@@ -1,4 +1,12 @@
 {
+  "modifier.tinkersnewlife.soul_body": "魂体",
+  "modifier.tinkersnewlife.soul_body.flavor": "死神之镰？死神之力！",
+  "modifier.tinkersnewlife.soul_body.description": "这种虚幻的魂体材质虽然看上去并不坚固，但却有着出乎意料的效用：可以将灵魂脱手穿墙而出！",
+  "material.tinkersnewlife.ghost_ingot": "灵锭",
+  "fluid_type.tinkersnewlife.molten_ghost_ingot": "熔融灵锭",
+  "block.tinkersnewlife.molten_ghost_ingot_block": "熔融灵锭",
+  "item.tinkersnewlife.molten_ghost_ingot_bucket": "熔融灵锭桶",
+  "entity.tinkersnewlife.soul_tool_echo": "虚幻工具复制体",
   "modifier.tinkersnewlife.frost_affinity": "霜亲和",
   "modifier.tinkersnewlife.frost_affinity.description": "极寒的神秘力量凝结出的结晶，它对寒冷的耐受与亲和使你的造物在霜冻环境下更加坚固且好用了！",
   "modifier.tinkersnewlife.frost_affinity.flavor": "极好的寒导体！",

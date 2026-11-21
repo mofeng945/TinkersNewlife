@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_ghost_ingot_still",
+  "flowing": "tinkersnewlife:block/molten_ghost_ingot_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FFE5FFFA",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

@@ -150,6 +150,9 @@ public class TinkersNewlife {
             LOGGER.info("[联动] 诡厄巫法＋神秘遗物同时在场 ⇒ 已有条件注册：邪灵辉锭（sinister_glow_ingot）"
                     + " ＋ 邪灵辉质（molten_sinister_glow）✓");
         }
+        if (IntegrationLoader.isLoaded(IntegrationLoader.GOETY) || IntegrationLoader.isIceAndFire()) {
+            ModFluids.ECTOPLASM_REGISTRAR.register(modEventBus);
+        }
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
 
@@ -449,6 +452,11 @@ public class TinkersNewlife {
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash.class, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash::encode, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash::new, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash::handle);   // TNL907
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.stuck.PacketStuckArrow.class, com.mofengbaizhi.tinkersnewlife.network.stuck.PacketStuckArrow::encode, com.mofengbaizhi.tinkersnewlife.network.stuck.PacketStuckArrow::new, com.mofengbaizhi.tinkersnewlife.network.stuck.PacketStuckArrow::handle);   // TNL927
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.stuck.PacketPullArrow.class, com.mofengbaizhi.tinkersnewlife.network.stuck.PacketPullArrow::encode, com.mofengbaizhi.tinkersnewlife.network.stuck.PacketPullArrow::new, com.mofengbaizhi.tinkersnewlife.network.stuck.PacketPullArrow::handle);   // TNL927
+
+        registerPacket(com.mofengbaizhi.tinkersnewlife.content.modifier.SoulBodyModifier.Swing.class,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SoulBodyModifier.Swing::encode,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SoulBodyModifier.Swing::new,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SoulBodyModifier.Swing::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);

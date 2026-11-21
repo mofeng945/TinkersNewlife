@@ -19,6 +19,8 @@ public class Modifiers {
     public static final StaticModifier<SupervisorModifier> SUPERVISOR =
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
+    public static final StaticModifier<SoulBodyModifier> SOUL_BODY = MODIFIERS.register("soul_body", SoulBodyModifier::new);
+
     public static final StaticModifier<FrostAffinityModifier> FROST_AFFINITY =
             MODIFIERS.register("frost_affinity", FrostAffinityModifier::new);
 

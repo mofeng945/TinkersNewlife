@@ -46,6 +46,10 @@ public class ModEntities {
                             .build(TinkersNewlife.MOD_ID + ":whip_lash")
             );
 
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.SoulToolEcho>> SOUL_TOOL_ECHO =
+            ENTITIES.register("soul_tool_echo", () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.SoulToolEcho>of(
+                    com.mofengbaizhi.tinkersnewlife.content.entity.SoulToolEcho::new,MobCategory.MISC).sized(.25f,.25f).clientTrackingRange(6).updateInterval(1).noSave().build("tinkersnewlife:soul_tool_echo"));
+
     public static final RegistryObject<EntityType<StoneShotEntity>> STONE_SHOT =
             ENTITIES.register("stone_shot",
                     () -> EntityType.Builder.<StoneShotEntity>of(StoneShotEntity::new, MobCategory.MISC)

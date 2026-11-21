@@ -1,0 +1,29 @@
+{
+  "name": "Ghost Ingot",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:ghost_ingot",
+  "sortnum": 17,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "An Ice and Fire tier 3 general and ranged material. Melt a ghost ingot at 800 degrees for 90 mB of Molten Ghost Ingot. Cast heads, handles, bindings, bow limbs or grips. Use a reusable or single-use ingot cast to recover the ingot."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Head: 350 durability, iron mining tier, 4.5 mining speed and 5 melee attack. Handle: unchanged durability, +5% melee damage, +10% attack speed and +10% mining speed. Bindings have no numerical stats."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Limb: 350 durability, +0.1 draw speed, +0.5 velocity and +0.1 accuracy. Grip: unchanged durability, +0.1 accuracy and 2.5 melee damage."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each part grants one level of Soul Body. A fully charged melee swing launches a gravity-free copy of the tool through walls, dealing weapon damage up to 5 blocks per level. Ranged projectiles ignore gravity and walls for that distance, then resume normal flight."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Both Ice and Fire and Goety ectoplasm melt at 300 degrees into 125 mB of the same Liquid Ectoplasm. Either mod enables the fluid. When both are present, gem casts recover Goety ectoplasm."
+    }
+  ]
+}

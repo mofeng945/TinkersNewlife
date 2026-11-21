@@ -25,6 +25,10 @@
       "required": false
     },
     {
+      "id": "tinkersnewlife:molten_ghost_ingot_bucket",
+      "required": false
+    },
+    {
       "id": "tinkersnewlife:molten_dreadsteel_bucket",
       "required": false
     },

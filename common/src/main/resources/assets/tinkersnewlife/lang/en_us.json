@@ -1,4 +1,12 @@
 {
+  "modifier.tinkersnewlife.soul_body": "Soul Body",
+  "modifier.tinkersnewlife.soul_body.flavor": "The Reaper's scythe? The Reaper's power!",
+  "modifier.tinkersnewlife.soul_body.description": "This ghostly material looks fragile, yet it lets a spectral echo of your weapon slip through walls.",
+  "material.tinkersnewlife.ghost_ingot": "Ghost Ingot",
+  "fluid_type.tinkersnewlife.molten_ghost_ingot": "Molten Ghost Ingot",
+  "block.tinkersnewlife.molten_ghost_ingot_block": "Molten Ghost Ingot",
+  "item.tinkersnewlife.molten_ghost_ingot_bucket": "Molten Ghost Ingot Bucket",
+  "entity.tinkersnewlife.soul_tool_echo": "Spectral Tool Echo",
   "modifier.tinkersnewlife.frost_affinity": "Frost Affinity",
   "modifier.tinkersnewlife.frost_affinity.description": "Crystallized from mysterious forces of bitter cold, this gem makes your creations tougher and easier to use in freezing conditions.",
   "modifier.tinkersnewlife.frost_affinity.flavor": "An excellent conductor of cold!",

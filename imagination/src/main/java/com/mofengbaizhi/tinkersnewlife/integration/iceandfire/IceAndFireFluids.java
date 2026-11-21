@@ -48,6 +48,10 @@ public final class IceAndFireFluids {
             2000, 10000, 1300, 0xFF8A2BE2,
             FluidRegistrar.lavaProps(MapColor.COLOR_YELLOW));
 
+    public static final FluidRegistrar.FluidEntry MOLTEN_GHOST_INGOT = REG.entry("molten_ghost_ingot",
+            2000, 10000, 800, 0xFFE5FFFA,
+            FluidRegistrar.lavaProps(MapColor.COLOR_LIGHT_GREEN));
+
     // ---- 悚怖（冰火悚怖碎片） ----
     public static final FluidRegistrar.FluidEntry MOLTEN_DREAD = REG.entry("molten_dread",
             1500, 5000, 800, 0xFF6A0DAD,

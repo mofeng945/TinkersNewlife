@@ -292,6 +292,7 @@ public class ModCreativeTabs {
                                 // ----- 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2 -----
                                 acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
                                 acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");
+                                acceptItemIfPresent(output, "molten_ghost_ingot_bucket");
                                 acceptItemIfPresent(output, "molten_dragonsteel_lightning_bucket");
                                 acceptItemIfPresent(output, "fire_blood_bucket");
                                 acceptItemIfPresent(output, "ice_blood_bucket");
@@ -437,6 +438,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("divine_gold", "goety_revelation");   // 神灵金（诡厄启示录联动材料：broken_halo/ascension_halo）
         MATERIAL_SOURCE_MOD.put("dragonsteel_fire", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragonsteel_ice", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("ghost_ingot", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragonsteel_lightning", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dreadsteel", "iceandfire");     // 悚怖碎片来自冰火
         MATERIAL_SOURCE_MOD.put("dragonbone", "iceandfire");     // 龙骨

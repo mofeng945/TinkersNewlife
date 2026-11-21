@@ -1,5 +1,22 @@
 {
   "mappings": {
+    "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyProjectileMixin": {
+      "tick": "Lnet/minecraft/world/entity/projectile/Projectile;m_8119_()V",
+      "addAdditionalSaveData": "Lnet/minecraft/world/entity/projectile/Projectile;m_7380_(Lnet/minecraft/nbt/CompoundTag;)V",
+      "readAdditionalSaveData": "Lnet/minecraft/world/entity/projectile/Projectile;m_7378_(Lnet/minecraft/nbt/CompoundTag;)V"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyArrowMixin": {
+      "tick": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_8119_()V",
+      "Lnet/minecraft/world/entity/projectile/AbstractArrow;isNoGravity()Z": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_20068_()Z",
+      "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z": "Lnet/minecraft/world/level/block/state/BlockState;m_60795_()Z"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyProjectileUtilMixin": {
+      "getHitResult": "Lnet/minecraft/world/entity/projectile/ProjectileUtil;m_278167_(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;Ljava/util/function/Predicate;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/phys/HitResult;"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyGravityMixin": {
+      "tick": "Lnet/minecraft/world/entity/projectile/ThrowableProjectile;m_8119_()V",
+      "Lnet/minecraft/world/entity/projectile/ThrowableProjectile;isNoGravity()Z": "Lnet/minecraft/world/entity/projectile/ThrowableProjectile;m_20068_()Z"
+    },
     "com/mofengbaizhi/tinkersnewlife/mixin/EntityRenderDispatcherMixin": {
       "render": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_114384_(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
     },
@@ -15,6 +32,23 @@
   },
   "data": {
     "searge": {
+      "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyProjectileMixin": {
+        "tick": "Lnet/minecraft/world/entity/projectile/Projectile;m_8119_()V",
+        "addAdditionalSaveData": "Lnet/minecraft/world/entity/projectile/Projectile;m_7380_(Lnet/minecraft/nbt/CompoundTag;)V",
+        "readAdditionalSaveData": "Lnet/minecraft/world/entity/projectile/Projectile;m_7378_(Lnet/minecraft/nbt/CompoundTag;)V"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyArrowMixin": {
+        "tick": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_8119_()V",
+        "Lnet/minecraft/world/entity/projectile/AbstractArrow;isNoGravity()Z": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_20068_()Z",
+        "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z": "Lnet/minecraft/world/level/block/state/BlockState;m_60795_()Z"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyProjectileUtilMixin": {
+        "getHitResult": "Lnet/minecraft/world/entity/projectile/ProjectileUtil;m_278167_(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;Ljava/util/function/Predicate;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/phys/HitResult;"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyGravityMixin": {
+        "tick": "Lnet/minecraft/world/entity/projectile/ThrowableProjectile;m_8119_()V",
+        "Lnet/minecraft/world/entity/projectile/ThrowableProjectile;isNoGravity()Z": "Lnet/minecraft/world/entity/projectile/ThrowableProjectile;m_20068_()Z"
+      },
       "com/mofengbaizhi/tinkersnewlife/mixin/EntityRenderDispatcherMixin": {
         "render": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_114384_(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
       },

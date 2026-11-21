@@ -159,6 +159,7 @@ public class ClientEventHandler {
                 com.mofengbaizhi.tinkersnewlife.client.renderer.WhipLashRenderer::new);
         event.registerEntityRenderer(ModEntities.SOLDIER_SLASH.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.SoldierSlashRenderer::new);
+        event.registerEntityRenderer(ModEntities.SOUL_TOOL_ECHO.get(), com.mofengbaizhi.tinkersnewlife.client.renderer.SoulToolEchoRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD.get(), FlyingSwordRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD_FOOT.get(), FlyingSwordFootRenderer::new);
         event.registerEntityRenderer(ModEntities.YO_YO.get(), YoYoRenderer::new);

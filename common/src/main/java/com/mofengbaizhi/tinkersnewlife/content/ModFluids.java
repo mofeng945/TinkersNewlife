@@ -113,8 +113,9 @@ public class ModFluids {
      * 流动星空取 `enigmaticlegacy:astral_dust` 的 **#9F37CA** ✓；
      * 贴图一律是"**换色匠魂默认熔融材质**" ✓（生成器 `tools/fluid_texture_tint.py` 同族脚本 ✓）。
      */
+    public static final FluidRegistrar ECTOPLASM_REGISTRAR = new FluidRegistrar(TinkersNewlife.MOD_ID);
     public static final FluidRegistrar.FluidEntry LIQUID_ECTOPLASM =
-            LINKED_REGISTRAR.entry("liquid_ectoplasm",
+            ECTOPLASM_REGISTRAR.entry("liquid_ectoplasm",
                     1500, 6000, 300, 0xFF399AD6,
                     FluidRegistrar.waterProps(MapColor.COLOR_LIGHT_BLUE));
 

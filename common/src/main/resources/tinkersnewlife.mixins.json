@@ -6,6 +6,10 @@
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
     "DisarmDropProtectionMixin",
+    "SoulBodyProjectileMixin",
+    "SoulBodyProjectileUtilMixin",
+    "SoulBodyArrowMixin",
+    "SoulBodyGravityMixin",
     "ToolkitTabPacketMixin",
     "VirtualBlockEntityMixin",
     "SlotMixin",
