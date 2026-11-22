@@ -1,0 +1,13 @@
+{
+  "conditions": [{"type": "forge:mod_loaded", "modid": "iceandfire"}],
+  "translation_key": "item.tconstruct.plate_shield",
+  "sortIndex": 16,
+  "icon": {
+    "item": "tconstruct:plate_shield",
+    "nbt": "{tic_display:1b,tic_materials:[\"tconstruct:wood\",\"tinkersnewlife:dragon_scales\"]}"
+  },
+  "input_slots": [
+    {"translation_key": "item.tconstruct.shield_core", "icon": "tconstruct:shield_core", "filter": {"item": "tconstruct:shield_core"}, "x": 33, "y": 29},
+    {"translation_key": "item.tinkersnewlife.shield_plating", "icon": "tinkersnewlife:shield_plating", "filter": {"item": "tinkersnewlife:shield_plating"}, "x": 33, "y": 53}
+  ]
+}

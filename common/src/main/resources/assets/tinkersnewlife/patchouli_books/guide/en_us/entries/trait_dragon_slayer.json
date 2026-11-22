@@ -1,0 +1,24 @@
+{
+  "name": "Dragon Slayer",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:dragonscales_red",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Per-level reduction by worn slot:$(br)Slot: general / extra breath$(br)Head: 1.25% / 5%$(br)Chest: 2.5% / 15%$(br)Legs: 2.5% / 10%$(br)Feet: 1.25% / 5%."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Add general reductions (cap 50%). Void and ordinary magic are excluded; breath still qualifies. For dragon breath, add the extra breath reductions (cap 70%) and apply to the remainder. At both caps, 100 breath damage becomes 15."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Shields gain 25% block amount and 10% block angle per level and can block dragon breath while raised. They do not grant passive armor-slot reductions."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "At four combined active levels on worn armor and held shields, non-boss mobs within 10 blocks with at most 20 current health try to flee. They need functioning AI and a usable escape path."
+    }
+  ]
+}

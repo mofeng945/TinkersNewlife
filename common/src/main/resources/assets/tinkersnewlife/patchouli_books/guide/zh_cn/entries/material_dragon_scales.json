@@ -1,0 +1,24 @@
+{
+  "name": "龙鳞",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:dragonscales_red",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动的三级盔甲材料。任意颜色的火龙、冰龙或电龙鳞均可在部件制作台直接制作，无需熔炼或浇筑。可制作四种盔甲镶板、锁链基底、盾牌镶板和盾牌基底。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "镶板（耐久／护甲）：头 396／5，胸 576／9，腿 540／7，靴 468／5。各有韧性 2、击退抗性 1。盾牌镶板耐久 580、韧性 2、击退抗性 2。两种基底无额外数值。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "盾牌镶板是独立部件：在部件制作台选择盾牌镶板，投入 3 片龙鳞。再把龙鳞盾牌镶板和有效盾牌基底放到匠魂装配台，制成镶板盾。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "每个龙鳞部件提供 1 级$(l:trait_dragon_slayer)屠龙者$()，装备上多个部件可以叠级。"
+    }
+  ]
+}

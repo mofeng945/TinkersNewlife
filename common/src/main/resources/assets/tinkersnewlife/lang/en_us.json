@@ -1,4 +1,9 @@
 {
+  "item.tinkersnewlife.shield_plating": "Shield Plating",
+  "material.tinkersnewlife.dragon_scales": "Dragon Scales",
+  "modifier.tinkersnewlife.dragon_slayer": "Dragon Slayer",
+  "modifier.tinkersnewlife.dragon_slayer.flavor": "Fell the proud lords of the sky, and all shall bow before you.",
+  "modifier.tinkersnewlife.dragon_slayer.description": "Whether you won by cunning or brute strength, the metallic sheen of these scales silences every doubter. You have earned the name of dragon slayer!",
   "message.tinkersnewlife.astral_cooldown": "Astral Projection cooldown: %s seconds remaining",
   "modifier.tinkersnewlife.soul_projection": "Astral Projection",
   "modifier.tinkersnewlife.soul_projection.flavor": "Croak! A master of the spirit arts! Everybody, back away!",

@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:tool_building",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ],
+  "result": "tconstruct:plate_shield",
+  "slot_layout": "tinkersnewlife:dragon_scales_plate_shield",
+  "parts_override": [
+    "tconstruct:shield_core",
+    "tinkersnewlife:shield_plating"
+  ]
+}

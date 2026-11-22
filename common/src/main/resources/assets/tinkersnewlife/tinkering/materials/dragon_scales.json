@@ -1,0 +1,61 @@
+{
+  "color": "FF8CB9C5",
+  "fallbacks": [
+    "scale",
+    "rock"
+  ],
+  "generator": {
+    "supported_stats": [
+      "tconstruct:maille",
+      "tconstruct:shield_core",
+      "tconstruct:plating_helmet",
+      "tconstruct:plating_chestplate",
+      "tconstruct:plating_leggings",
+      "tconstruct:plating_boots",
+      "tconstruct:plating_shield",
+      "tconstruct:armor_maille",
+      "tconstruct:armor_plating",
+      "tconstruct:repair_kit"
+    ],
+    "transformer": {
+      "type": "tconstruct:grey_to_sprite",
+      "palette": [
+        {
+          "grey": 0,
+          "path": "tinkersnewlife:generator/dragon_scales",
+          "color": "FF222222"
+        },
+        {
+          "grey": 63,
+          "path": "tinkersnewlife:generator/dragon_scales",
+          "color": "FF707070"
+        },
+        {
+          "grey": 102,
+          "path": "tinkersnewlife:generator/dragon_scales",
+          "color": "FF969696"
+        },
+        {
+          "grey": 140,
+          "path": "tinkersnewlife:generator/dragon_scales",
+          "color": "FFB5B5B5"
+        },
+        {
+          "grey": 178,
+          "path": "tinkersnewlife:generator/dragon_scales",
+          "color": "FFD4D4D4"
+        },
+        {
+          "grey": 216,
+          "path": "tinkersnewlife:generator/dragon_scales",
+          "color": "FFEBEBEB"
+        },
+        {
+          "grey": 255,
+          "path": "tinkersnewlife:generator/dragon_scales",
+          "color": "FFFFFFFF"
+        }
+      ]
+    }
+  }
+}

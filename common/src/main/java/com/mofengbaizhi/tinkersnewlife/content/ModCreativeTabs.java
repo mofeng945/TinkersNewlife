@@ -439,6 +439,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("dragonsteel_fire", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragonsteel_ice", "iceandfire");
         MATERIAL_SOURCE_MOD.put("ghost_ingot", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("dragon_scales", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragonsteel_lightning", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dreadsteel", "iceandfire");     // 悚怖碎片来自冰火
         MATERIAL_SOURCE_MOD.put("dragonbone", "iceandfire");     // 龙骨

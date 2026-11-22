@@ -1,0 +1,24 @@
+{
+  "name": "Dragon Scales",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:dragonscales_red",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Tier 3 armor material from Ice and Fire. Use any color of fire, ice or lightning dragon scales at the Part Builder. No melting or casting is required. Make four armor platings, maille, shield plating or a shield core."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Plating durability / armor: head 396/5, chest 576/9, legs 540/7, feet 468/5. Each has 2 toughness and 1 displayed knockback resistance. Shield plating has 580 durability, 2 toughness and 2 displayed knockback resistance. Maille and shield core have no extra stats."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Shield plating is a separate part. Select Shield Plating in the Part Builder and supply 3 scales. Assemble it with a valid shield core at the Tinker Station to make a plate shield."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each scale part grants one level of $(l:trait_dragon_slayer)Dragon Slayer$(). Multiple parts can contribute to the same item."
+    }
+  ]
+}

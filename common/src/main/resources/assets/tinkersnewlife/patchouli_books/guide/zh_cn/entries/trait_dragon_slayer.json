@@ -1,0 +1,24 @@
+{
+  "name": "屠龙者",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:dragonscales_red",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "按穿戴部位分别累计每级减免。$(br)部位：普通 / 额外龙息$(br)头：1.25% / 5%$(br)胸：2.5% / 15%$(br)腿：2.5% / 10%$(br)脚：1.25% / 5%"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "第一层普通减免相加，最高 50%，不含虚空与普通魔法；龙息仍享受第一层。第二层龙息减免另行相加，最高 70%，乘在剩余伤害上。例：两层都封顶时，100 点龙息剩 15 点。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "盾牌每级增加 25% 格挡值和 10% 格挡角度，举盾可格挡龙息。盾牌不提供上述护甲部位的被动减免。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "穿戴的盔甲与手持盾牌上有效屠龙者等级合计至少 4 级时，10 格内当前生命不超过 20 的非 Boss 生物会尝试寻找逃跑路线。无 AI、不能移动或没有出路的生物不会被强制传送。"
+    }
+  ]
+}

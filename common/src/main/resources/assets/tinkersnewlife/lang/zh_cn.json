@@ -1,4 +1,9 @@
 {
+  "item.tinkersnewlife.shield_plating": "盾牌镶板",
+  "material.tinkersnewlife.dragon_scales": "龙鳞",
+  "modifier.tinkersnewlife.dragon_slayer": "屠龙者",
+  "modifier.tinkersnewlife.dragon_slayer.flavor": "斩落那傲慢飞天的龙类，自此万物向你俯首",
+  "modifier.tinkersnewlife.dragon_slayer.description": "无论你是用计谋坑杀还是用体魄碾压获胜，这些闪烁着金属光泽的鳞片足以驳回所有质疑，你就是当之无愧的屠龙者！",
   "message.tinkersnewlife.astral_cooldown": "灵魂出窍冷却中：还需 %s 秒",
   "modifier.tinkersnewlife.soul_projection": "灵魂出窍",
   "modifier.tinkersnewlife.soul_projection.flavor": "呱，是神识大能，大家快退口牙！",

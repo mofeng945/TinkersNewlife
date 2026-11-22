@@ -156,6 +156,10 @@ public class ModItems {
     public static final RegistryObject<DragonCoreItem> DRAGON_CORE =
             ITEMS.register("dragon_core", () -> new DragonCoreItem(new Item.Properties()));
 
+    /** Plate shields normally cast their second material directly onto the core. Provide a real part for table assembly. */
+    public static final RegistryObject<ToolPartItem> SHIELD_PLATING = ITEMS.register("shield_plating",
+            () -> new ToolPartItem(new Item.Properties(), new MaterialStatsId(new ResourceLocation("tconstruct", "plating_shield"))));
+
     /** 龙魂核心铸模（金铸模） */
     public static final RegistryObject<Item> DRAGON_CORE_CAST =
             ITEMS.register("dragon_core_cast", () -> new Item(new Item.Properties().stacksTo(1)));

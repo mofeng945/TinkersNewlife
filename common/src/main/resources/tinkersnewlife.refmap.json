@@ -1,5 +1,8 @@
 {
   "mappings": {
+    "com/mofengbaizhi/tinkersnewlife/mixin/DragonSlayerShieldMixin": {
+      "isDamageSourceBlocked": "Lnet/minecraft/world/entity/LivingEntity;m_21275_(Lnet/minecraft/world/damagesource/DamageSource;)Z"
+    },
     "com/mofengbaizhi/tinkersnewlife/mixin/AstralEntityMovementMixin": {
       "collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/entity/Entity;m_20272_(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;",
       "updateFluidOnEyes": "Lnet/minecraft/world/entity/Entity;m_20323_()V",
@@ -50,6 +53,9 @@
   },
   "data": {
     "searge": {
+      "com/mofengbaizhi/tinkersnewlife/mixin/DragonSlayerShieldMixin": {
+        "isDamageSourceBlocked": "Lnet/minecraft/world/entity/LivingEntity;m_21275_(Lnet/minecraft/world/damagesource/DamageSource;)Z"
+      },
       "com/mofengbaizhi/tinkersnewlife/mixin/AstralEntityMovementMixin": {
         "collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/entity/Entity;m_20272_(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;",
         "updateFluidOnEyes": "Lnet/minecraft/world/entity/Entity;m_20323_()V",
