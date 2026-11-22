@@ -18,7 +18,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "At four combined active levels on worn armor and held shields, non-boss mobs within 10 blocks with at most 20 current health try to flee. They need functioning AI and a usable escape path."
+      "text": "At four combined active levels on worn armor and held shields, hostile non-boss mobs within 10 blocks whose health does not exceed your current health (excluding absorption) try to flee. Passive mobs are unaffected. Monsters need functioning AI and a usable escape path."
     }
   ]
 }

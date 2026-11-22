@@ -40,7 +40,7 @@
     { "path": "tinkersnewlife:item/tool/yo_yo/wheel2", "stat_type": "tconstruct:head" },
     { "path": "tinkersnewlife:item/tool/yo_yo/spool", "stat_type": "tconstruct:handle" },
     { "path": "tinkersnewlife:item/tool/yo_yo/bowstring", "stat_type": "tconstruct:bowstring" },
-    { "path": "tinkersnewlife:item/tool/parts/shield_plating", "stat_type": "tconstruct:plating_shield" },
+    { "path": "tinkersnewlife:item/tool/parts/shield_plating_64", "stat_type": "tconstruct:plating_shield" },
     { "path": "tinkersnewlife:item/tool/parts/dragon_core", "stat_type": "tconstruct:head" },
     { "path": "tinkersnewlife:item/tool/parts/spell_core", "stat_type": "tconstruct:head" },
     { "path": "tinkersnewlife:item/tool/parts/curse_core_part", "stat_type": "tconstruct:head" },

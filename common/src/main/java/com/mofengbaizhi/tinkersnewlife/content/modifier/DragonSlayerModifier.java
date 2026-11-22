@@ -36,7 +36,8 @@ public final class DragonSlayerModifier extends Modifier {
         event.setAmount(event.getAmount()*DragonSlayerProtection.multiplier(h,c,l,f,DragonSlayerShield.isDragonBreath(event.getSource())));
     }
     @SubscribeEvent public static void onWearerTick(LivingEvent.LivingTickEvent event) {
-        var e=event.getEntity();if(e.level().isClientSide || !e.isAlive() || e.isSpectator() || (e.tickCount+e.getId())%10!=0 || !IntegrationLoader.isIceAndFire())return;
+        if(!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer e))return;
+        if(!e.isAlive() || e.isSpectator() || (e.tickCount+e.getId())%10!=0 || !IntegrationLoader.isIceAndFire())return;
         long levels=(long)armor(e,EquipmentSlot.HEAD)+armor(e,EquipmentSlot.CHEST)+armor(e,EquipmentSlot.LEGS)+armor(e,EquipmentSlot.FEET)
                 +shield(e.getMainHandItem())+shield(e.getOffhandItem());
         if(levels>=4) DragonSlayerFear.refresh(e,levels);

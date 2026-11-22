@@ -19,18 +19,19 @@ final class DragonSlayerFear extends Goal {
     private int expires, nextPath;
     private Path path;
     private DragonSlayerFear(Mob mob){this.mob=mob;setFlags(EnumSet.of(Flag.MOVE));}
-    static void refresh(LivingEntity wearer,long levels){
-        for(Mob m:wearer.level().getEntitiesOfClass(Mob.class,wearer.getBoundingBox().inflate(10),m->m!=wearer&&m.isAlive()&&!m.isNoAi())){
-            if(!DragonSlayerProtection.fearEligible(levels,m.getHealth(),m.distanceToSqr(wearer),false) || StarfallArrow.tnl$isBoss(m))continue;
+    private static boolean hostile(Mob m){return m instanceof net.minecraft.world.entity.monster.Enemy || m.getType().getCategory()==MobCategory.MONSTER;}
+    static void refresh(net.minecraft.server.level.ServerPlayer wearer,long levels){
+        for(Mob m:wearer.level().getEntitiesOfClass(Mob.class,wearer.getBoundingBox().inflate(10),m->m.isAlive()&&!m.isNoAi())){
+            if(!DragonSlayerProtection.fearEligible(levels,m.getHealth(),wearer.getHealth(),m.distanceToSqr(wearer),hostile(m),false) || StarfallArrow.tnl$isBoss(m))continue;
             var ref=GOALS.get(m);var goal=ref==null?null:ref.get();
             if(goal==null){goal=new DragonSlayerFear(m);m.goalSelector.addGoal(-1,goal);GOALS.put(m,new WeakReference<>(goal));}
             var old=goal.threat.get();
-            if(old==null || old==wearer || m.tickCount>=goal.expires || !old.isAlive() || old.level()!=m.level() || m.distanceToSqr(wearer)<m.distanceToSqr(old)){
+            if(old==null || old==wearer || m.tickCount>=goal.expires || !old.isAlive() || old.level()!=m.level() || old.getHealth()<m.getHealth() || m.distanceToSqr(wearer)<m.distanceToSqr(old)){
                 goal.threat=new WeakReference<>(wearer);goal.expires=m.tickCount+11;
             }
         }
     }
-    private boolean afraid(){if(mob.tickCount>=expires || mob.getHealth()>20)return false;var e=threat.get();return e!=null&&e.isAlive()&&!e.isSpectator()&&e.level()==mob.level()&&mob.distanceToSqr(e)<=100;}
+    private boolean afraid(){if(mob.tickCount>=expires)return false;var e=threat.get();return e!=null&&e.isAlive()&&!e.isSpectator()&&e.level()==mob.level()&&DragonSlayerProtection.fearEligible(4,mob.getHealth(),e.getHealth(),mob.distanceToSqr(e),hostile(mob),false);}
     private Path escape(LivingEntity e){
         var origin=mob.position();double initial=origin.distanceToSqr(e.position());
         for(int i=0;i<5;i++){
