@@ -1,0 +1,16 @@
+{
+  "name": "潮汐庇护",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:sea_serpent_scales_teal",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "穿戴的护甲与手持的盾牌共同累计潮汐庇护等级。合计至少 2 级时，获得水下呼吸。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "达到 2 级门槛后，在水中或淋雨时还会获得夜视、海豚的恩惠 III 和力量。力量等级等于潮汐庇护的总等级，最高为 VIII 级。离开水和雨后，额外效果消失，水下呼吸持续到总等级不足 2 级。"
+    }
+  ]
+}

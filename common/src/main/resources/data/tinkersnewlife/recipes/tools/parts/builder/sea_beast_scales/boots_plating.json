@@ -1,0 +1,26 @@
+{
+  "type": "tconstruct:item_part_builder",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ],
+  "material": "tinkersnewlife:sea_beast_scales",
+  "pattern": "tconstruct:boots_plating",
+  "pattern_item": [
+    {
+      "tag": "tconstruct:patterns/default"
+    },
+    {
+      "item": "tconstruct:boots_plating_cast"
+    }
+  ],
+  "cost": 2,
+  "result": {
+    "item": "tconstruct:boots_plating",
+    "nbt": {
+      "Material": "tinkersnewlife:sea_beast_scales"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Tidal Shelter",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:sea_serpent_scales_teal",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Tidal Shelter levels add up across worn armor and held shields. A combined level of 2 or higher grants Water Breathing."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "With at least 2 levels, being in water or exposed to rain also grants Night Vision, Dolphin's Grace III and Strength equal to the total Tidal Shelter level, up to Strength VIII. The extra effects end when you leave the water or rain. Water Breathing lasts until the total falls below level 2."
+    }
+  ]
+}

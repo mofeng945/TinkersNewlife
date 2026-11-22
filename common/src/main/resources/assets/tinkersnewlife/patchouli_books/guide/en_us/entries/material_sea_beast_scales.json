@@ -1,0 +1,20 @@
+{
+  "name": "Sea Beast Scales",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:shiny_scales",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A tier 3 armor material from Ice and Fire. Use Shiny Scales or any color of Sea Serpent Scales directly in the Part Builder. Each scale provides 1 material unit. The seven parts are four armor platings, maille, shield plating and a shield core."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Durability / armor: helmet 330/4, chestplate 480/7, leggings 450/8, boots 390/4. Each armor plating has 2.5 toughness. Shield plating has 500 durability and 5 toughness. All five platings give 10% knockback resistance (0.1). Maille and shield cores have no extra stats."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Use 3 scales to make shield plating in the Part Builder. Combine it with any valid shield core at a Tinker Station to build a plate shield. Each Sea Beast Scales part grants 1 level of $(l:trait_tidal_shelter)Tidal Shelter$()."
+    }
+  ]
+}

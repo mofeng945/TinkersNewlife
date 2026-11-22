@@ -1,0 +1,20 @@
+{
+  "name": "海兽鳞片",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:shiny_scales",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动的三级护甲材料。闪光鳞片和任意颜色的海蟒鳞片均可在部件制作台直接加工，每片都提供 1 个材料单位。可制作四种护甲镶板、锁链基底、盾牌镶板和盾芯。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "耐久／护甲：头 330／4，胸 480／7，腿 450／8，靴 390／4。四种护甲镶板均有 2.5 韧性。盾牌镶板有 500 耐久和 5 韧性。五种镶板的击退抗性均为 10%（属性值 0.1）。锁链基底和盾芯无额外面板属性。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "在部件制作台投入 3 片鳞片制作盾牌镶板，再将它与任意有效盾芯放入工匠站组装镶板盾。每个海兽鳞片部件提供 1 级$(l:trait_tidal_shelter)潮汐庇护$()。"
+    }
+  ]
+}

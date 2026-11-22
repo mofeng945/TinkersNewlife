@@ -444,6 +444,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("sea_serpent_fang", "iceandfire");
         MATERIAL_SOURCE_MOD.put("stymphalian_feather", "iceandfire");
         MATERIAL_SOURCE_MOD.put("ghost_ingot", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("sea_beast_scales", "iceandfire");
         MATERIAL_SOURCE_MOD.put("death_worm_chitin", "iceandfire");
         MATERIAL_SOURCE_MOD.put("troll_matter", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragon_scales", "iceandfire");
