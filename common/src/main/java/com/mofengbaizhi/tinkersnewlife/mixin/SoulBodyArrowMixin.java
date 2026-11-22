@@ -2,8 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 
 import com.mofengbaizhi.tinkersnewlife.content.modifier.events.SoulBodyProjectileHandler;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.SeaSerpentModifier;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,9 +14,10 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(AbstractArrow.class)
 public abstract class SoulBodyArrowMixin {
-    @Inject(method = "getWaterInertia", at = @At("HEAD"), cancellable = true)
-    private void tnl$seaSerpentWaterInertia(CallbackInfoReturnable<Float> callback) {
-        if (SeaSerpentModifier.swims((AbstractArrow)(Object)this)) callback.setReturnValue(1.0f);
+    // Tinkers arrows override getWaterInertia. Replace the resulting drag coefficient at the point of use.
+    @ModifyArg(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;scale(D)Lnet/minecraft/world/phys/Vec3;"), index = 0, require = 1)
+    private double tnl$seaSerpentWaterInertia(double inertia) {
+        return SeaSerpentModifier.swims((AbstractArrow)(Object)this) ? 1.0 : inertia;
     }
 
     @Redirect(method = "onHitEntity", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/projectile/AbstractArrow;baseDamage:D"))

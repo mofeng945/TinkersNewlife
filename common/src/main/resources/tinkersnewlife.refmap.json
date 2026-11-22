@@ -28,7 +28,7 @@
     },
     "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyArrowMixin": {
       "tick": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_8119_()V",
-      "getWaterInertia": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_6882_()F",
+      "Lnet/minecraft/world/phys/Vec3;scale(D)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/phys/Vec3;m_82490_(D)Lnet/minecraft/world/phys/Vec3;",
       "onHitEntity": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_5790_(Lnet/minecraft/world/phys/EntityHitResult;)V",
       "Lnet/minecraft/world/entity/projectile/AbstractArrow;baseDamage:D": "Lnet/minecraft/world/entity/projectile/AbstractArrow;f_36698_:D",
       "Lnet/minecraft/world/entity/projectile/AbstractArrow;isNoGravity()Z": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_20068_()Z",
@@ -84,7 +84,7 @@
       },
       "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyArrowMixin": {
         "tick": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_8119_()V",
-        "getWaterInertia": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_6882_()F",
+        "Lnet/minecraft/world/phys/Vec3;scale(D)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/phys/Vec3;m_82490_(D)Lnet/minecraft/world/phys/Vec3;",
         "onHitEntity": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_5790_(Lnet/minecraft/world/phys/EntityHitResult;)V",
         "Lnet/minecraft/world/entity/projectile/AbstractArrow;baseDamage:D": "Lnet/minecraft/world/entity/projectile/AbstractArrow;f_36698_:D",
         "Lnet/minecraft/world/entity/projectile/AbstractArrow;isNoGravity()Z": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_20068_()Z",
