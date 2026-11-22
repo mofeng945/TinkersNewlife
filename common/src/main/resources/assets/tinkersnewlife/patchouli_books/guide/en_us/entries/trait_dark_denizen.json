@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Shields gain 8% block amount and 4% block angle per level. At four or more combined levels across worn armor and held shields, gain continuous Regeneration II, plus 1.5% damage and one knockback level per combined level."
+      "text": "Shields gain 8% block amount and 4% block angle per level. Blocking projectile damage has a 25% chance per shield trait level (up to 100%) to send a surviving projectile back along its incoming path. At four or more combined levels, gain continuous Regeneration II, +1.5% damage per combined level, and one additional knockback level."
     }
   ]
 }

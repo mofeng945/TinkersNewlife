@@ -52,6 +52,40 @@ public final class DarkDenizenModifier extends Modifier {
         return levels;
     }
 
+    private record Rebound(net.minecraft.world.entity.projectile.Projectile projectile, LivingEntity blocker,
+                           net.minecraft.world.phys.Vec3 position, net.minecraft.world.phys.Vec3 velocity) {}
+    private static final java.util.Map<net.minecraft.server.level.ServerLevel, java.util.Map<UUID, Rebound>> REBOUNDS = new java.util.WeakHashMap<>();
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void rebound(net.minecraftforge.event.entity.living.ShieldBlockEvent event) {
+        var blocker = event.getEntity();
+        if (!(blocker.level() instanceof net.minecraft.server.level.ServerLevel level) || !IntegrationLoader.isIceAndFire()
+                || event.getBlockedDamage() <= 0 || !event.getDamageSource().is(DamageTypeTags.IS_PROJECTILE)
+                || !(event.getDamageSource().getDirectEntity() instanceof net.minecraft.world.entity.projectile.Projectile projectile)) return;
+        var shield = blocker.getUseItem();
+        if (!shield.is(TinkerTags.Items.SHIELDS)) return;
+        int rank = ToolHelper.getActiveModifierLevel(ToolHelper.getToolStack(shield), ID);
+        var velocity = projectile.getDeltaMovement();
+        if (rank <= 0 || velocity.lengthSqr() < 1e-8 || blocker.getRandom().nextFloat() >= Math.min(1f, .25f * rank)) return;
+        REBOUNDS.computeIfAbsent(level, ignored -> new java.util.HashMap<>())
+                .putIfAbsent(projectile.getUUID(), new Rebound(projectile, blocker, projectile.position(), velocity.reverse()));
+    }
+
+    @SubscribeEvent public static void finishRebounds(net.minecraftforge.event.TickEvent.LevelTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || !(event.level instanceof net.minecraft.server.level.ServerLevel level)) return;
+        var rebounds = REBOUNDS.remove(level);
+        if (rebounds == null) return;
+        for (var bounce : rebounds.values()) {
+            var projectile = bounce.projectile();
+            if (projectile.isRemoved() || projectile.level() != level) continue;
+            // Run after vanilla's own bounce/drag, retaining the incoming speed and shield wear.
+            projectile.setPos(bounce.position());
+            projectile.setOwner(bounce.blocker());
+            projectile.setDeltaMovement(bounce.velocity());
+            projectile.hurtMarked = true;
+        }
+    }
+
     @SubscribeEvent public static void resist(LivingDamageEvent event) {
         var wearer = event.getEntity();
         if (wearer.level().isClientSide || !IntegrationLoader.isIceAndFire() || !event.getSource().is(DamageTypeTags.IS_PROJECTILE)) return;
