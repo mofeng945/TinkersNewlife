@@ -22,37 +22,37 @@
       "palette": [
         {
           "grey": 0,
-          "path": "tinkersnewlife:generator/dragon_scales_64",
+          "path": "tinkersnewlife:generator/dragon_scales_32",
           "color": "FF222222"
         },
         {
           "grey": 63,
-          "path": "tinkersnewlife:generator/dragon_scales_64",
+          "path": "tinkersnewlife:generator/dragon_scales_32",
           "color": "FF707070"
         },
         {
           "grey": 102,
-          "path": "tinkersnewlife:generator/dragon_scales_64",
+          "path": "tinkersnewlife:generator/dragon_scales_32",
           "color": "FF969696"
         },
         {
           "grey": 140,
-          "path": "tinkersnewlife:generator/dragon_scales_64",
+          "path": "tinkersnewlife:generator/dragon_scales_32",
           "color": "FFB5B5B5"
         },
         {
           "grey": 178,
-          "path": "tinkersnewlife:generator/dragon_scales_64",
+          "path": "tinkersnewlife:generator/dragon_scales_32",
           "color": "FFD4D4D4"
         },
         {
           "grey": 216,
-          "path": "tinkersnewlife:generator/dragon_scales_64",
+          "path": "tinkersnewlife:generator/dragon_scales_32",
           "color": "FFEBEBEB"
         },
         {
           "grey": 255,
-          "path": "tinkersnewlife:generator/dragon_scales_64",
+          "path": "tinkersnewlife:generator/dragon_scales_32",
           "color": "FFFFFFFF"
         }
       ]
