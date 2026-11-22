@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "iceandfire:myrmex_desert_chitin",
+      "required": false
+    },
+    {
+      "id": "iceandfire:myrmex_jungle_chitin",
+      "required": false
+    }
+  ]
+}

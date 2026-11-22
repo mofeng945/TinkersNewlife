@@ -1,0 +1,12 @@
+{
+  "name": "Biotoxicity",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:myrmex_stinger",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "An Ice and Fire single-level melee upgrade. Two Myrmex chitin of either variety (mixing is allowed) and one stinger cost one upgrade slot. Melee hits gain +1 damage against arthropods or +2 against undead. Other living targets, including death worms, take +2 damage and receive Poison for 10 seconds."
+    }
+  ]
+}

@@ -438,6 +438,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("divine_gold", "goety_revelation");   // 神灵金（诡厄启示录联动材料：broken_halo/ascension_halo）
         MATERIAL_SOURCE_MOD.put("dragonsteel_fire", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragonsteel_ice", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("amphithere_feather", "iceandfire");
         MATERIAL_SOURCE_MOD.put("ghost_ingot", "iceandfire");
         MATERIAL_SOURCE_MOD.put("death_worm_chitin", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragon_scales", "iceandfire");

@@ -1,0 +1,12 @@
+{
+  "name": "生物毒性",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:myrmex_stinger",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动的无等级近战强化。用任意恐蚁甲壳 2 个（丛林、沙漠可混用）和恐蚁螫针 1 个，占 1 个升级槽，只能强化一次。近战命中节肢动物 +1 伤害、亡灵 +2；其他生物（包括死亡蠕虫）+2 伤害，并施加 10 秒中毒。"
+    }
+  ]
+}

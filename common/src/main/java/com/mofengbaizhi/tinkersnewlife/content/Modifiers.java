@@ -19,6 +19,9 @@ public class Modifiers {
     public static final StaticModifier<SupervisorModifier> SUPERVISOR =
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
+    public static final StaticModifier<BiotoxicityModifier> BIOTOXICITY = MODIFIERS.register("biotoxicity", BiotoxicityModifier::new);
+    public static final StaticModifier<AmphitherePowerModifier> AMPHITHERE_POWER = MODIFIERS.register("amphithere_power", AmphitherePowerModifier::new);
+
     public static final StaticModifier<SandSeaHunterModifier> SAND_SEA_HUNTER = MODIFIERS.register("sand_sea_hunter", SandSeaHunterModifier::new);
 
     public static final StaticModifier<DragonSlayerModifier> DRAGON_SLAYER = MODIFIERS.register("dragon_slayer", DragonSlayerModifier::new);

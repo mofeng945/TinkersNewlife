@@ -1,0 +1,12 @@
+{
+  "name": "Amphithere Power",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:amphithere_feather",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Adds a flat 4 projectile power. A Tinkers arrow made with this fletching releases a burst of smoke and strongly knocks back living targets on an unblocked hit."
+    }
+  ]
+}

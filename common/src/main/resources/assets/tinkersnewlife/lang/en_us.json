@@ -1,6 +1,13 @@
 {
   "item.tinkersnewlife.shield_plating": "Shield Plating",
   "material.tinkersnewlife.death_worm_chitin": "Death Worm Chitin",
+  "modifier.tinkersnewlife.biotoxicity": "Biotoxicity",
+  "modifier.tinkersnewlife.biotoxicity.flavor": "You are alive, aren't you?",
+  "modifier.tinkersnewlife.biotoxicity.description": "Snake venom, spider venom, ant venom… Whatever the source, living things can be poisoned.",
+  "material.tinkersnewlife.amphithere_feather": "Amphithere Feather",
+  "modifier.tinkersnewlife.amphithere_power": "Amphithere Power",
+  "modifier.tinkersnewlife.amphithere_power.flavor": "Whoosh!",
+  "modifier.tinkersnewlife.amphithere_power.description": "A powerful gust sends whatever you hit flying!",
   "modifier.tinkersnewlife.sand_sea_hunter": "Sand Sea Hunter",
   "modifier.tinkersnewlife.sand_sea_hunter.flavor": "The sands surge!",
   "modifier.tinkersnewlife.sand_sea_hunter.description": "Clad in chitin? Watch your step!",

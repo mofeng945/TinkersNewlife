@@ -1,0 +1,12 @@
+{
+  "name": "Amphithere Feather",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:amphithere_feather",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "An Ice and Fire tier 2 ammunition material. Make fletching from an amphithere feather at the Part Builder to grant Amphithere Power."
+    }
+  ]
+}

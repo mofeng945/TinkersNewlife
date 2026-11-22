@@ -1,0 +1,12 @@
+{
+  "name": "翼蚺翎羽",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:amphithere_feather",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动的 T2 弹药材料。用翼蚺翎羽在部件制作台制作箭羽，自带无等级特性羽蛇之力。"
+    }
+  ]
+}

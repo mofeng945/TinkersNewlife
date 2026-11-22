@@ -1,6 +1,13 @@
 {
   "item.tinkersnewlife.shield_plating": "盾牌镶板",
   "material.tinkersnewlife.death_worm_chitin": "死亡蠕虫甲壳",
+  "modifier.tinkersnewlife.biotoxicity": "生物毒性",
+  "modifier.tinkersnewlife.biotoxicity.flavor": "你是活物，对吧？",
+  "modifier.tinkersnewlife.biotoxicity.description": "蛇毒，蛛毒，蚁毒……随便什么，反正只要是活物都会中毒。",
+  "material.tinkersnewlife.amphithere_feather": "翼蚺翎羽",
+  "modifier.tinkersnewlife.amphithere_power": "羽蛇之力",
+  "modifier.tinkersnewlife.amphithere_power.flavor": "咻~呼呼呼！",
+  "modifier.tinkersnewlife.amphithere_power.description": "随着一阵强风，管他是什么生物都会远远的被击退飞走！",
   "modifier.tinkersnewlife.sand_sea_hunter": "沙海猎手",
   "modifier.tinkersnewlife.sand_sea_hunter.flavor": "狂沙翻涌！",
   "modifier.tinkersnewlife.sand_sea_hunter.description": "披上虫壳？当心脚下！",
