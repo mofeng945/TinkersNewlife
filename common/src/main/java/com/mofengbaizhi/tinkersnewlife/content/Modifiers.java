@@ -20,6 +20,7 @@ public class Modifiers {
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
     public static final StaticModifier<BiotoxicityModifier> BIOTOXICITY = MODIFIERS.register("biotoxicity", BiotoxicityModifier::new);
+    public static final StaticModifier<CopperArrowModifier> COPPER_ARROW = MODIFIERS.register("copper_arrow", CopperArrowModifier::new);
     public static final StaticModifier<AmphitherePowerModifier> AMPHITHERE_POWER = MODIFIERS.register("amphithere_power", AmphitherePowerModifier::new);
 
     public static final StaticModifier<SandSeaHunterModifier> SAND_SEA_HUNTER = MODIFIERS.register("sand_sea_hunter", SandSeaHunterModifier::new);

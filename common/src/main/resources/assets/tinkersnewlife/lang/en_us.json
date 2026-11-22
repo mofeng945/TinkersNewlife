@@ -1,4 +1,8 @@
 {
+  "material.tinkersnewlife.stymphalian_feather": "Bronze Stymphalian Feather",
+  "modifier.tinkersnewlife.copper_arrow": "Copper Feather Arrow",
+  "modifier.tinkersnewlife.copper_arrow.flavor": "Perfect aerodynamics!",
+  "modifier.tinkersnewlife.copper_arrow.description": "I'm quite sure it does this solely thanks to its astonishing physical structure.",
   "item.tinkersnewlife.shield_plating": "Shield Plating",
   "material.tinkersnewlife.death_worm_chitin": "Death Worm Chitin",
   "modifier.tinkersnewlife.biotoxicity": "Biotoxicity",

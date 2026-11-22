@@ -1,4 +1,8 @@
 {
+  "material.tinkersnewlife.stymphalian_feather": "青铜鹗羽",
+  "modifier.tinkersnewlife.copper_arrow": "铜羽箭",
+  "modifier.tinkersnewlife.copper_arrow.flavor": "完美的气动结构！",
+  "modifier.tinkersnewlife.copper_arrow.description": "我很确信它是纯粹依靠它那神奇无比的物理结构做到这点的。",
   "item.tinkersnewlife.shield_plating": "盾牌镶板",
   "material.tinkersnewlife.death_worm_chitin": "死亡蠕虫甲壳",
   "modifier.tinkersnewlife.biotoxicity": "生物毒性",

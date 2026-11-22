@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ],
+  "ingredient": {
+    "item": "iceandfire:stymphalian_bird_feather"
+  },
+  "result": {
+    "fluid": "tconstruct:molten_copper",
+    "amount": 5
+  },
+  "temperature": 500,
+  "time": 15
+}

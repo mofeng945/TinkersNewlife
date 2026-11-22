@@ -1,0 +1,16 @@
+{
+  "name": "青铜鹗羽",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:stymphalian_bird_feather",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动的 T3 弹药材料，仅用于箭羽。在部件制作台中，8 根冰火传说的青铜鹗羽换算为 1 个材料单位。每根羽毛也可熔炼成 5 mB 熔融铜。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "铜羽箭：箭矢初速度 +2，起初不受重力影响，逐渐减速后恢复重力。首次命中生物且未被格挡时，向八个方向散射铜羽泽鹗羽箭；散射箭落地即消失，无法回收，也不会触发连锁散射。"
+    }
+  ]
+}

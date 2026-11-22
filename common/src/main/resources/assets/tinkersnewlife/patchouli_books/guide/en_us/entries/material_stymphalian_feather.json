@@ -1,0 +1,16 @@
+{
+  "name": "Bronze Stymphalian Feather",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:stymphalian_bird_feather",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A Tier 3 ammo material from Ice and Fire, usable only as fletching. Eight Stymphalian Bird Feathers provide one material unit at the Part Builder. Each feather can also be melted into 5 mB of molten copper."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Copper Feather Arrow: Arrows gain +2 initial speed and ignore gravity at first. They gradually slow down before gravity returns. The first unblocked hit on a creature scatters copper Stymphalian feather arrows in eight directions. They vanish on landing, cannot be recovered, and cannot trigger another burst."
+    }
+  ]
+}

@@ -13,6 +13,10 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(AbstractArrow.class)
 public abstract class SoulBodyArrowMixin {
+    @org.spongepowered.asm.mixin.injection.Inject(method="tick",at=@At("HEAD"))
+    private void tnl$copperGlide(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        com.mofengbaizhi.tinkersnewlife.content.modifier.CopperArrowModifier.glideTick((AbstractArrow)(Object)this);
+    }
     @Redirect(method="tick",at=@At(value="INVOKE",target="Lnet/minecraft/world/entity/projectile/AbstractArrow;isNoGravity()Z"))
     private boolean tnl$arrowGravity(AbstractArrow p) {
         return p.isNoGravity() || SoulBodyProjectileHandler.suppressGravity(p);
