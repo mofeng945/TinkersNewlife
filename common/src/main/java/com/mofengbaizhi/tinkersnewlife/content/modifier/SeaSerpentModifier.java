@@ -42,6 +42,6 @@ public final class SeaSerpentModifier extends NoLevelsModifier {
         double speed = velocity.length();
         if (!Double.isFinite(speed) || speed < 1e-6) return;
         arrow.getPersistentData().putBoolean(LAUNCHED, true);
-        arrow.setDeltaMovement(velocity.scale((speed + 2) / speed));
+        arrow.setDeltaMovement(velocity.scale((speed + 1) / speed));
     }
 }
