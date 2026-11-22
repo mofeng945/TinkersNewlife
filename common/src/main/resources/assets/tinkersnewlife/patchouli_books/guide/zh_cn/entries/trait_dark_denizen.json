@@ -1,0 +1,16 @@
+{
+  "name": "黑暗住民",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:troll_mixture",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "头盔、胸甲、护腿、靴子的黑暗住民每级分别减少 5%、15%、10%、5% 弹射物伤害。各件效果相加，总减伤最多 70%。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "盾牌每级增加 8% 格挡量与 4% 格挡角度。当身穿盔甲与手持盾牌的特性等级合计至少为 4，持续获得生命恢复 II；达到门槛时，合计每级还提升 1.5% 伤害和 1 级击退。"
+    }
+  ]
+}

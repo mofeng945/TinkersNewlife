@@ -1,0 +1,21 @@
+{
+  "name": "食人妖质",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:troll_mixture",
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:troll_mixture",
+      "text": "将两张任意冰火传说食人妖皮与两枚食人妖长牙交错摆放，得到两份食人妖混合物。每份可在部件台提供一个单位的二阶材料食人妖质。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "镶板耐久 / 护甲：头 220 / 3，胸 320 / 7，腿 300 / 5，靴 260 / 2。四种盔甲镶板均有 1 韧性和 5% 击退抗性；盾牌镶板有 320 耐久、2 韧性和 10% 击退抗性。锁链和盾芯没有额外面板属性。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "食人妖质可用于以上七种部件。盾牌镶板花费 3 单位材料，在工匠站与有效盾芯组装板盾。每个食人妖质部件提供一级$(l:trait_dark_denizen)黑暗住民$()。"
+    }
+  ]
+}

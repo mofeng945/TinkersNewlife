@@ -1,0 +1,21 @@
+{
+  "name": "Troll Matter",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:troll_mixture",
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:troll_mixture",
+      "text": "Arrange two pieces of Ice and Fire troll leather of any type and two troll tusks in a checkerboard to make two Troll Mixtures. Each mixture provides one unit of Troll Matter, a tier 2 Part Builder material."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Plating durability / armor: helmet 220 / 3, chestplate 320 / 7, leggings 300 / 5, boots 260 / 2. All four armor plates have 1 toughness and 5% knockback resistance. Shield plating has 320 durability, 2 toughness and 10% knockback resistance. Maille and shield cores have no extra stats."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Troll Matter works for all seven parts listed above. Shield plating costs 3 units and can be assembled with a valid shield core at the Tinker Station. Each Troll Matter part grants one level of $(l:trait_dark_denizen)Dark Denizen$()."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Dark Denizen",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:troll_mixture",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Each level of Dark Denizen reduces projectile damage by 5% on a helmet, 15% on a chestplate, 10% on leggings, and 5% on boots. These bonuses add together up to a 70% reduction."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Shields gain 8% block amount and 4% block angle per level. At four or more combined levels across worn armor and held shields, gain continuous Regeneration II, plus 1.5% damage and one knockback level per combined level."
+    }
+  ]
+}

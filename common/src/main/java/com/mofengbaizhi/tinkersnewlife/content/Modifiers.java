@@ -25,6 +25,8 @@ public class Modifiers {
 
     public static final StaticModifier<SandSeaHunterModifier> SAND_SEA_HUNTER = MODIFIERS.register("sand_sea_hunter", SandSeaHunterModifier::new);
 
+    public static final StaticModifier<DarkDenizenModifier> DARK_DENIZEN = MODIFIERS.register("dark_denizen", DarkDenizenModifier::new);
+
     public static final StaticModifier<DragonSlayerModifier> DRAGON_SLAYER = MODIFIERS.register("dragon_slayer", DragonSlayerModifier::new);
 
     public static final StaticModifier<SoulProjectionModifier> SOUL_PROJECTION = MODIFIERS.register("soul_projection", SoulProjectionModifier::new);

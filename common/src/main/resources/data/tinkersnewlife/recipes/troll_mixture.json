@@ -1,0 +1,33 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "iceandfire"
+                       }
+                   ],
+    "pattern":  [
+                    "ab",
+                    "ba"
+                ],
+    "key":  {
+                "a":  [
+                          {
+                              "item":  "iceandfire:troll_leather_forest"
+                          },
+                          {
+                              "item":  "iceandfire:troll_leather_frost"
+                          },
+                          {
+                              "item":  "iceandfire:troll_leather_mountain"
+                          }
+                      ],
+                "b":  {
+                          "item":  "iceandfire:troll_tusk"
+                      }
+            },
+    "result":  {
+                   "item":  "tinkersnewlife:troll_mixture",
+                   "count":  2
+               }
+}

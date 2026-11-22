@@ -73,6 +73,8 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.NYARLATHOTEP_DESIRE.get());
                                 output.accept(ModItems.DURANDAL_SHARD.get());
 
+                                if (ModList.get().isLoaded("iceandfire")) output.accept(ModItems.TROLL_MIXTURE.get());
+
                                 // ----- 矿石 -----
                                 output.accept(ModItems.GHELOTH_ORE.get());
                                 output.accept(ModItems.ELDER_CRYSTAL_ORE.get());   // §519 古老者水晶矿石（只在深暗之域）
@@ -442,6 +444,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("stymphalian_feather", "iceandfire");
         MATERIAL_SOURCE_MOD.put("ghost_ingot", "iceandfire");
         MATERIAL_SOURCE_MOD.put("death_worm_chitin", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("troll_matter", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragon_scales", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragonsteel_lightning", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dreadsteel", "iceandfire");     // 悚怖碎片来自冰火

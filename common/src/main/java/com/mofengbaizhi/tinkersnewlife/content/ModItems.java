@@ -145,6 +145,8 @@ public class ModItems {
     //  矿石方块物品
     // ============================================================
 
+    public static final RegistryObject<Item> TROLL_MIXTURE = ITEMS.register("troll_mixture", () -> new Item(new Item.Properties()));
+
     public static final RegistryObject<Item> GHELOTH_ORE =
             ITEMS.register("gheloth_ore", () -> new BlockItem(ModBlocks.GHELOTH_ORE.get(), new Item.Properties()));
 

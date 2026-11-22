@@ -1,0 +1,39 @@
+{
+    "stats":  {
+                  "tconstruct:maille":  {
+
+                                        },
+                  "tconstruct:shield_core":  {
+
+                                             },
+                  "tconstruct:plating_helmet":  {
+                                                    "durability":  220,
+                                                    "armor":  3,
+                                                    "toughness":  1,
+                                                    "knockback_resistance":  0.05
+                                                },
+                  "tconstruct:plating_chestplate":  {
+                                                        "durability":  320,
+                                                        "armor":  7,
+                                                        "toughness":  1,
+                                                        "knockback_resistance":  0.05
+                                                    },
+                  "tconstruct:plating_leggings":  {
+                                                      "durability":  300,
+                                                      "armor":  5,
+                                                      "toughness":  1,
+                                                      "knockback_resistance":  0.05
+                                                  },
+                  "tconstruct:plating_boots":  {
+                                                   "durability":  260,
+                                                   "armor":  2,
+                                                   "toughness":  1,
+                                                   "knockback_resistance":  0.05
+                                               },
+                  "tconstruct:plating_shield":  {
+                                                    "durability":  320,
+                                                    "toughness":  2,
+                                                    "knockback_resistance":  0.1
+                                                }
+              }
+}
