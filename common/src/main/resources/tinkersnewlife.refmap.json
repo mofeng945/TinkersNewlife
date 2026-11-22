@@ -28,6 +28,9 @@
     },
     "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyArrowMixin": {
       "tick": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_8119_()V",
+      "getWaterInertia": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_6882_()F",
+      "onHitEntity": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_5790_(Lnet/minecraft/world/phys/EntityHitResult;)V",
+      "Lnet/minecraft/world/entity/projectile/AbstractArrow;baseDamage:D": "Lnet/minecraft/world/entity/projectile/AbstractArrow;f_36698_:D",
       "Lnet/minecraft/world/entity/projectile/AbstractArrow;isNoGravity()Z": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_20068_()Z",
       "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z": "Lnet/minecraft/world/level/block/state/BlockState;m_60795_()Z"
     },
@@ -81,6 +84,9 @@
       },
       "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyArrowMixin": {
         "tick": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_8119_()V",
+        "getWaterInertia": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_6882_()F",
+        "onHitEntity": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_5790_(Lnet/minecraft/world/phys/EntityHitResult;)V",
+        "Lnet/minecraft/world/entity/projectile/AbstractArrow;baseDamage:D": "Lnet/minecraft/world/entity/projectile/AbstractArrow;f_36698_:D",
         "Lnet/minecraft/world/entity/projectile/AbstractArrow;isNoGravity()Z": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_20068_()Z",
         "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z": "Lnet/minecraft/world/level/block/state/BlockState;m_60795_()Z"
       },

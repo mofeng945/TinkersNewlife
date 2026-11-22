@@ -1,0 +1,12 @@
+{
+  "name": "海蟒长牙",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:sea_serpent_fang",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动的二级弹药材料，可在部件制作台制作箭头。自带无等级特性「烦人海蟒」：初速度 +2 格/tick，在水中飞行时不受水阻，命中点在水中时弹射物力量 +1.5。"
+    }
+  ]
+}

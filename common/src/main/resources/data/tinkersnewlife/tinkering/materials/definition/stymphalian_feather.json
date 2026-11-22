@@ -3,7 +3,7 @@
     "type": "forge:mod_loaded",
     "modid": "iceandfire"
   },
-  "tier": 3,
+  "tier": 2,
   "craftable": true,
   "hidden": false
 }

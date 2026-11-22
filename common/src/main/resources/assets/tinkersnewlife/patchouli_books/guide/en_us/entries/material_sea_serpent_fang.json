@@ -1,0 +1,12 @@
+{
+  "name": "Sea Serpent Fang",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:sea_serpent_fang",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A tier 2 ammunition material from Ice and Fire. Make arrowheads at the Part Builder. Its unlevelled Annoying Sea Serpent trait adds 2 blocks per tick of launch speed, removes water drag, and adds 1.5 projectile power when the impact point is in water."
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 package com.mofengbaizhi.tinkersnewlife.mixin;
 
 import com.mofengbaizhi.tinkersnewlife.content.modifier.events.SoulBodyProjectileHandler;
+import com.mofengbaizhi.tinkersnewlife.content.modifier.SeaSerpentModifier;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,6 +16,16 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(AbstractArrow.class)
 public abstract class SoulBodyArrowMixin {
+    @Inject(method = "getWaterInertia", at = @At("HEAD"), cancellable = true)
+    private void tnl$seaSerpentWaterInertia(CallbackInfoReturnable<Float> callback) {
+        if (SeaSerpentModifier.swims((AbstractArrow)(Object)this)) callback.setReturnValue(1.0f);
+    }
+
+    @Redirect(method = "onHitEntity", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/projectile/AbstractArrow;baseDamage:D"))
+    private double tnl$seaSerpentWaterDamage(AbstractArrow arrow, net.minecraft.world.phys.EntityHitResult hit) {
+        return arrow.getBaseDamage() + (SeaSerpentModifier.swimsAtImpact(arrow, hit.getLocation()) ? 1.5 : 0);
+    }
+
     @org.spongepowered.asm.mixin.injection.Inject(method="tick",at=@At("HEAD"))
     private void tnl$copperGlide(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         com.mofengbaizhi.tinkersnewlife.content.modifier.CopperArrowModifier.glideTick((AbstractArrow)(Object)this);

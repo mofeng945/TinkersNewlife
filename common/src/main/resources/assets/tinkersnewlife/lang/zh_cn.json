@@ -1,4 +1,8 @@
 {
+  "material.tinkersnewlife.sea_serpent_fang": "海蟒长牙",
+  "modifier.tinkersnewlife.annoying_sea_serpent": "烦人海蟒",
+  "modifier.tinkersnewlife.annoying_sea_serpent.flavor": "领海问题这下得到了解决",
+  "modifier.tinkersnewlife.annoying_sea_serpent.description": "海蟒长牙的力量，使箭矢在水中可以顺畅通过",
   "material.tinkersnewlife.stymphalian_feather": "青铜鹗羽",
   "modifier.tinkersnewlife.copper_arrow": "铜羽箭",
   "modifier.tinkersnewlife.copper_arrow.flavor": "完美的气动结构！",
