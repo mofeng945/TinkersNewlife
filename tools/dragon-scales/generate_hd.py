@@ -21,7 +21,7 @@ def store(im,path):
     if dst.exists() and dst.read_bytes()!=buf.getvalue():raise SystemExit('Refusing to overwrite: '+str(dst))
     if not dst.exists():dst.write_bytes(buf.getvalue())
 store(base,'generator/dragon_scales_64.png')
-mask=Image.open(tex/'item/tool/parts/shield_plating.png').convert('RGBA').resize((64,64),Image.Resampling.NEAREST)
+mask=Image.open(tex/'gui/tinker_pattern/shield_plating.png').convert('RGBA').resize((64,64),Image.Resampling.NEAREST)
 store(mask,'item/tool/parts/shield_plating_64.png');baked=Image.new('RGBA',mask.size)
 for y in range(64):
     for x in range(64):
