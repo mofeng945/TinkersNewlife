@@ -2,6 +2,11 @@
   "mappings": {
     "com/mofengbaizhi/tinkersnewlife/mixin/AstralEntityMovementMixin": {
       "collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/entity/Entity;m_20272_(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;",
+      "updateFluidOnEyes": "Lnet/minecraft/world/entity/Entity;m_20323_()V",
+      "Lnet/minecraft/world/entity/Entity;getEyeY()D": "Lnet/minecraft/world/entity/Entity;m_20188_()D",
+      "isInBubbleColumn": "Lnet/minecraft/world/entity/Entity;m_20305_()Z",
+      "checkInsideBlocks": "Lnet/minecraft/world/entity/Entity;m_20101_()V",
+      "Lnet/minecraft/world/level/block/state/BlockState;entityInside(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/Entity;)V": "Lnet/minecraft/world/level/block/state/BlockState;m_60682_(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/Entity;)V",
       "isInWall": "Lnet/minecraft/world/entity/Entity;m_5830_()Z"
     },
     "com/mofengbaizhi/tinkersnewlife/mixin/AstralMovePacketMixin": {
@@ -47,6 +52,11 @@
     "searge": {
       "com/mofengbaizhi/tinkersnewlife/mixin/AstralEntityMovementMixin": {
         "collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/entity/Entity;m_20272_(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;",
+        "updateFluidOnEyes": "Lnet/minecraft/world/entity/Entity;m_20323_()V",
+        "Lnet/minecraft/world/entity/Entity;getEyeY()D": "Lnet/minecraft/world/entity/Entity;m_20188_()D",
+        "isInBubbleColumn": "Lnet/minecraft/world/entity/Entity;m_20305_()Z",
+        "checkInsideBlocks": "Lnet/minecraft/world/entity/Entity;m_20101_()V",
+        "Lnet/minecraft/world/level/block/state/BlockState;entityInside(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/Entity;)V": "Lnet/minecraft/world/level/block/state/BlockState;m_60682_(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/Entity;)V",
         "isInWall": "Lnet/minecraft/world/entity/Entity;m_5830_()Z"
       },
       "com/mofengbaizhi/tinkersnewlife/mixin/AstralMovePacketMixin": {
