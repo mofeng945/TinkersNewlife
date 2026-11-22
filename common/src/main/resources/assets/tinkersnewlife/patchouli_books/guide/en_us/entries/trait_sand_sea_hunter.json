@@ -1,0 +1,16 @@
+{
+  "name": "Sand Sea Hunter",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:deathworm_chitin_yellow",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "In hot-type biomes, each equipped item gains bonus armor equal to its own armor value × its trait level × 3%. For example, a chestplate with 7 armor and two levels gains 0.42 armor."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "With at least four levels across worn armor and held shields, sprint on sand or red sand to switch to third person and take a burrowing pose. Particles appear only at the sand surface. Leave the sand or stop meeting the conditions to return to normal. Burrowing does not let you pass through blocks."
+    }
+  ]
+}

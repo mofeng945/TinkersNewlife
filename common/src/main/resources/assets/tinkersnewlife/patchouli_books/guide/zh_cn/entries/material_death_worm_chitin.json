@@ -1,0 +1,20 @@
+{
+  "name": "死亡蠕虫甲壳",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:deathworm_chitin_yellow",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说的二阶盔甲材料。红、白、黄三色死亡蠕虫甲壳均可在部件台加工，不用熔炼。可制作头、胸、腿、靴四种镶板，以及锁链、盾牌镶板和盾芯。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "镶板耐久 / 护甲：头 165 / 3，胸 240 / 7，腿 225 / 5，靴 195 / 2。盾牌镶板耐久 290。五种镶板均有 1.5 韧性、0.5 面板击退抗性；锁链与盾芯没有额外面板属性。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "在部件台用 3 份甲壳制作盾牌镶板，再与任意有效盾芯在工匠站组装板盾。每个甲壳部件赋予一级$(l:trait_sand_sea_hunter)沙海猎手$()。"
+    }
+  ]
+}

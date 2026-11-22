@@ -1,5 +1,9 @@
 {
   "item.tinkersnewlife.shield_plating": "盾牌镶板",
+  "material.tinkersnewlife.death_worm_chitin": "死亡蠕虫甲壳",
+  "modifier.tinkersnewlife.sand_sea_hunter": "沙海猎手",
+  "modifier.tinkersnewlife.sand_sea_hunter.flavor": "狂沙翻涌！",
+  "modifier.tinkersnewlife.sand_sea_hunter.description": "披上虫壳？当心脚下！",
   "material.tinkersnewlife.dragon_scales": "龙鳞",
   "modifier.tinkersnewlife.dragon_slayer": "屠龙者",
   "modifier.tinkersnewlife.dragon_slayer.flavor": "斩落那傲慢飞天的龙类，自此万物向你俯首",

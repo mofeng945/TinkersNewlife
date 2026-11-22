@@ -1,5 +1,9 @@
 {
   "item.tinkersnewlife.shield_plating": "Shield Plating",
+  "material.tinkersnewlife.death_worm_chitin": "Death Worm Chitin",
+  "modifier.tinkersnewlife.sand_sea_hunter": "Sand Sea Hunter",
+  "modifier.tinkersnewlife.sand_sea_hunter.flavor": "The sands surge!",
+  "modifier.tinkersnewlife.sand_sea_hunter.description": "Clad in chitin? Watch your step!",
   "material.tinkersnewlife.dragon_scales": "Dragon Scales",
   "modifier.tinkersnewlife.dragon_slayer": "Dragon Slayer",
   "modifier.tinkersnewlife.dragon_slayer.flavor": "Fell the proud lords of the sky, and all shall bow before you.",

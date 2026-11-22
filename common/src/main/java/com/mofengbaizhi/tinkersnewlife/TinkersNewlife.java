@@ -463,6 +463,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.content.astral.AstralProjection.Sync::new,
                 com.mofengbaizhi.tinkersnewlife.content.astral.AstralProjection.Sync::handle);
 
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.content.modifier.SandSeaHunterModifier.Sync.class,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SandSeaHunterModifier.Sync::encode,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SandSeaHunterModifier.Sync::new,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SandSeaHunterModifier.Sync::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 

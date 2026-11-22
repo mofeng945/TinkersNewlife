@@ -84,6 +84,10 @@ public abstract class EntityRenderDispatcherMixin {
                 }
             }
             if (!(entity instanceof Player player)) return;
+            if (com.mofengbaizhi.tinkersnewlife.client.handler.SandBurrowClient.submerged(player)) {
+                ci.cancel();
+                return;
+            }
             boolean disguised = ClientWuWeiData.isDisguised(player.getUUID());
             // ⭐ 诊断：证明本 Hook 确实在跑（同时给出"客户端是否已知该玩家伪装"）
             if (!tinkersnewlife$hookLogged) {

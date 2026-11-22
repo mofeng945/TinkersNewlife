@@ -1,0 +1,20 @@
+{
+  "name": "Death Worm Chitin",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:deathworm_chitin_yellow",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Tier 2 armor material from Ice and Fire. Red, white and yellow death worm chitin all work at the Part Builder. Make helmet, chestplate, leggings or boots plating, maille, shield plating or a shield core. No melting is required."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Durability / armor: helmet 165/3, chest 240/7, legs 225/5, boots 195/2. Shield plating has 290 durability. All five platings have 1.5 toughness and 0.5 displayed knockback resistance. Maille and shield cores add no stats."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Use 3 chitin to make shield plating at the Part Builder. Assemble it with any valid shield core at the Tinker Station to make a plate shield. Each chitin part grants one level of $(l:trait_sand_sea_hunter)Sand Sea Hunter$()."
+    }
+  ]
+}
