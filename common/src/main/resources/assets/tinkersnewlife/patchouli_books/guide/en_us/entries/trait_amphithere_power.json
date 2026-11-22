@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Adds a flat 4 projectile power. A Tinkers arrow made with this fletching releases a burst of smoke and strongly knocks back living targets on an unblocked hit."
+      "text": "Adds a flat 1.5 projectile power. A Tinkers arrow made with this fletching releases a burst of smoke and strongly knocks back living targets on an unblocked hit."
     }
   ]
 }

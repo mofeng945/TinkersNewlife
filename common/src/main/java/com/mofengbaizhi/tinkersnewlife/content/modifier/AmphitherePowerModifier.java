@@ -35,7 +35,7 @@ public class AmphitherePowerModifier extends NoLevelsModifier implements ToolSta
     @Override
     public void addToolStats(IToolContext context, ModifierEntry modifier, ModifierStatsBuilder builder) {
         if (ModList.get().isLoaded("iceandfire") && context.getItem() instanceof ModifiableArrowItem) {
-            ToolStats.PROJECTILE_DAMAGE.add(builder, 4f);
+            ToolStats.PROJECTILE_DAMAGE.add(builder, 1.5f);
         }
     }
 
