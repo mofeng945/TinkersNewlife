@@ -613,6 +613,7 @@ public final class TruePierce {
         }
         if (target == null || damage <= 0.0F) return 0.0F;
         if (target.level().isClientSide || target.isRemoved()) return 0.0F;
+        if (target instanceof net.minecraft.server.level.ServerPlayer p && com.mofengbaizhi.tinkersnewlife.content.modifier.SandSeaHunterModifier.burrowed(p)) return 0.0F;
         if (target instanceof net.minecraft.server.level.ServerPlayer player && MomoMercy.boss(attacker))
             damage *= MomoMercy.multiplier(player);
         // ⭐ 同心戒：互为同伴的两名玩家互相免疫术式与领域效果 —— 穿透（真伤）也不例外。

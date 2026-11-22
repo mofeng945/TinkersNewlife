@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "With at least four levels across worn armor and held shields, sprint on sand or red sand to switch to third person and take a burrowing pose. Particles appear only at the sand surface. Leave the sand or stop meeting the conditions to return to normal. Burrowing does not let you pass through blocks."
+      "text": "With at least four levels across worn armor and held shields, sprint on sand or red sand to switch to third person and take a burrowing pose. Particles appear only at the sand surface. You are invulnerable while burrowing. Hitting a non-sand obstacle makes you surface immediately. Leaving the sand or stopping your sprint also restores normal movement and damage."
     }
   ]
 }

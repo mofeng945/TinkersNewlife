@@ -16,6 +16,11 @@ abstract class AstralEntityMovementMixin {
         if((Object)this instanceof Player p && AstralMovement.active(p))
             cir.setReturnValue(AstralMovement.collide(p,p.getBoundingBox(),wanted));
     }
+    @Inject(method="collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;",at=@At("RETURN"),require=1)
+    private void tnl$surfaceAtWall(Vec3 wanted, CallbackInfoReturnable<Vec3> cir) {
+        if((Object)this instanceof net.minecraft.server.level.ServerPlayer player)
+            com.mofengbaizhi.tinkersnewlife.content.modifier.SandSeaHunterModifier.onCollision(player,wanted,cir.getReturnValue());
+    }
     private static boolean tnl$spirit(Entity entity) {
         return entity instanceof Player player && AstralMovement.active(player);
     }

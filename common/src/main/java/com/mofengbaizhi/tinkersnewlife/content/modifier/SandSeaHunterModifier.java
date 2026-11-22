@@ -33,6 +33,29 @@ public final class SandSeaHunterModifier extends Modifier {
     private static final UUID ARMOR_ID = UUID.fromString("09f9aab2-d3ae-42fc-a8c3-b94e8f56e2e1");
     // Transient: never save a forced perspective/pose with the player. Value records whether we own the forced pose.
     private static final Map<ServerPlayer,Boolean> BURROWED=new WeakHashMap<>();
+    private static final Set<ServerPlayer> SURFACED=Collections.newSetFromMap(new WeakHashMap<>());
+    public static boolean burrowed(ServerPlayer p){return BURROWED.containsKey(p);}
+    @SubscribeEvent(priority=net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+    public static void protect(net.minecraftforge.event.entity.living.LivingAttackEvent e){
+        if(e.getEntity() instanceof ServerPlayer p && burrowed(p))e.setCanceled(true);
+    }
+    /** Vanilla has already decided the permitted movement. Inspect the blocked face without changing that result. */
+    public static void onCollision(ServerPlayer p,net.minecraft.world.phys.Vec3 wanted,net.minecraft.world.phys.Vec3 allowed){
+        if(!burrowed(p))return;
+        var box=p.getBoundingBox().move(allowed);
+        double dx=wanted.x-allowed.x,dz=wanted.z-allowed.z;
+        if(Math.abs(dx)>1e-6 && solidOther(p,box.move(Math.copySign(.002,dx),0,0)) ||
+           Math.abs(dz)>1e-6 && solidOther(p,box.move(0,0,Math.copySign(.002,dz)))){
+            SURFACED.add(p);exit(p);
+        }
+    }
+    private static boolean solidOther(ServerPlayer p,net.minecraft.world.phys.AABB box){
+        var probe=box.deflate(.0001);
+        for(var pos:BlockPos.betweenClosed(BlockPos.containing(probe.minX,probe.minY,probe.minZ),BlockPos.containing(probe.maxX,probe.maxY,probe.maxZ))){
+            var block=p.level().getBlockState(pos);if(block.isAir()||block.is(Blocks.SAND)||block.is(Blocks.RED_SAND))continue;
+            for(var shape:block.getCollisionShape(p.level(),pos,net.minecraft.world.phys.shapes.CollisionContext.of(p)).toAabbs())if(shape.move(pos).intersects(probe))return true;
+        }return false;
+    }
     public static double bonus(double pieceArmor,int rank){return Math.max(0,pieceArmor)*.03*Math.max(0,rank);}
     @SubscribeEvent public static void tick(LivingEvent.LivingTickEvent event){
         var e=event.getEntity(); if(e.level().isClientSide || !IntegrationLoader.isIceAndFire())return;
@@ -52,7 +75,8 @@ public final class SandSeaHunterModifier extends Modifier {
         }
         if(!(e instanceof ServerPlayer p))return;
         BlockPos floor=p.getOnPos();var state=p.level().getBlockState(floor);
-        boolean on=levels>=4 && p.isAlive() && !p.isSpectator() && !p.isPassenger() && !p.isSleeping() && !p.getAbilities().flying
+        if(!p.isSprinting() || !p.horizontalCollision) SURFACED.remove(p);
+        boolean on=!SURFACED.contains(p) && levels>=4 && p.isAlive() && !p.isSpectator() && !p.isPassenger() && !p.isSleeping() && !p.getAbilities().flying
                 && !AstralProjection.active(p) && p.isSprinting() && p.onGround() && (state.is(Blocks.SAND)||state.is(Blocks.RED_SAND));
         if(on){
             if(!BURROWED.containsKey(p)){
