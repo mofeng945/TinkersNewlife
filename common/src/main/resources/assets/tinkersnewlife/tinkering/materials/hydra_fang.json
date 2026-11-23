@@ -1,0 +1,26 @@
+{
+  "color": "FF8BA24A",
+  "generator": {
+    "supported_stats": [
+      "tconstruct:arrow_head"
+    ],
+    "textures": {
+      "tconstruct:item/tool/ammo/arrow_head": "tconstruct:item/tool/ammo/arrow_head_tinkersnewlife_hydra_fang"
+    },
+    "transformer": {
+      "type": "tconstruct:recolor_sprite",
+      "color_mapping": {
+        "type": "tconstruct:grey_to_color",
+        "palette": [
+          { "grey": 0, "color": "FF293018" },
+          { "grey": 63, "color": "FF505A2A" },
+          { "grey": 102, "color": "FF6D7937" },
+          { "grey": 140, "color": "FF819244" },
+          { "grey": 178, "color": "FF8BA24A" },
+          { "grey": 216, "color": "FFA9B967" },
+          { "grey": 255, "color": "FFC8D795" }
+        ]
+      }
+    }
+  }
+}

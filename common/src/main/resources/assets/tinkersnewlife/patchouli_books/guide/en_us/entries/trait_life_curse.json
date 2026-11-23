@@ -1,0 +1,12 @@
+{
+  "name": "Life Curse",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:hydra_fang",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Life Curse$() is an unlevelled trait innate to Hydra Fang arrowhead material: +2 projectile power; on hit, inflicts Poison I for 10 seconds and heals the attacker for the actual damage dealt. Arrows with this trait are crafted in double quantity, stacking with conservation.$(br2)$(italic)Hydra blood is never spilled in vain.$()"
+    }
+  ]
+}

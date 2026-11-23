@@ -141,7 +141,8 @@
     "void_touch": "#7a4cff",
     "ender_power": "#b06bff",
     "void_grace": "#4b2a7a",
-    "watcher_will": "#2f6f8f"
+    "watcher_will": "#2f6f8f",
+    "life_curse": "#6b8e3e"
   },
   "material.tinkersnewlife": {
     "mithril": "#c9d6e8",
@@ -170,7 +171,8 @@
     "frozen_bone": "#abbfc1",
     "origin_alloy": "#9a92e8",
     "malicious_star_spirit": "#7157fa",
-    "void_metal": "#6a4bb5"
+    "void_metal": "#6a4bb5",
+    "hydra_fang": "#8ba24a"
   },
   "indestructible": "#FFFFFF"
 }

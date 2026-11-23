@@ -1,0 +1,12 @@
+{
+  "name": "生命诅咒",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:hydra_fang",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)生命诅咒$()是九头蛇毒牙箭头材料自带的无等级特性：箭矢弹射物力量 +2；命中后令目标中毒 I，持续 10 秒，并按此次实际伤害为攻击者恢复等量生命。带有此特性的箭矢合成产量翻倍，且与节约效果叠加。$(br2)$(italic)海德拉的血从不白流。$(/italic)"
+    }
+  ]
+}

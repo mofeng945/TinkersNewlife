@@ -1,0 +1,12 @@
+{
+  "name": "九头蛇毒牙",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:hydra_fang",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动的 T3 弹药材料，仅用于箭头。在部件制作台中使用九头蛇毒牙制作箭头。$(br2)$(bold)生命诅咒$()为无等级特性：箭矢弹射物力量 +2；命中后使目标中毒 I，持续 10 秒，并按此次实际伤害为攻击者恢复等量生命。$(br2)带有此特性的箭矢合成产量翻倍，并可与节约特性叠加。"
+    }
+  ]
+}

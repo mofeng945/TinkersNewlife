@@ -1,0 +1,31 @@
+{
+  "type": "tconstruct:modifier",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ],
+  "allow_crystal": false,
+  "inputs": [
+    {
+      "item": "minecraft:arrow"
+    },
+    {
+      "item": "minecraft:arrow"
+    },
+    {
+      "item": "minecraft:arrow"
+    },
+    {
+      "item": "minecraft:arrow"
+    },
+    {
+      "item": "iceandfire:hydra_fang"
+    }
+  ],
+  "result": "tinkersnewlife:life_curse",
+  "tools": {
+    "item": "tconstruct:arrow"
+  }
+}

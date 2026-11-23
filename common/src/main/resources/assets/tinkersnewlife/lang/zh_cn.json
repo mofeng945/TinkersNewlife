@@ -1,5 +1,9 @@
 {
   "material.tinkersnewlife.sea_serpent_fang": "海蟒长牙",
+  "material.tinkersnewlife.hydra_fang": "九头蛇毒牙",
+  "modifier.tinkersnewlife.life_curse": "生命诅咒",
+  "modifier.tinkersnewlife.life_curse.flavor": "海德拉的血从不白流。",
+  "modifier.tinkersnewlife.life_curse.description": "毒素使目标衰弱，攻击者从中抽取生命。",
   "modifier.tinkersnewlife.annoying_sea_serpent": "烦人海蟒",
   "modifier.tinkersnewlife.annoying_sea_serpent.flavor": "领海问题这下得到了解决",
   "modifier.tinkersnewlife.annoying_sea_serpent.description": "海蟒长牙的力量，使箭矢在水中可以顺畅通过",

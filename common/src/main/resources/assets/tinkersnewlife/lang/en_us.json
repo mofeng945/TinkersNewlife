@@ -1,5 +1,9 @@
 {
   "material.tinkersnewlife.sea_serpent_fang": "Sea Serpent Fang",
+  "material.tinkersnewlife.hydra_fang": "Hydra Fang",
+  "modifier.tinkersnewlife.life_curse": "Life Curse",
+  "modifier.tinkersnewlife.life_curse.flavor": "Hydra blood is never spilled in vain.",
+  "modifier.tinkersnewlife.life_curse.description": "The toxin weakens its target, and the attacker draws life from it.",
   "modifier.tinkersnewlife.annoying_sea_serpent": "Annoying Sea Serpent",
   "modifier.tinkersnewlife.annoying_sea_serpent.flavor": "That settles the territorial waters dispute.",
   "modifier.tinkersnewlife.annoying_sea_serpent.description": "The power of the sea serpent fang lets arrows travel smoothly through water.",

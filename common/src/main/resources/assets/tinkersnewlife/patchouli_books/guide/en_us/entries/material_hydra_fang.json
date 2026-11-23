@@ -1,0 +1,12 @@
+{
+  "name": "Hydra Fang",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:hydra_fang",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A tier 3 ammunition material from Ice and Fire, used only for arrowheads. Make arrowheads from Hydra Fangs at the Part Builder.$(br2)$(bold)Life Curse$() is an unlevelled trait: +2 projectile power; on hit, inflicts Poison I for 10 seconds and heals the attacker for the actual damage dealt.$(br2)Arrows crafted with this trait are produced in double quantity, stacking with conservation."
+    }
+  ]
+}
