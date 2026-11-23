@@ -1,0 +1,12 @@
+{
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:siren_tear",
+    "category":  "tinkersnewlife:traits",
+    "name":  "Siren Song",
+    "pages":  [
+                  {
+                      "text":  "One siren tear and four shiny scales cost one ability slot. Apply once. Damaging a creature plays the siren song, making nearby mobs within eight blocks of the victim target it for up to ten seconds. Ten-second cooldown.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

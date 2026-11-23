@@ -1,0 +1,12 @@
+{
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:siren_tear",
+    "category":  "tinkersnewlife:traits",
+    "name":  "人鱼之歌",
+    "pages":  [
+                  {
+                      "text":  "塞壬之泪 ×1、闪光鳞片 ×4，消耗 1 个能力槽，只能强化一次。攻击造成伤害时播放塞壬歌声，使目标 8 格内可锁定仇恨的生物转而锁定被击中的目标，持续至多 10 秒。冷却 10 秒。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}
