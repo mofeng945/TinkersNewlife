@@ -468,6 +468,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SandSeaHunterModifier.Sync::new,
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SandSeaHunterModifier.Sync::handle);
 
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.content.modifier.WitherGazeModifier.Sync.class,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.WitherGazeModifier.Sync::encode,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.WitherGazeModifier.Sync::new,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.WitherGazeModifier.Sync::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 

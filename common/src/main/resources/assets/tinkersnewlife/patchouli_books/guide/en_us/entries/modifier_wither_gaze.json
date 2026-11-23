@@ -1,0 +1,12 @@
+{
+    "name":  "Withering Gaze",
+    "category":  "tinkersnewlife:traits",
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:cockatrice_eye",
+    "pages":  [
+                  {
+                      "text":  "Apply one cockatrice eye and two witherbones to a melee tool for one ability slot. On a melee hit, a beam links you to the target and branches to up to five nearby creatures within six blocks. Beams last five seconds, deal two magic damage per second, and keep applying two seconds of Wither III. Hitting a linked creature renews its beam.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

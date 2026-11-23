@@ -1,0 +1,12 @@
+{
+    "name":  "凋亡注视",
+    "category":  "tinkersnewlife:traits",
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:cockatrice_eye",
+    "pages":  [
+                  {
+                      "text":  "用一只鸡蛇之眼和两根凋灵骨头强化近战装备，消耗 1 个能力槽，最多强化一次。近战命中生物时，射线连接命中的生物，再从它身上连向 6 格内最近的最多 5 个其他生物。射线持续 5 秒，每秒尝试造成 2 点魔法伤害，并持续刷新 2 秒凋零 III。再次命中已连线的目标时刷新剩余时间。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}
