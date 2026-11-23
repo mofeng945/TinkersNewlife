@@ -6,6 +6,7 @@
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
     "DragonSlayerShieldMixin",
+    "RaptorPounceSweepMixin",
     "AstralEntityMovementMixin",
     "AstralMovePacketMixin",
     "AstralArmorMixin",

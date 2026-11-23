@@ -1,5 +1,6 @@
 {
   "color": "FF4590A3",
+  "texture": "tinkersnewlife:ocean_scales",
   "fallbacks": [
     "scale",
     "rock"
@@ -20,13 +21,13 @@
     "transformer": {
       "type": "tconstruct:grey_to_sprite",
       "palette": [
-        {"grey": 0, "path": "tinkersnewlife:generator/sea_beast_scales_32", "color": "FF222222"},
-        {"grey": 63, "path": "tinkersnewlife:generator/sea_beast_scales_32", "color": "FF707070"},
-        {"grey": 102, "path": "tinkersnewlife:generator/sea_beast_scales_32", "color": "FF969696"},
-        {"grey": 140, "path": "tinkersnewlife:generator/sea_beast_scales_32", "color": "FFB5B5B5"},
-        {"grey": 178, "path": "tinkersnewlife:generator/sea_beast_scales_32", "color": "FFD4D4D4"},
-        {"grey": 216, "path": "tinkersnewlife:generator/sea_beast_scales_32", "color": "FFEBEBEB"},
-        {"grey": 255, "path": "tinkersnewlife:generator/sea_beast_scales_32", "color": "FFFFFFFF"}
+        {"grey": 0, "path": "tinkersnewlife:generator/ocean_scales", "color": "FF222222"},
+        {"grey": 63, "path": "tinkersnewlife:generator/ocean_scales", "color": "FF707070"},
+        {"grey": 102, "path": "tinkersnewlife:generator/ocean_scales", "color": "FF969696"},
+        {"grey": 140, "path": "tinkersnewlife:generator/ocean_scales", "color": "FFB5B5B5"},
+        {"grey": 178, "path": "tinkersnewlife:generator/ocean_scales", "color": "FFD4D4D4"},
+        {"grey": 216, "path": "tinkersnewlife:generator/ocean_scales", "color": "FFEBEBEB"},
+        {"grey": 255, "path": "tinkersnewlife:generator/ocean_scales", "color": "FFFFFFFF"}
       ]
     }
   }

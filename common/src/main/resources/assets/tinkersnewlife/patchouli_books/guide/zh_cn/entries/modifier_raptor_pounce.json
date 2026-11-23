@@ -1,0 +1,12 @@
+{
+    "name":  "猛禽扑击",
+    "category":  "tinkersnewlife:traits",
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:hippogryph_talon",
+    "pages":  [
+                  {
+                      "text":  "骏鹰利爪和两个羽毛可为近战工具附加猛禽扑击，消耗 1 个升级槽，只能强化一次。每次对目标发动近战攻击都会横扫，攻击冷却未满也可触发，横扫伤害享受横扫之刃加成。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

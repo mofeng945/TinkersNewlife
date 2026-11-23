@@ -1,0 +1,12 @@
+{
+    "name":  "Raptor Pounce",
+    "category":  "tinkersnewlife:traits",
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:hippogryph_talon",
+    "pages":  [
+                  {
+                      "text":  "Apply a hippogryph talon and two feathers to a melee tool for one upgrade slot. This single-level upgrade sweeps on every melee attack against a target, even before the cooldown finishes. Sweeping Edge boosts the sweep damage.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}
