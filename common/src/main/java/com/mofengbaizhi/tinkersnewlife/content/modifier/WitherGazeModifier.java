@@ -16,7 +16,11 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
-import slimeknights.tconstruct.common.TinkerTags;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.hook.combat.MeleeHitModifierHook;
@@ -32,6 +36,7 @@ import java.util.function.Supplier;
 public final class WitherGazeModifier extends NoLevelsModifier implements MeleeHitModifierHook {
     private static final int DURATION = 100;
     private static final int RADIUS = 6;
+    private static final ModifierId ID = new ModifierId(TinkersNewlife.prefix("wither_gaze"));
     private record Link(UUID caster, UUID target) {}
     private record Cast(LivingEntity caster, LivingEntity target, LivingEntity[] branches) {}
     private static final class Beam {
@@ -64,15 +69,33 @@ public final class WitherGazeModifier extends NoLevelsModifier implements MeleeH
     }
 
     @Override public void afterMeleeHit(IToolStackView tool, ModifierEntry modifier, ToolAttackContext context, float damage) {
-        var caster = context.getAttacker();
-        var target = context.getLivingTarget();
-        if (!(caster.level() instanceof ServerLevel level) || target == null || damage <= 0 || context.isProjectile()
-                || context.isExtraAttack() || !IntegrationLoader.isIceAndFire() || !tool.hasTag(TinkerTags.Items.MELEE)
-                || !eligible(caster, target)) return;
+        if (!context.isProjectile() && !context.isExtraAttack()) {
+            queueCast(context.getAttacker(), context.getLivingTarget());
+        }
+    }
+
+    /** Custom weapon attacks may call hurt directly and never reach the Tinkers melee hook. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onDirectDamage(LivingDamageEvent event) {
+        var source = event.getSource();
+        if (event.getAmount() <= 0 || !(source.getEntity() instanceof LivingEntity caster)
+                || source.getDirectEntity() != caster
+                || !(caster.level() instanceof ServerLevel)
+                || !(source.is(DamageTypes.PLAYER_ATTACK) || source.is(DamageTypes.MOB_ATTACK)
+                || source.is(DamageTypes.MOB_ATTACK_NO_AGGRO))) return;
+        var tool = ToolHelper.getToolStack(caster.getMainHandItem());
+        if (tool != null && !tool.isBroken() && tool.getModifierLevel(ID) > 0) queueCast(caster, event.getEntity());
+    }
+
+    private static void queueCast(LivingEntity caster, LivingEntity target) {
+        if (!(caster.level() instanceof ServerLevel level) || target == null
+                || !IntegrationLoader.isIceAndFire() || !eligible(caster, target)) return;
+        var state = STATES.computeIfAbsent(level, ignored -> new State());
+        if (state.pending.stream().anyMatch(cast -> cast.caster == caster && cast.target == target)) return;
         var branches = level.getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(RADIUS),
                 candidate -> candidate != target && eligible(caster, candidate) && target.distanceToSqr(candidate) <= RADIUS * RADIUS);
         branches.sort(Comparator.comparingDouble(target::distanceToSqr));
-        STATES.computeIfAbsent(level, ignored -> new State()).pending.add(new Cast(caster, target,
+        state.pending.add(new Cast(caster, target,
                 branches.stream().limit(5).toArray(LivingEntity[]::new)));
     }
 

@@ -352,6 +352,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.tnl$bossForm();
     }
 
+    public java.util.Collection<ServerPlayer> tnl$bossAudience() {
+        return this.bossEvent.getPlayers();
+    }
+
     /**
      * TNL1407 ★我们自己的改血（tick 镜像 / 治疗 / 真死 / 写回权威值）✗
      * 必须打上"内部写"标记 ⇒ 否则会被 `a.qD` 当成外部伤害再去吃一次预算 ✓。

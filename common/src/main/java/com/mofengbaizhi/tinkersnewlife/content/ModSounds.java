@@ -63,6 +63,7 @@ public class ModSounds {
     // ===== §1241 新唱片「Tell Me Tell Me」=====
     /** 新唱片音效 id：{@code tinkersnewlife:music_tell_me} ✓（⭐ 用户口径 ✓「不是替换，是新舞蹈和新唱片」✓） */
     public static final RegistryObject<SoundEvent> MUSIC_TELL_ME = reg("music_tell_me");
+    public static final RegistryObject<SoundEvent> MOMO_BOSS_MUSIC = reg("music.momo_boss");
 
     /** {@link #MUSIC_TELL_ME} 的 id（客户端判定用 ✓ 注册前就能拿到 ✓） */
     public static final ResourceLocation MUSIC_TELL_ME_ID =

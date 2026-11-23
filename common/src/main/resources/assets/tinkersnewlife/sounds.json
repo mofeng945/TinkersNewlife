@@ -60,6 +60,14 @@
       }
     ]
   },
+  "music.momo_boss": {
+    "sounds": [
+      {
+        "name": "tinkersnewlife:music/momo_boss",
+        "stream": true
+      }
+    ]
+  },
   "music_doll": {
     "subtitle": "subtitles.tinkersnewlife.music_doll",
     "sounds": [

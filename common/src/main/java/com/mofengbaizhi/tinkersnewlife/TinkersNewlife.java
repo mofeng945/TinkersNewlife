@@ -473,6 +473,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.content.modifier.WitherGazeModifier.Sync::new,
                 com.mofengbaizhi.tinkersnewlife.content.modifier.WitherGazeModifier.Sync::handle);
 
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBossMusic.class,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBossMusic::encode,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBossMusic::new,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBossMusic::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 
