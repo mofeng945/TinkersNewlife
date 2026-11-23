@@ -1,0 +1,12 @@
+{
+    "name":  "Cyclops Gaze",
+    "category":  "tinkersnewlife:traits",
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:cyclops_eye",
+    "pages":  [
+                  {
+                      "text":  "Apply one cyclops eye, two wool of any color, and one gold block to a helmet. Costs one defense slot and can be applied once. Other creatures within eight blocks have Weakness I. Creatures in range that attack the wearer receive Weakness III for five seconds.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

@@ -1,0 +1,35 @@
+{
+    "type":  "tconstruct:modifier",
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "iceandfire"
+                       }
+                   ],
+    "allow_crystal":  false,
+    "inputs":  [
+                   {
+                       "item":  "iceandfire:hydra_heart"
+                   },
+                   {
+                       "item":  "minecraft:rotten_flesh"
+                   },
+                   {
+                       "item":  "minecraft:leather"
+                   },
+                   {
+                       "item":  "iceandfire:hydra_fang"
+                   },
+                   {
+                       "item":  "minecraft:glowstone_dust"
+                   }
+               ],
+    "level":  1,
+    "result":  "tinkersnewlife:hydra_curse",
+    "slots":  {
+                  "defense":  1
+              },
+    "tools":  {
+                  "tag":  "tconstruct:modifiable/armor/chestplate"
+              }
+}

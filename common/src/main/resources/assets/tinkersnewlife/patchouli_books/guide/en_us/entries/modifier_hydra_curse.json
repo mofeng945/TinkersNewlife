@@ -1,0 +1,12 @@
+{
+    "name":  "Hydra Curse",
+    "category":  "tinkersnewlife:traits",
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:hydra_heart",
+    "pages":  [
+                  {
+                      "text":  "Apply one hydra heart, rotten flesh, leather, hydra fang, and glowstone dust to a chestplate. Costs one defense slot and can be applied once. Grants Regeneration IV and prevents a lethal hit by restoring full health, with a 200-second revival cooldown. Both effects are disabled while immersed in lava or hot fluids, while burning, and for five seconds after fire damage. Fire and lava damage are doubled.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

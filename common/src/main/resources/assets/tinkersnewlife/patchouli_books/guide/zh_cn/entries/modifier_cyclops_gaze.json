@@ -1,0 +1,12 @@
+{
+    "name":  "巨人凝视",
+    "category":  "tinkersnewlife:traits",
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:cyclops_eye",
+    "pages":  [
+                  {
+                      "text":  "仅限头盔，消耗 1 个防御槽，只能强化一次。巨人独眼 ×1、任意羊毛 ×2、金块 ×1。穿戴者周围 8 格内的其他生物持续受到虚弱 I；范围内的生物攻击穿戴者时，改为虚弱 III，持续 5 秒。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

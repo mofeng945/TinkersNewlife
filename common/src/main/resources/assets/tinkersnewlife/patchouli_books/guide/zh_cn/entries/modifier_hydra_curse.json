@@ -1,0 +1,12 @@
+{
+    "name":  "海德拉诅咒",
+    "category":  "tinkersnewlife:traits",
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:hydra_heart",
+    "pages":  [
+                  {
+                      "text":  "仅限胸甲，消耗 1 个防御槽，只能强化一次。使用九头蛇心脏、腐肉、皮革、九头蛇毒牙、萤石粉各一份。穿戴时持续获得生命恢复 IV，抵消一次致死伤害并回满生命，免死冷却 200 秒。浸在岩浆或高温流体、着火或受到火焰伤害后的 5 秒内，这两项效果停用。受到的火焰与岩浆伤害翻倍。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}
