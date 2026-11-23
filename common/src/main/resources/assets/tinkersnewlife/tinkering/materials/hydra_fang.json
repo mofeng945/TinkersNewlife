@@ -1,24 +1,22 @@
 {
-  "color": "FF8BA24A",
+  "color": "FFD6CEBD",
+  "texture": "tinkersnewlife:hydra_fang_recolor",
   "generator": {
     "supported_stats": [
       "tconstruct:arrow_head"
     ],
-    "textures": {
-      "tconstruct:item/tool/ammo/arrow_head": "tconstruct:item/tool/ammo/arrow_head_tinkersnewlife_hydra_fang"
-    },
     "transformer": {
       "type": "tconstruct:recolor_sprite",
       "color_mapping": {
         "type": "tconstruct:grey_to_color",
         "palette": [
-          { "grey": 0, "color": "FF293018" },
-          { "grey": 63, "color": "FF505A2A" },
-          { "grey": 102, "color": "FF6D7937" },
-          { "grey": 140, "color": "FF819244" },
-          { "grey": 178, "color": "FF8BA24A" },
-          { "grey": 216, "color": "FFA9B967" },
-          { "grey": 255, "color": "FFC8D795" }
+          { "grey": 0, "color": "FF4A4231" },
+          { "grey": 63, "color": "FF606747" },
+          { "grey": 102, "color": "FF665D5A" },
+          { "grey": 140, "color": "FFC5BDB5" },
+          { "grey": 178, "color": "FFD6CEBD" },
+          { "grey": 216, "color": "FFEDF4E8" },
+          { "grey": 255, "color": "FFFFFAF4" }
         ]
       }
     }
