@@ -13,6 +13,7 @@ import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 public abstract class RaptorPounceSweepMixin {
     @Inject(method = "afterMeleeHit", at = @At("HEAD"), cancellable = true, remap = false)
     private void tnl$preventDuplicateSweep(IToolStackView tool, ToolAttackContext context, float damage, CallbackInfo ci) {
-        if (!context.getAttacker().level().isClientSide && RaptorPounceModifier.applies(tool, context)) ci.cancel();
+        if (!context.getAttacker().level().isClientSide && (RaptorPounceModifier.applies(tool, context)
+                || com.mofengbaizhi.tinkersnewlife.content.modifier.TailspinModifier.applies(tool, context))) ci.cancel();
     }
 }

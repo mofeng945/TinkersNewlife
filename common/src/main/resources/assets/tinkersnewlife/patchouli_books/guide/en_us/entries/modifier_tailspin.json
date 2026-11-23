@@ -1,0 +1,12 @@
+{
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:hippocampus_fin",
+    "category":  "tinkersnewlife:traits",
+    "name":  "Tailspin",
+    "pages":  [
+                  {
+                      "text":  "One hippocampus fin and two shiny scales cost one upgrade slot. Apply once. Attack damage decreases by 5% and knockback rises by three levels. Melee attacks against a target always sweep, with Sweeping Edge damage bonuses. Creatures hit receive Slowness I and Nausea I for three seconds. Attacking in water propels you backward.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

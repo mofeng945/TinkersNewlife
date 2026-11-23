@@ -43,8 +43,12 @@ public final class RaptorPounceModifier extends NoLevelsModifier implements Mele
     }
 
     private static void sweep(IToolStackView tool, ToolAttackContext context, float damage) {
+        if (applies(tool, context) && !TailspinModifier.applies(tool, context)) performSweep(tool, context, damage, false);
+    }
+
+    static void performSweep(IToolStackView tool, ToolAttackContext context, float damage, boolean tailspin) {
         LivingEntity attacker = context.getAttacker();
-        if (attacker.level().isClientSide || !applies(tool, context)) return;
+        if (attacker.level().isClientSide) return;
         var target = context.getTarget();
         if (target == null) return;
 
@@ -65,8 +69,8 @@ public final class RaptorPounceModifier extends NoLevelsModifier implements Mele
                     || !neighbor.isAlive() || neighbor.isSpectator() || attacker.isAlliedTo(neighbor)
                     || (neighbor instanceof ArmorStand stand && stand.isMarker())
                     || attacker.distanceToSqr(neighbor) >= maxDistance * maxDistance) continue;
-            neighbor.knockback(0.4, Mth.sin(yaw), -Mth.cos(yaw));
-            neighbor.hurt(source, sweepDamage);
+            neighbor.knockback(tailspin ? 1.9 : 0.4, Mth.sin(yaw), -Mth.cos(yaw));
+            if (neighbor.hurt(source, sweepDamage) && tailspin) TailspinModifier.disorient(neighbor, attacker);
         }
         attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, attacker.getSoundSource(), 1.0f, 1.0f);

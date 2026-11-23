@@ -21,6 +21,7 @@ public class Modifiers {
 
     public static final StaticModifier<SandwormTongueModifier> SANDWORM_TONGUE = MODIFIERS.register("sandworm_tongue", SandwormTongueModifier::new);
     public static final StaticModifier<WitherGazeModifier> WITHER_GAZE = MODIFIERS.register("wither_gaze", WitherGazeModifier::new);
+    public static final StaticModifier<TailspinModifier> TAILSPIN = MODIFIERS.register("tailspin", TailspinModifier::new);
     public static final StaticModifier<RaptorPounceModifier> RAPTOR_POUNCE = MODIFIERS.register("raptor_pounce", RaptorPounceModifier::new);
     public static final StaticModifier<BiotoxicityModifier> BIOTOXICITY = MODIFIERS.register("biotoxicity", BiotoxicityModifier::new);
     public static final StaticModifier<SeaSerpentModifier> ANNOYING_SEA_SERPENT = MODIFIERS.register("annoying_sea_serpent", SeaSerpentModifier::new);

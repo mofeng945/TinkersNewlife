@@ -1,0 +1,12 @@
+{
+    "flag":  "mod:iceandfire",
+    "icon":  "iceandfire:hippocampus_fin",
+    "category":  "tinkersnewlife:traits",
+    "name":  "天旋地转",
+    "pages":  [
+                  {
+                      "text":  "海马鳍 ×1、闪光鳞片 ×2，消耗 1 个升级槽，只能强化一次。武器攻击力降低 5%，击退提升 3 级。对目标发动近战攻击时必定横扫，兼容横扫之刃；击中的生物获得 3 秒缓慢 I 与反胃 I。水中攻击会把自己沿视线反方向推出。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}
