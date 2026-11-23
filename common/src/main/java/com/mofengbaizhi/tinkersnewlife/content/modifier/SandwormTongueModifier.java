@@ -1,7 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
+import com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler;
 import com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
@@ -15,7 +15,6 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
@@ -114,7 +113,7 @@ public final class SandwormTongueModifier extends NoLevelsModifier {
         }
         target.setDeltaMovement(Vec3.ZERO);
         target.hurtMarked = true;
-        target.addEffect(new MobEffectInstance(ModEffects.STUN.get(), 60), caster);
+        StunHandler.apply(target, 60, StunHandler.Mode.FULL);
     }
 
     @SubscribeEvent public static void unload(LevelEvent.Unload event) {
