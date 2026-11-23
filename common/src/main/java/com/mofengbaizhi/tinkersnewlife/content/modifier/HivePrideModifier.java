@@ -49,6 +49,16 @@ public final class HivePrideModifier extends Modifier {
         return total;
     }
 
+    public static int vanillaReputation(Object hive, UUID playerId) {
+        try {
+            Class<?> type = hive.getClass();
+            var method = type.getMethod("getPlayerReputation", UUID.class);
+            return (int)method.invoke(hive, playerId);
+        } catch (ReflectiveOperationException | LinkageError ex) {
+            return 0;
+        }
+    }
+
     public static int effectiveReputation(UUID playerId, int reputation) {
         if (reputation >= 25) return reputation;
         var server = ServerLifecycleHooks.getCurrentServer();
@@ -66,6 +76,12 @@ public final class HivePrideModifier extends Modifier {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)
                 || player.tickCount % 10 != 0 || !IntegrationLoader.isIceAndFire()) return;
         int rank = rank(player);
+        if (rank > 0) {
+            // Remove any aggro acquired before the armor was equipped; the vanilla selector otherwise keeps it.
+            for (var mob : player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(32),
+                    mob -> mob.isAlive() && Bridge.isMyrmex(mob) && mob.getTarget() == player
+                            && Bridge.reputation(mob, player) >= 25)) mob.setTarget(null);
+        }
         int reputation = 0;
         if (rank >= 3) {
             for (var mob : nearby(player)) reputation = Math.max(reputation, Bridge.reputation(mob, player));
