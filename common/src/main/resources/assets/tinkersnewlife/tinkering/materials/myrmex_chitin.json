@@ -1,0 +1,66 @@
+{
+  "color": "FF6D5836",
+  "fallbacks": [
+    "scale",
+    "rock"
+  ],
+  "generator": {
+    "supported_stats": [
+      "tconstruct:head",
+      "tconstruct:handle",
+      "tconstruct:binding",
+      "tconstruct:limb",
+      "tconstruct:grip",
+      "tconstruct:plating_helmet",
+      "tconstruct:plating_chestplate",
+      "tconstruct:plating_leggings",
+      "tconstruct:plating_boots",
+      "tconstruct:plating_shield",
+      "tconstruct:maille",
+      "tconstruct:shield_core",
+      "tconstruct:armor_maille",
+      "tconstruct:armor_plating",
+      "tconstruct:repair_kit"
+    ],
+    "transformer": {
+      "type": "tconstruct:grey_to_sprite",
+      "palette": [
+        {
+          "grey": 0,
+          "path": "tinkersnewlife:generator/myrmex_chitin_32",
+          "color": "FF222222"
+        },
+        {
+          "grey": 63,
+          "path": "tinkersnewlife:generator/myrmex_chitin_32",
+          "color": "FF707070"
+        },
+        {
+          "grey": 102,
+          "path": "tinkersnewlife:generator/myrmex_chitin_32",
+          "color": "FF969696"
+        },
+        {
+          "grey": 140,
+          "path": "tinkersnewlife:generator/myrmex_chitin_32",
+          "color": "FFB5B5B5"
+        },
+        {
+          "grey": 178,
+          "path": "tinkersnewlife:generator/myrmex_chitin_32",
+          "color": "FFD4D4D4"
+        },
+        {
+          "grey": 216,
+          "path": "tinkersnewlife:generator/myrmex_chitin_32",
+          "color": "FFEBEBEB"
+        },
+        {
+          "grey": 255,
+          "path": "tinkersnewlife:generator/myrmex_chitin_32",
+          "color": "FFFFFFFF"
+        }
+      ]
+    }
+  }
+}

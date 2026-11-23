@@ -1,4 +1,11 @@
 {
+  "material.tinkersnewlife.myrmex_chitin": "恐蚁甲壳",
+  "modifier.tinkersnewlife.arthropod_fury": "节肢之怒",
+  "modifier.tinkersnewlife.arthropod_fury.flavor": "节肢杀手不应该是除了节肢都杀了吗？",
+  "modifier.tinkersnewlife.arthropod_fury.description": "为什么要笑，我只看见了节肢杀手杀掉了所有非节肢生物",
+  "modifier.tinkersnewlife.hive_pride": "蚁群之傲",
+  "modifier.tinkersnewlife.hive_pride.flavor": "同类？同类~",
+  "modifier.tinkersnewlife.hive_pride.description": "这散发着同族气息的躯壳使蚁群轻易放下了警惕，即便那只是披在敌人身上的一层尸体。",
   "material.tinkersnewlife.sea_serpent_fang": "海蟒长牙",
   "material.tinkersnewlife.hydra_fang": "九头蛇毒牙",
   "modifier.tinkersnewlife.life_curse": "生命诅咒",

@@ -1,0 +1,12 @@
+{
+  "name": "节肢之怒",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:myrmex_desert_chitin",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l:material_myrmex_chitin)恐蚁甲壳$()的工具头部、手柄、绑定结、弓臂与弓把各提供 1 级节肢之怒。每级对节肢生物的伤害提高 5%，对其余生物提高 10%。死亡蠕虫按其余生物计算，每级提高 10%。"
+    }
+  ]
+}

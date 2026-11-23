@@ -1,0 +1,24 @@
+{
+  "name": "Myrmex Chitin",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:myrmex_desert_chitin",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A tier 3 material from Ice and Fire. Desert and Jungle Myrmex Chitin can be used together, and each piece provides 1 material unit. Helmet, chestplate, leggings and boots plating cost 3, 6, 5 and 2 pieces in the Part Builder. Shield plating costs 3. Combine it with a valid shield core at a Tinker Station to assemble a plate shield."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Tool heads have 400 durability, iron mining tier, 3.5 mining speed and 3 melee attack damage. Handles give −5% durability and +15% melee damage, with no change to mining or melee attack speed. Bindings add no stats. Each part grants 1 level of $(l:trait_arthropod_fury)Arthropod Fury$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Bow limbs have 400 durability, +20% draw speed and −10% accuracy, with no change to projectile velocity. Bow grips give −5% durability, −10% accuracy and +1.5 melee damage. Each limb and grip also grants 1 level of $(l:trait_arthropod_fury)Arthropod Fury$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Durability / armor: helmet 220/4, chestplate 320/8, leggings 300/5, boots 260/3. All four give 0 toughness and 5% knockback resistance. Shield plating gives 350 durability, 0 toughness and 10% knockback resistance. Maille and shield cores add no stats. Each of these seven parts grants 1 level of $(l:trait_hive_pride)Hive Pride$()."
+    }
+  ]
+}

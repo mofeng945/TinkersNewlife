@@ -1,0 +1,20 @@
+{
+  "name": "Hive Pride",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:myrmex_jungle_chitin",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Worn armor and shields held in either hand contribute Hive Pride levels. With at least 1 level, each hive treats your reputation as at least 25. A total of 3 or more levels unlocks four effects within 20 blocks. Each hive checks its own reputation toward you."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "At 25 reputation, nearby Myrmex from that hive grant you 5% movement speed per level, up to +50%. At 50 reputation, taking a hit calls nearby Myrmex to assist for 10 seconds. The reinforcements gain Strength equal to your total Hive Pride level, up to Strength V."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "At 75 reputation, your attacks direct nearby Myrmex to join the fight. While Myrmex from a hive with at least 75 reputation are nearby, you gain Resistance equal to your total Hive Pride level, up to Resistance III. At 100 reputation, nearby Myrmex from that hive continually receive Regeneration II."
+    }
+  ]
+}

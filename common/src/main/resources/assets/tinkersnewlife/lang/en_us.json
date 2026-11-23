@@ -1,4 +1,11 @@
 {
+  "material.tinkersnewlife.myrmex_chitin": "Myrmex Chitin",
+  "modifier.tinkersnewlife.arthropod_fury": "Arthropod Fury",
+  "modifier.tinkersnewlife.arthropod_fury.flavor": "Shouldn't an arthropod slayer slay everything except arthropods?",
+  "modifier.tinkersnewlife.arthropod_fury.description": "Why are you laughing? All I saw was the arthropod slayer kill every creature that wasn't an arthropod.",
+  "modifier.tinkersnewlife.hive_pride": "Hive Pride",
+  "modifier.tinkersnewlife.hive_pride.flavor": "Kin? Kiiin~",
+  "modifier.tinkersnewlife.hive_pride.description": "The scent of kin on this shell lulls the hive into lowering its guard, even when it is only a corpse draped over an enemy.",
   "material.tinkersnewlife.sea_serpent_fang": "Sea Serpent Fang",
   "material.tinkersnewlife.hydra_fang": "Hydra Fang",
   "modifier.tinkersnewlife.life_curse": "Life Curse",

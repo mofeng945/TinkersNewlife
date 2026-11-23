@@ -19,6 +19,8 @@ public class Modifiers {
     public static final StaticModifier<SupervisorModifier> SUPERVISOR =
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
+    public static final StaticModifier<ArthropodFuryModifier> ARTHROPOD_FURY = MODIFIERS.register("arthropod_fury", ArthropodFuryModifier::new);
+    public static final StaticModifier<HivePrideModifier> HIVE_PRIDE = MODIFIERS.register("hive_pride", HivePrideModifier::new);
     public static final StaticModifier<SandwormTongueModifier> SANDWORM_TONGUE = MODIFIERS.register("sandworm_tongue", SandwormTongueModifier::new);
     public static final StaticModifier<WitherGazeModifier> WITHER_GAZE = MODIFIERS.register("wither_gaze", WitherGazeModifier::new);
     public static final StaticModifier<LifeCurseModifier> LIFE_CURSE = MODIFIERS.register("life_curse", LifeCurseModifier::new);
