@@ -478,6 +478,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBossMusic::new,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBossMusic::handle);
 
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.content.modifier.PixieTreasureModifier.Glow.class,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.PixieTreasureModifier.Glow::encode,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.PixieTreasureModifier.Glow::new,
+                com.mofengbaizhi.tinkersnewlife.content.modifier.PixieTreasureModifier.Glow::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 

@@ -1,0 +1,23 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/gear"
+  },
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_pixie_silver_still",
+    "amount": 360
+  },
+  "result": {
+    "item": "tconstruct:shield_core",
+    "nbt": {
+      "Material": "tinkersnewlife:pixie_silver"
+    }
+  },
+  "cooling_time": 120,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ]
+}

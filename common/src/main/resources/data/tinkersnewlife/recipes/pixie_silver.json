@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ],
+  "pattern": [
+    "ABA",
+    "BCB",
+    "ABA"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:pink_petals"
+    },
+    "B": {
+      "item": "iceandfire:pixie_dust"
+    },
+    "C": {
+      "item": "iceandfire:silver_ingot"
+    }
+  },
+  "result": {
+    "item": "tinkersnewlife:pixie_silver",
+    "count": 1
+  }
+}

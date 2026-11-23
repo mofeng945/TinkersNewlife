@@ -1,0 +1,16 @@
+{
+  "name": "Friend of Pixies",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:pixie_jar_0",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Equip armor or a shield with this $(l:material_pixie_silver)Pixie Silver$() trait and pixies will keep their distance and cannot steal from you. A jar containing a pixie in your inventory grants a boon based on its color. The boon level is your total equipped Friend of Pixies level, capped as listed on the next page."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Pink pixies grant Strength up to VIII. Purple pixies grant Jump Boost up to V. Blue pixies grant Speed up to VI. Green pixies grant Luck up to III. Yellow pixies grant Haste up to V."
+    }
+  ]
+}

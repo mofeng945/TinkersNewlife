@@ -1,0 +1,29 @@
+{
+  "name": "仙灵银",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:pixie_silver",
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:pixie_silver",
+      "text": "仙灵银是冰火传说联动的三级材料。将银锭放在工作台中央，精灵尘放在四边，粉红色花簇放在四角，即可合成一枚仙灵银锭。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "工具头部有 350 耐久、铁级采掘等级、3 挖掘速度和 3.5 近战伤害。手柄提高 15% 攻速和挖掘速度，耐久和伤害不变。绑定结无额外属性。这些部件提供$(l:trait_pixie_treasure)仙灵秘藏$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "弓臂有 350 耐久，拉弓速度加成 0.1、初速加成 1.5。弓把增加 2 近战伤害，耐久不变。两者都不影响精准度，均提供$(l:trait_pixie_treasure)仙灵秘藏$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "护甲镶板的耐久／护甲为头 200／2、胸 305／6、腿 285／3、靴 210／2，均有 2 韧性和 5% 击退抗性。盾牌镶板有 300 耐久、2 韧性和 10% 击退抗性。锁链基底、盾芯无额外属性。这七种甲盾部件提供$(l:trait_friend_of_pixies)精灵之友$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "每锭提供 1 个材料单位，可在 800°C 熔为 90 mB 熔融仙灵银，用于浇筑。盾牌基底可用齿轮铸模浇筑，盾牌镶板用板铸模。部件制作台制作头、胸、腿、靴镶板分别消耗 3、6、5、2 锭，锁链基底、盾芯、盾牌镶板分别消耗 2、4、3 锭。盾牌镶板与有效的盾芯可在工匠站组装成镶板盾。"
+    }
+  ]
+}

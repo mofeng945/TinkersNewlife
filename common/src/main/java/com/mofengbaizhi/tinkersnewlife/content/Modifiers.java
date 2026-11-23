@@ -19,6 +19,9 @@ public class Modifiers {
     public static final StaticModifier<SupervisorModifier> SUPERVISOR =
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
+    public static final StaticModifier<PixieTreasureModifier> PIXIE_TREASURE = MODIFIERS.register("pixie_treasure", PixieTreasureModifier::new);
+    public static final StaticModifier<PixieFriendModifier> FRIEND_OF_PIXIES = MODIFIERS.register("friend_of_pixies", PixieFriendModifier::new);
+
     public static final StaticModifier<ArthropodFuryModifier> ARTHROPOD_FURY = MODIFIERS.register("arthropod_fury", ArthropodFuryModifier::new);
     public static final StaticModifier<HivePrideModifier> HIVE_PRIDE = MODIFIERS.register("hive_pride", HivePrideModifier::new);
     public static final StaticModifier<SandwormTongueModifier> SANDWORM_TONGUE = MODIFIERS.register("sandworm_tongue", SandwormTongueModifier::new);

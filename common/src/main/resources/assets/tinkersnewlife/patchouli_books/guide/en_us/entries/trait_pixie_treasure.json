@@ -1,0 +1,16 @@
+{
+  "name": "Pixie Treasure",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:pixie_dust",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A fully charged hit on a pixie with this $(l:material_pixie_silver)Pixie Silver$() trait has a 2.5% chance per level to yield treasure. If it triggers, it randomly selects one of six loot tables and rolls it 2–4 times: fishing treasure, ancient city, buried treasure, Nether fortress, bastion treasure room, or End city."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A hit on any other creature has a 5% chance per level to steal its held item and inflict Levitation III for 5 seconds. Mining a block highlights entities and block entities within 5 blocks per trait level for 3 seconds."
+    }
+  ]
+}

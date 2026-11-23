@@ -1,0 +1,29 @@
+{
+  "name": "Pixie Silver",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:pixie_silver",
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:pixie_silver",
+      "text": "Pixie Silver is a tier 3 Ice and Fire material. Put a silver ingot in the center of a crafting table, pixie dust on its four sides, and pink petals in the four corners to make one ingot."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Heads have 350 durability, iron mining tier, 3 mining speed, and 3.5 melee damage. Handles add 15% attack and mining speed without changing durability or damage. Bindings add no stats. These parts grant $(l:trait_pixie_treasure)Pixie Treasure$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Bow limbs have 350 durability, +0.1 draw speed, and +1.5 projectile velocity. Grips add 2 melee damage with unchanged durability. Neither part changes accuracy, and both grant $(l:trait_pixie_treasure)Pixie Treasure$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Helmet, chestplate, leggings, and boots plating have 200/2, 305/6, 285/3, and 210/2 durability/armor respectively, all with 2 toughness and 5% knockback resistance. Shield plating has 300 durability, 2 toughness, and 10% knockback resistance. Maille and shield cores add no stats. These seven parts grant $(l:trait_friend_of_pixies)Friend of Pixies$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each ingot provides one material unit and melts into 90 mB of Molten Pixie Silver at 800°C. Use a gear cast for the shield core and a plate cast for shield plating. In the Part Builder, helmet, chestplate, leggings, and boots plating cost 3, 6, 5, and 2 ingots. Maille, shield cores, and shield plating cost 2, 4, and 3 ingots. Assemble shield plating with any valid shield core in the Tinker Station."
+    }
+  ]
+}

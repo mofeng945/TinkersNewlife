@@ -1,0 +1,16 @@
+{
+  "name": "精灵之友",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:pixie_jar_0",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "装备带有$(l:material_pixie_silver)仙灵银$()特性的甲盾后，精灵会远离你，也不会偷走你的物品。随身携带装有精灵的广口瓶时（背包、快捷栏和副手均可，不用放置或使用，空瓶不算），会获得与精灵颜色对应的增益。增益等级取全身精灵之友总等级，并受对应上限限制。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "粉色精灵提供力量，最高 VIII。紫色精灵提供跳跃提升，最高 V。蓝色精灵提供速度，最高 VI。绿色精灵提供幸运，最高 III。黄色精灵提供急迫，最高 V。"
+    }
+  ]
+}

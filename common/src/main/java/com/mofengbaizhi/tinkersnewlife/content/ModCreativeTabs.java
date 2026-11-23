@@ -73,7 +73,7 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.NYARLATHOTEP_DESIRE.get());
                                 output.accept(ModItems.DURANDAL_SHARD.get());
 
-                                if (ModList.get().isLoaded("iceandfire")) output.accept(ModItems.TROLL_MIXTURE.get());
+                                if (ModList.get().isLoaded("iceandfire")) { output.accept(ModItems.TROLL_MIXTURE.get()); output.accept(ModItems.PIXIE_SILVER.get()); }
 
                                 // ----- 矿石 -----
                                 output.accept(ModItems.GHELOTH_ORE.get());
@@ -295,6 +295,7 @@ public class ModCreativeTabs {
                                 acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
                                 acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");
                                 acceptItemIfPresent(output, "molten_ghost_ingot_bucket");
+                                acceptItemIfPresent(output, "molten_pixie_silver_bucket");
                                 acceptItemIfPresent(output, "molten_dragonsteel_lightning_bucket");
                                 acceptItemIfPresent(output, "fire_blood_bucket");
                                 acceptItemIfPresent(output, "ice_blood_bucket");
@@ -444,6 +445,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("sea_serpent_fang", "iceandfire");
         MATERIAL_SOURCE_MOD.put("stymphalian_feather", "iceandfire");
         MATERIAL_SOURCE_MOD.put("ghost_ingot", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("pixie_silver", "iceandfire");
         MATERIAL_SOURCE_MOD.put("sea_beast_scales", "iceandfire");
         MATERIAL_SOURCE_MOD.put("death_worm_chitin", "iceandfire");
         MATERIAL_SOURCE_MOD.put("deathworm_tongue", "iceandfire");

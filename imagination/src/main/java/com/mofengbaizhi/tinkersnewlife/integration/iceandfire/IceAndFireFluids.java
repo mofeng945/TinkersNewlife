@@ -52,6 +52,11 @@ public final class IceAndFireFluids {
             2000, 10000, 800, 0xFFE5FFFA,
             FluidRegistrar.lavaProps(MapColor.COLOR_LIGHT_GREEN));
 
+    // Forge fluid temperature is in kelvin; Tinkers subtracts 300 for its Celsius recipes.
+    public static final FluidRegistrar.FluidEntry MOLTEN_PIXIE_SILVER = REG.entry("molten_pixie_silver",
+            2000, 10000, 1100, 0xFFEFA2D7,
+            FluidRegistrar.lavaProps(MapColor.COLOR_PINK));
+
     // ---- 悚怖（冰火悚怖碎片） ----
     public static final FluidRegistrar.FluidEntry MOLTEN_DREAD = REG.entry("molten_dread",
             1500, 5000, 800, 0xFF6A0DAD,

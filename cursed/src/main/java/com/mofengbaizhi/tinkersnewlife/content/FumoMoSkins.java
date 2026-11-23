@@ -111,6 +111,7 @@ public final class FumoMoSkins {
      */
     public static ResourceLocation texture(String skin) {
         if (DEFAULT_SKIN.equals(skin) || !isSafe(skin)) return DEFAULT_TEXTURE;
+        if ("yanying".equals(skin)) return new ResourceLocation(TinkersNewlife.MOD_ID, "textures/entity/yanying_fufu.png");
         try {
             return new ResourceLocation(TinkersNewlife.MOD_ID, "textures/fumo/" + skin + ".png");
         } catch (Throwable t) {
@@ -123,7 +124,7 @@ public final class FumoMoSkins {
         if (DEFAULT_SKIN.equals(skin) || !isSafe(skin)) {
             return TinkersNewlife.MOD_ID + ":textures/entity/momo_common.png";
         }
-        return TinkersNewlife.MOD_ID + ":textures/fumo/" + skin + ".png";
+        return texture(skin).toString();
     }
 
     // ============================================================

@@ -1,0 +1,16 @@
+{
+  "name": "仙灵秘藏",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:pixie_dust",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "用带有$(l:material_pixie_silver)仙灵银$()特性的武器满蓄命中精灵时，每级有 2.5% 的触发概率。触发后从钓鱼宝藏、远古城市、埋藏的宝藏、下界要塞、堡垒遗迹藏宝室、末地城六个战利品表中随机选一个，并从中抽取 2–4 次。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "命中其他生物时，每级有 5% 的概率偷走目标手持物，并使目标获得 5 秒漂浮 III。挖掘方块时，照亮周围「特性等级 × 5」格内的实体和方块实体，持续 3 秒。"
+    }
+  ]
+}
