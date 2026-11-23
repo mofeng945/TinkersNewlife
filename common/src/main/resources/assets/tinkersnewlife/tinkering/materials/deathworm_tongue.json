@@ -1,0 +1,22 @@
+{
+  "color": "FFB36060",
+  "fallbacks": ["string", "primitive"],
+  "generator": {
+    "supported_stats": ["tconstruct:bowstring"],
+    "transformer": {
+      "type": "tconstruct:recolor_sprite",
+      "color_mapping": {
+        "type": "tconstruct:grey_to_color",
+        "palette": {
+          "000": "FF372F2F",
+          "063": "FF423A3A",
+          "102": "FF574E4E",
+          "140": "FF923838",
+          "178": "FF923838",
+          "216": "FFB36060",
+          "255": "FFB36060"
+        }
+      }
+    }
+  }
+}

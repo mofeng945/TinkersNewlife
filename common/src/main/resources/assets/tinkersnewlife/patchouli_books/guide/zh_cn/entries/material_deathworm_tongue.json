@@ -1,0 +1,12 @@
+{
+  "name": "死亡蠕虫长舌",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:deathworm_tounge",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说的三阶弓弦材料。死亡蠕虫稀有掉落；在部件台用长舌制作弓弦，无需熔炼。长舌弓弦赋予$(l:trait_sandworm_tongue)沙虫长舌$()特性。"
+    }
+  ]
+}

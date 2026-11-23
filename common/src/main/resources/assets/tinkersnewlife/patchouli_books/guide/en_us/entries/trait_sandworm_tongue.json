@@ -1,0 +1,12 @@
+{
+  "name": "Sandworm Tongue",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:deathworm_tounge",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Hits trigger a 2-block-radius explosion that leaves blocks intact. The explosion deals 1.5 times the hit's damage before armor reduction. The struck target is pulled toward the player and stunned for 3 seconds. Obstacles stop the pull."
+    }
+  ]
+}

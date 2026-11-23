@@ -1,0 +1,12 @@
+{
+  "name": "沙虫长舌",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:deathworm_tounge",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "命中时触发半径 2 格的爆炸，不破坏方块。爆炸伤害以护甲减伤前的命中伤害为基数，乘以 1.5。命中的目标会被拉向玩家并僵直 3 秒；拉拽遇到障碍物时停止。"
+    }
+  ]
+}
