@@ -26,7 +26,13 @@ public class MomoTradeScreen extends Screen {
     private static final int PANEL_TOP_PAD = 46;
 
     private final int momoId;
-    private final int favor;
+    private int favor;
+    private final List<MomoMerchant.Offer> offers;
+    private int firstRow;
+    private int noticeTicks;
+    private float uiScale = 1;
+    private int layoutWidth;
+    private int layoutHeight;
     private int[] sold;   // 会被 PacketMomoSoldState 就地刷新 ✓
     public boolean hired;
     public String employer;
@@ -42,15 +48,35 @@ public class MomoTradeScreen extends Screen {
      */
     private record Row(ItemStack result, ItemStack currency, int price, int base, int slot) {}
 
-    private int left() {
-        return Math.max(12, (Math.max(PANEL_W + 8, this.width - MomoArt.portraitWidth(this.width, this.height) - 24)
-                - PANEL_W) / 2);
+    private static final int FOOTER_H = 34;
+    private static final int MARGIN = 8;
+    private static final int SPEECH_GAP = 10;
+
+    @Override protected void init() {
+        int available = Math.max(1, width - MomoArt.portraitWidth(width, height) - 24);
+        int minHeight = 2 * MARGIN + speechHeight() + SPEECH_GAP + PANEL_TOP_PAD + ROW_H + FOOTER_H;
+        uiScale = Math.min(1f, Math.min(available / (float)(PANEL_W + 2 * MARGIN), Math.max(1, height) / (float)minHeight));
+        layoutWidth = (int)Math.floor(available / uiScale);
+        layoutHeight = (int)Math.floor(height / uiScale);
+        firstRow = Math.min(firstRow, maxScroll());
     }
-    private int top() { return Math.max(10, (this.height - panelH()) / 2); }
+
+    private int left() {
+        return Math.max(MARGIN, (layoutWidth - PANEL_W) / 2);
+    }
+    private int speechHeight() { return MomoArt.sayHeight(font, HELLO, PANEL_W); }
+    private int top() {
+        return Math.max(MARGIN + speechHeight() + SPEECH_GAP, (layoutHeight - panelH()) / 2);
+    }
+    private int visibleRows() {
+        int room = layoutHeight - 2 * MARGIN - speechHeight() - SPEECH_GAP - PANEL_TOP_PAD - FOOTER_H;
+        return Math.min(Math.max(1, rows.size()), Math.max(1, room / ROW_H));
+    }
+    private int maxScroll() { return Math.max(0, rows.size() - visibleRows()); }
     private int rowX() { return left() + 12; }
     private int rowY(int i) { return top() + PANEL_TOP_PAD + i * ROW_H; }
     private int rowW() { return PANEL_W - 24; }
-    private int panelH() { return PANEL_TOP_PAD + Math.max(1, rows.size()) * ROW_H + 34; }
+    private int panelH() { return PANEL_TOP_PAD + visibleRows() * ROW_H + FOOTER_H; }
     private int backX() { return left() + PANEL_W - 68; }
     private int backY() { return top() + panelH() - 26; }
 
@@ -61,30 +87,44 @@ public class MomoTradeScreen extends Screen {
         this.employer = employer == null ? "" : employer;
         this.favor = favor;
         this.sold = sold == null ? new int[0] : sold;
-        if (offers != null) {
-            for (int i = 0; i < offers.size(); i++) {
-                MomoMerchant.Offer offer = offers.get(i);
-                if (offer.result().isEmpty()) continue;
-                // §1109 fumo 交易栏：好感 <30 ⇒ **完全不显示这一行** ✓（用户口径 ✓）
-                //   ⚠ 行里记**真实槽位 i** ✓ 点击发 r.slot() ✓ ⇒ 隐藏一行也不会错位 ✓
-                boolean fumoOffer = offer.result().is(
-                        com.mofengbaizhi.tinkersnewlife.content.FumoMoDoll.FUMO_MO_ITEM.get());
-                if (fumoOffer && favor < 30) continue;
-                // 显示折后价（与服务端 buyFrom 同一算法 ✓）
-                int shown = Math.max(1, (int) Math.ceil(offer.price() * MomoFavor.priceFactor(favor)));
-                // ⚠ fumo 那一行固定收「格赫罗斯残骸」✓（与服务端 buyFrom 的货币口径一致 ✓）
-                net.minecraft.world.item.Item curr = fumoOffer
-                        ? com.mofengbaizhi.tinkersnewlife.content.ModItems.GHELOTH_REMAINS.get()
-                        : MomoMerchant.currencyForSlot(i);
-                rows.add(new Row(offer.result().copy(), new ItemStack(curr), shown, offer.price(), i));
-            }
+        this.offers = offers == null ? List.of() : List.copyOf(offers);
+        rebuildRows();
+    }
+
+    private void rebuildRows() {
+        rows.clear();
+        for (int i = 0; i < offers.size(); i++) {
+            MomoMerchant.Offer offer = offers.get(i);
+            if (offer.result().isEmpty()) continue;
+            // §1109 fumo 交易栏：好感 <30 ⇒ **完全不显示这一行** ✓（用户口径 ✓）
+            //   ⚠ 行里记**真实槽位 i** ✓ 点击发 r.slot() ✓ ⇒ 隐藏一行也不会错位 ✓
+            boolean fumoOffer = offer.result().is(
+                    com.mofengbaizhi.tinkersnewlife.content.FumoMoDoll.FUMO_MO_ITEM.get());
+            if (fumoOffer && favor < 30) continue;
+            // 显示折后价（与服务端 buyFrom 同一算法 ✓）
+            int shown = Math.max(1, (int) Math.ceil(offer.price() * MomoFavor.priceFactor(favor)));
+            // ⚠ fumo 那一行固定收「格赫罗斯残骸」✓（与服务端 buyFrom 的货币口径一致 ✓）
+            net.minecraft.world.item.Item curr = fumoOffer
+                    ? com.mofengbaizhi.tinkersnewlife.content.ModItems.GHELOTH_REMAINS.get()
+                    : MomoMerchant.currencyForSlot(i);
+            rows.add(new Row(offer.result().copy(), new ItemStack(curr), shown, offer.price(), i));
         }
     }
 
     /** 兼容旧调用：这只墨默是不是本界面的那只（PacketMomoHireState 会调 ✓） */
     /** 就地刷新今日已买次数（`PacketMomoSoldState` 收到就调 ⇒ 缺货立刻变灰，不用重开界面） */
-    public void updateSold(int[] sold) {
+    public void updatePurchase(int[] sold, Integer updatedFavor) {
         this.sold = sold == null ? new int[0] : sold;
+        if (updatedFavor != null && favor != updatedFavor) {
+            favor = updatedFavor;
+            rebuildRows();
+            firstRow = Math.min(firstRow, maxScroll());
+        }
+        noticeTicks = 80;
+    }
+
+    @Override public void tick() {
+        if (noticeTicks > 0) noticeTicks--;
     }
     public boolean matches(int id) {
         return this.momoId == id;
@@ -113,16 +153,25 @@ public class MomoTradeScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
         MomoArt.dim(graphics, this.width, this.height);
-        MomoArt.portrait(graphics, MomoArt.exprForFavor(favor), this.width, this.height);   // §497 同一套皮：右侧立绘 ✓
+        MomoArt.portrait(graphics, MomoArt.exprForFavor(favor), width, height);
+        graphics.pose().pushPose();
+        try {
+            graphics.pose().scale(uiScale, uiScale, 1);
+            renderTrade(graphics, mouseX / uiScale, mouseY / uiScale);
+        } finally {
+            graphics.pose().popPose();
+        }
+    }
+
+    private void renderTrade(GuiGraphics graphics, double mouseX, double mouseY) {
 
         int x = left();
         int y = top();
         int h = panelH();
 
         // §501 开场白气泡：右缘 = 面板右缘 ⇒ 尖角从这里指向她 ✓ 摆在面板**上方** ✓
-        int sayH = MomoArt.sayHeight(this.font, HELLO, PANEL_W);
-        int[] box = MomoArt.sayRight(graphics, this.font, left() + PANEL_W, Math.max(6, y - 12 - sayH), HELLO, PANEL_W);
-        int tailY = Math.max(box[1] + 8, Math.min(box[1] + box[3] - 8, MomoArt.faceY(this.width, this.height)));
+        int[] box = MomoArt.sayRight(graphics, this.font, x + PANEL_W, y - SPEECH_GAP - speechHeight(), HELLO, PANEL_W);
+        int tailY = Math.max(box[1] + 8, Math.min(box[1] + box[3] - 8, MomoArt.faceY(layoutWidth, layoutHeight)));
         MomoArt.tail(graphics, left() + PANEL_W, tailY, MomoArt.BUBBLE_FILL);
 
         MomoArt.nine(graphics, MomoArt.BUBBLE, x, y, PANEL_W, h);                            // 面板 = 同一套九宫格 ✓
@@ -136,10 +185,10 @@ public class MomoTradeScreen extends Screen {
         }
         graphics.fill(x + 12, y + PANEL_TOP_PAD - 8, x + PANEL_W - 12, y + PANEL_TOP_PAD - 7, 0x558C7F63);
 
-        for (int i = 0; i < rows.size(); i++) {
-            Row r = rows.get(i);
+        for (int i = 0; i < visibleRows() && firstRow + i < rows.size(); i++) {
+            Row r = rows.get(firstRow + i);
             int ry = rowY(i);
-            boolean soldOut = i < sold.length && sold[i] >= MomoMerchant.MAX_PER_DAY;
+            boolean soldOut = r.slot() < sold.length && sold[r.slot()] >= MomoMerchant.MAX_PER_DAY;
             boolean hover = !soldOut && hovering(rowX(), ry, rowW(), ROW_H - 2, mouseX, mouseY);
             MomoArt.nine(graphics, MomoArt.OPTION, rowX(), ry, rowW(), ROW_H - 2);           // 报价行 = 九宫格 ✓
             graphics.fill(rowX() + 2, ry + 2, rowX() + rowW() - 2, ry + ROW_H - 4,
@@ -175,6 +224,22 @@ public class MomoTradeScreen extends Screen {
             }
         }
 
+        if (maxScroll() > 0) {
+            String page = (firstRow + 1) + "–" + (firstRow + visibleRows()) + " / " + rows.size();
+            MomoArt.text(graphics, font, page, x + 14, backY() + 4, 0x606060);
+        }
+        if (noticeTicks > 0) {
+            var notice = Component.translatable("message.tinkersnewlife.momo.bought");
+            String text = notice.getString();
+            int textWidth = MomoArt.textWidth(font, text);
+            int leftEdge = maxScroll() > 0 ? x + 65 : x + 14;
+            float scale = Math.min(1f, (backX() - leftEdge - 5) / (float)Math.max(1, textWidth));
+            graphics.pose().pushPose();
+            graphics.pose().translate(leftEdge, backY() + 5, 0);
+            graphics.pose().scale(scale, scale, 1);
+            MomoArt.text(graphics, font, text, 0, 0, 0x1F6B1F);
+            graphics.pose().popPose();
+        }
         boolean backHover = hovering(backX(), backY(), 60, 20, mouseX, mouseY);
         MomoArt.nine(graphics, MomoArt.OPTION, backX(), backY(), 60, 20);
         if (backHover) graphics.fill(backX() + 2, backY() + 2, backX() + 58, backY() + 18, MomoArt.HOVER_TINT);
@@ -194,13 +259,15 @@ public class MomoTradeScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
+            mouseX /= uiScale;
+            mouseY /= uiScale;
             if (hovering(backX(), backY(), 60, 20, mouseX, mouseY)) {
                 backToMenu();                        // §497：回上一级主菜单 ✓（不再直接关 GUI ✗）
                 return true;
             }
-            for (int i = 0; i < rows.size(); i++) {
+            for (int i = 0; i < visibleRows() && firstRow + i < rows.size(); i++) {
                 int ry = rowY(i);
-                Row r = rows.get(i);                                             // §1109 用**真实槽位**判缺货 ✓
+                Row r = rows.get(firstRow + i);                                             // §1109 用**真实槽位**判缺货 ✓
                 if (r.slot() < sold.length && sold[r.slot()] >= MomoMerchant.MAX_PER_DAY) continue;   // 缺货行点不动
                 if (hovering(rowX(), ry, rowW(), ROW_H - 2, mouseX, mouseY)) {
                     // §1109 发**真实槽位**而不是行号 ✓（fumo 行在好感 <30 时被隐藏 ⇒ 行号 ≠ 槽位 ✗）
@@ -210,6 +277,14 @@ public class MomoTradeScreen extends Screen {
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        if (amount != 0 && maxScroll() > 0 && hovering(left(), top(), PANEL_W, panelH(), mouseX / uiScale, mouseY / uiScale)) {
+            firstRow = Math.max(0, Math.min(maxScroll(), firstRow - (int)Math.signum(amount)));
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, amount);
     }
 
     @Override

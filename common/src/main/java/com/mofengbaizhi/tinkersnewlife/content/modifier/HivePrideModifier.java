@@ -113,15 +113,32 @@ public final class HivePrideModifier extends Modifier {
         }
     }
 
-    @SubscribeEvent public static void holdTarget(LivingChangeTargetEvent event) {
+    private static boolean protectedFromMyrmex(Mob mob, LivingEntity target) {
+        return target instanceof ServerPlayer player && IntegrationLoader.isIceAndFire()
+                && Bridge.isMyrmex(mob) && rank(player) > 0;
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+    public static void preventMyrmexHit(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        if (event.getSource().getEntity() instanceof Mob mob && !mob.level().isClientSide
+                && protectedFromMyrmex(mob, event.getEntity())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void holdTarget(LivingChangeTargetEvent event) {
         if (!(event.getEntity() instanceof Mob mob) || mob.level().isClientSide) return;
         var order = ORDERS.get(mob);
-        if (order == null) return;
-        if (valid(mob, order)) event.setNewTarget(order.target);
+        if (order != null && valid(mob, order)) event.setNewTarget(order.target);
+        if (protectedFromMyrmex(mob, event.getNewTarget())) event.setNewTarget(null);
     }
 
     @SubscribeEvent public static void maintainOrder(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
         if (!(event.getEntity() instanceof Mob mob) || mob.level().isClientSide || mob.tickCount % 5 != 0) return;
+        if (protectedFromMyrmex(mob, mob.getTarget())) {
+            ORDERS.remove(mob);
+            mob.setTarget(null);
+            return;
+        }
         var order = ORDERS.get(mob);
         if (order == null) return;
         if (!valid(mob, order)) {

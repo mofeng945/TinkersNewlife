@@ -52,8 +52,6 @@ public class PacketMomoBuy {
                         sl.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
                                 momo.getX(), momo.getY() + 1.6, momo.getZ(), 8, 0.3, 0.3, 0.3, 0.02);
                     }
-                    player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                            "message.tinkersnewlife.momo.bought"), true);
                 }
                 case INSUFFICIENT -> player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                         "message.tinkersnewlife.momo.insufficient"), true);

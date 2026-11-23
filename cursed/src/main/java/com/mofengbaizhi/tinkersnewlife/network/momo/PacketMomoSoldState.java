@@ -24,9 +24,12 @@ public class PacketMomoSoldState {
     private final int momoId;
     private final int[] sold;
 
-    public PacketMomoSoldState(int momoId, int[] sold) {
+    private final Integer favor;
+
+    public PacketMomoSoldState(int momoId, int[] sold, int favor) {
         this.momoId = momoId;
         this.sold = sold == null ? new int[0] : sold;
+        this.favor = favor;
     }
 
     public PacketMomoSoldState(FriendlyByteBuf buf) {
@@ -34,24 +37,30 @@ public class PacketMomoSoldState {
         int n = buf.readVarInt();
         this.sold = new int[n];
         for (int i = 0; i < n; i++) this.sold[i] = buf.readVarInt();
+        this.favor = buf.isReadable() ? buf.readVarInt() : null;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(momoId);
         buf.writeVarInt(sold.length);
         for (int s : sold) buf.writeVarInt(s);
+        if (favor != null) buf.writeVarInt(favor);
     }
 
     public static void sendTo(ServerPlayer player, MomoMerchant momo) {
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new PacketMomoSoldState(momo.getId(), momo.soldToday()));
+                new PacketMomoSoldState(momo.getId(), momo.soldToday(),
+                        com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.favorAsSeenByMomo(player)));
     }
 
     public static void handle(PacketMomoSoldState packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.screen instanceof MomoTradeScreen screen && screen.matches(packet.momoId)) {
-                screen.updateSold(packet.sold);       // 就地刷新 ⇒ 缺货立刻变灰 ✓
+                screen.updatePurchase(packet.sold, packet.favor);
+            } else if (packet.favor != null && mc.player != null) {
+                mc.player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "message.tinkersnewlife.momo.bought"), true);
             }
         }));
         ctx.get().setPacketHandled(true);
