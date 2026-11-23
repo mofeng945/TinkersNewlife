@@ -37,6 +37,9 @@ public final class WitherGazeModifier extends NoLevelsModifier implements MeleeH
     private static final int DURATION = 100;
     private static final int RADIUS = 6;
     private static final ModifierId ID = new ModifierId(TinkersNewlife.prefix("wither_gaze"));
+    private static final net.minecraft.resources.ResourceKey<net.minecraft.world.damagesource.DamageType> BEAM_DAMAGE =
+            net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE,
+                    TinkersNewlife.prefix("wither_gaze"));
     private record Link(UUID caster, UUID target) {}
     private record Cast(LivingEntity caster, LivingEntity target, LivingEntity[] branches) {}
     private static final class Beam {
@@ -153,7 +156,9 @@ public final class WitherGazeModifier extends NoLevelsModifier implements MeleeH
             }
             if (now >= beam.pulse) {
                 beam.pulse = now + 20;
-                beam.target.hurt(level.damageSources().indirectMagic(beam.source, beam.caster), 2);
+                var type = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
+                        .getHolderOrThrow(BEAM_DAMAGE);
+                beam.target.hurt(new net.minecraft.world.damagesource.DamageSource(type, beam.source, beam.caster), 2);
             }
             if (now % 10 == 0 && beam.target.isAlive()) {
                 beam.target.addEffect(new MobEffectInstance(MobEffects.WITHER, 40, 2), beam.caster);

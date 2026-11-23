@@ -1,17 +1,11 @@
 package com.mofengbaizhi.tinkersnewlife.client.renderer;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -22,8 +16,6 @@ import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,8 +26,6 @@ import java.util.UUID;
 public final class WitherGazeRenderer {
     private static final Map<Edge, Beam> BEAMS = new HashMap<>();
     private static final int TRACKING_GRACE = 3;
-    private static final DustParticleOptions MOTE = new DustParticleOptions(new Vector3f(0.62F, 0.31F, 0.52F), 0.75F);
-    private static final MultiBufferSource.BufferSource BUFFER = MultiBufferSource.immediate(new BufferBuilder(2048));
     private static ClientLevel currentLevel;
     private static long ticks;
 
@@ -88,11 +78,6 @@ public final class WitherGazeRenderer {
             if (to != null) beam.targetId = to.getUUID();
             if (from == null || to == null) return ticks - beam.started >= TRACKING_GRACE;
 
-            if ((ticks + edge.source() + edge.target()) % 3 == 0) {
-                double progress = (ticks % 24L) / 24.0D;
-                Vec3 point = anchor(from, 1.0F).lerp(anchor(to, 1.0F), progress);
-                currentLevel.addParticle(MOTE, point.x, point.y, point.z, 0.0D, 0.0D, 0.0D);
-            }
             return false;
         });
     }
@@ -104,9 +89,9 @@ public final class WitherGazeRenderer {
 
         Vec3 camera = event.getCamera().getPosition();
         float partial = event.getPartialTick();
-        Matrix4f pose = event.getPoseStack().last().pose();
-        VertexConsumer vertices = BUFFER.getBuffer(BeamLayer.TYPE);
-        for (Map.Entry<Edge, Beam> entry : BEAMS.entrySet()) {
+        var buffers = Minecraft.getInstance().renderBuffers().bufferSource();
+        var pose = event.getPoseStack();
+        for (var entry : BEAMS.entrySet()) {
             Edge edge = entry.getKey();
             Beam beam = entry.getValue();
             Entity from = currentLevel.getEntity(edge.source());
@@ -114,70 +99,47 @@ public final class WitherGazeRenderer {
             if (from == null || to == null || !beam.matches(from, to)) continue;
             beam.sourceId = from.getUUID();
             beam.targetId = to.getUUID();
-            Vec3 start = anchor(from, partial);
-            Vec3 end = anchor(to, partial);
-            if (!event.getFrustum().isVisible(new AABB(start, end).inflate(0.5D))) continue;
-
-            boolean firstPerson = from == event.getCamera().getEntity()
-                    && Minecraft.getInstance().options.getCameraType().isFirstPerson();
-            if (firstPerson) {
-                // Keep the near clip plane from cutting straight through the eye-level beam origin.
-                start = camera.add(from.getViewVector(partial).scale(0.22D)).add(0.0D, -0.095D, 0.0D);
+            Vec3 start = from.getPosition(partial);
+            Vec3 end = to.getPosition(partial).add(0, to.getBbHeight() * 0.5, 0);
+            if (!event.getFrustum().isVisible(new AABB(start.add(0, from.getEyeHeight(), 0), end).inflate(0.5))) continue;
+            pose.pushPose();
+            try {
+                Vec3 offset = start.subtract(camera);
+                pose.translate(offset.x, offset.y, offset.z);
+                IceAndFireBeam.render(from, to, pose, buffers, partial);
+            } finally {
+                pose.popPose();
             }
-            drawBeam(vertices, pose, start.subtract(camera), end.subtract(camera), from instanceof Player,
-                    ticks + partial, 0.31D * edge.source() + 0.19D * edge.target());
         }
-        BUFFER.endBatch(BeamLayer.TYPE);
+        IceAndFireBeam.flush(buffers);
     }
 
-    private static Vec3 anchor(Entity entity, float partial) {
-        return entity.getEyePosition(partial).add(0.0D, entity instanceof Player ? -0.06D : -0.12D, 0.0D);
-    }
+    // The optional mod owns both the geometry and texture. Resolve once without a hard dependency.
+    private static final class IceAndFireBeam {
+        private static java.lang.reflect.Method render;
+        private static net.minecraft.client.renderer.RenderType layer;
+        private static boolean resolved;
 
-    private static void drawBeam(VertexConsumer out, Matrix4f pose, Vec3 start, Vec3 end,
-                                 boolean fromPlayer, double time, double phase) {
-        Vec3 delta = end.subtract(start);
-        double length = delta.length();
-        if (length < 0.025D) return;
-        Vec3 along = delta.scale(1.0D / length);
-        Vec3 side = along.cross(start.lerp(end, 0.5D)).normalize();
-        if (side.lengthSqr() < 0.5D) {
-            side = along.cross(Math.abs(along.y) < 0.9D ? new Vec3(0.0D, 1.0D, 0.0D)
-                    : new Vec3(1.0D, 0.0D, 0.0D)).normalize();
+        private static void render(Entity from, Entity to, com.mojang.blaze3d.vertex.PoseStack pose,
+                                   net.minecraft.client.renderer.MultiBufferSource buffers, float partial) {
+            try {
+                if (!resolved) {
+                    resolved = true;
+                    var type = Class.forName("com.github.alexthe666.iceandfire.client.particle.CockatriceBeamRender");
+                    layer = (net.minecraft.client.renderer.RenderType) type.getField("TEXTURE_BEAM").get(null);
+                    render = type.getMethod("render", Entity.class, Entity.class, com.mojang.blaze3d.vertex.PoseStack.class,
+                            net.minecraft.client.renderer.MultiBufferSource.class, float.class);
+                }
+                if (render != null) render.invoke(null, from, to, pose, buffers, partial);
+            } catch (ReflectiveOperationException | LinkageError exception) {
+                render = null;
+                TinkersNewlife.LOGGER.warn("Could not render the Ice and Fire cockatrice beam", exception);
+            }
         }
-        int segments = Math.min(48, Math.max(5, (int) Math.ceil(length * 3.0D)));
-        double width = fromPlayer ? 0.125D : 0.087D;
-        Vec3 previous = start;
-        double previousPulse = 0.62D;
-        for (int i = 1; i <= segments; i++) {
-            double t = (double) i / segments;
-            double envelope = Math.sin(t * Math.PI);
-            double wave = phase + 9.0D * t - time * 0.28D;
-            Vec3 next = start.lerp(end, t).add(side.scale(Math.sin(wave) * envelope * width * 0.48D));
-            double pulse = 0.58D + 0.42D * Math.pow(0.5D + 0.5D * Math.sin(wave * 1.8D), 3.0D);
-            Vec3 outer = side.scale(width);
-            Vec3 core = side.scale(width * 0.32D);
-            // Transparent edges frame a dark plum center with a pale pulse traveling toward the target.
-            strip(out, pose, previous, next, outer, core, 0x452637, 0, 105, 0, 105);
-            strip(out, pose, previous, next, core.scale(-1), outer.scale(-1), 0x452637, 105, 0, 105, 0);
-            strip(out, pose, previous, next, core, Vec3.ZERO, 0xC787AE, 95, (int) (240 * previousPulse), 95, (int) (240 * pulse));
-            strip(out, pose, previous, next, Vec3.ZERO, core.scale(-1), 0xC787AE, (int) (240 * previousPulse), 95, (int) (240 * pulse), 95);
-            previous = next;
-            previousPulse = pulse;
+
+        private static void flush(net.minecraft.client.renderer.MultiBufferSource.BufferSource buffers) {
+            if (layer != null) buffers.endBatch(layer);
         }
-    }
-
-    private static void strip(VertexConsumer out, Matrix4f pose, Vec3 a, Vec3 b, Vec3 left, Vec3 right,
-                              int color, int alphaALeft, int alphaARight, int alphaBLeft, int alphaBRight) {
-        vertex(out, pose, a, left, color, alphaALeft);
-        vertex(out, pose, a, right, color, alphaARight);
-        vertex(out, pose, b, right, color, alphaBRight);
-        vertex(out, pose, b, left, color, alphaBLeft);
-    }
-
-    private static void vertex(VertexConsumer out, Matrix4f pose, Vec3 center, Vec3 offset, int rgb, int alpha) {
-        out.vertex(pose, (float) (center.x + offset.x), (float) (center.y + offset.y), (float) (center.z + offset.z))
-                .color((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255, alpha).endVertex();
     }
 
     @SubscribeEvent
@@ -233,18 +195,4 @@ public final class WitherGazeRenderer {
         }
     }
 
-    private static final class BeamLayer extends RenderType {
-        private static final RenderType TYPE = create("tinkersnewlife_wither_gaze", DefaultVertexFormat.POSITION_COLOR,
-                VertexFormat.Mode.QUADS, 2048, false, true, CompositeState.builder()
-                        .setShaderState(POSITION_COLOR_SHADER)
-                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                        .setCullState(NO_CULL)
-                        .setWriteMaskState(COLOR_WRITE)
-                        .createCompositeState(false));
-
-        private BeamLayer() {
-            super("tinkersnewlife_wither_gaze", DefaultVertexFormat.POSITION_COLOR,
-                    VertexFormat.Mode.QUADS, 2048, false, true, () -> {}, () -> {});
-        }
-    }
 }
