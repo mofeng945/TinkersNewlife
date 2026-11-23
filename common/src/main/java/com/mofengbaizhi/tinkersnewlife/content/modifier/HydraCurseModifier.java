@@ -1,13 +1,13 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -45,12 +45,8 @@ public final class HydraCurseModifier extends NoLevelsModifier {
     @SubscribeEvent public static void tick(LivingEvent.LivingTickEvent event) {
         var wearer = event.getEntity();
         if (wearer.level().isClientSide) return;
-        var regeneration = ModEffects.HYDRA_REGENERATION.get();
-        if (canRegenerate(wearer)) {
-            if (!wearer.hasEffect(regeneration)) {
-                wearer.addEffect(new MobEffectInstance(regeneration, MobEffectInstance.INFINITE_DURATION, 3, true, false, true));
-            }
-        } else if (wearer.hasEffect(regeneration)) wearer.removeEffect(regeneration);
+        VanillaEffectLease.maintain(wearer, MobEffects.REGENERATION, "hydra_curse",
+                canRegenerate(wearer), 3);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -61,7 +57,7 @@ public final class HydraCurseModifier extends NoLevelsModifier {
         // Record fire hits even if the chestplate is equipped only after the hit.
         wearer.getPersistentData().putLong(FIRE_UNTIL, now(level) + 100);
         if (active(wearer)) event.setAmount(event.getAmount() * 2);
-        wearer.removeEffect(ModEffects.HYDRA_REGENERATION.get());
+        VanillaEffectLease.maintain(wearer, MobEffects.REGENERATION, "hydra_curse", false, 3);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

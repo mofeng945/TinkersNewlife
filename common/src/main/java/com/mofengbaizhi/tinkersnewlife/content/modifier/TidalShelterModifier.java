@@ -50,7 +50,7 @@ public final class TidalShelterModifier extends Modifier {
 
     private static boolean isOwned(MobEffectInstance instance, int amplifier) {
         return instance != null && instance.isInfiniteDuration() && instance.getAmplifier() == amplifier
-                && !instance.isAmbient() && !instance.isVisible();
+                && !instance.isAmbient() && instance.showIcon();
     }
 
     private static MobEffectInstance create(MobEffect effect, int amplifier, MobEffectInstance hidden) {

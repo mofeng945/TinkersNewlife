@@ -22,31 +22,6 @@ public class ModEffects {
     public static final DeferredRegister<MobEffect> EFFECTS =
             DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, TinkersNewlife.MOD_ID);
 
-    public static final RegistryObject<MobEffect> HYDRA_REGENERATION = EFFECTS.register("hydra_regeneration",
-            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0xb45872) {
-                @Override public boolean isDurationEffectTick(int duration, int amplifier) { return true; }
-
-                @Override public void applyEffectTick(LivingEntity wearer, int amplifier) {
-                    if (!com.mofengbaizhi.tinkersnewlife.content.modifier.HydraCurseModifier.canRegenerate(wearer)) return;
-                    var vanilla = wearer.getEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
-                    if (vanilla == null || vanilla.getAmplifier() < 3) {
-                        var regeneration = net.minecraft.world.effect.MobEffects.REGENERATION;
-                        if (regeneration.isDurationEffectTick(wearer.tickCount, 3)) regeneration.applyEffectTick(wearer, 3);
-                    }
-                }
-            });
-
-    public static final RegistryObject<MobEffect> DARK_DENIZEN_REGENERATION = EFFECTS.register("dark_denizen_regeneration",
-            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0xcd5cab) {
-                @Override public boolean isDurationEffectTick(int duration, int amplifier) { return true; }
-                @Override public void applyEffectTick(LivingEntity wearer, int amplifier) {
-                    var other = wearer.getEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
-                    if (wearer.tickCount % 25 == 0 && (other == null || other.getAmplifier() < 1)) {
-                        net.minecraft.world.effect.MobEffects.REGENERATION.applyEffectTick(wearer, 1);
-                    }
-                }
-            });
-
     public static final RegistryObject<MobEffect> SOUL_PROJECTION = EFFECTS.register("soul_projection",
             () -> new MobEffect(MobEffectCategory.NEUTRAL, 0xa5dfb7) {});
 

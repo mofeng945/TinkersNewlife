@@ -111,10 +111,8 @@ public final class DarkDenizenModifier extends Modifier {
                 attr.addTransientModifier(new AttributeModifier(KNOCKBACK, "Dark Denizen", 1, AttributeModifier.Operation.ADDITION));
             } else if (!active && attr.getModifier(KNOCKBACK) != null) attr.removeModifier(KNOCKBACK);
         }
-        // Separate effect identity: unequipping the set never clears potion Regeneration.
-        var regeneration = ModEffects.DARK_DENIZEN_REGENERATION.get();
-        if (active && !wearer.hasEffect(regeneration)) {
-            wearer.addEffect(new MobEffectInstance(regeneration, -1, 1, true, false, true));
-        } else if (!active && wearer.hasEffect(regeneration)) wearer.removeEffect(regeneration);
+        // Use the vanilla effect/icon; the shared lease preserves stronger potion or beacon instances.
+        VanillaEffectLease.maintain(wearer, net.minecraft.world.effect.MobEffects.REGENERATION, "dark_denizen",
+                active, 1);
     }
 }
