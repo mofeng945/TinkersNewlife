@@ -75,6 +75,7 @@ public class ModCreativeTabs {
 
                                 if (ModList.get().isLoaded("iceandfire")) { output.accept(ModItems.TROLL_MIXTURE.get()); output.accept(ModItems.PIXIE_SILVER.get()); }
 
+                                if (ModList.get().isLoaded("iceandfire")) output.accept(ModItems.DREAD_SOULSTEEL.get());
                                 if (ModList.get().isLoaded("iceandfire")) output.accept(ModItems.CRYSTALLIZED_DRAGONBONE.get());
                                 // ----- 矿石 -----
                                 output.accept(ModItems.GHELOTH_ORE.get());
@@ -304,6 +305,7 @@ public class ModCreativeTabs {
                                 acceptItemIfPresent(output, "ice_blood_bucket");
                                 acceptItemIfPresent(output, "lightning_blood_bucket");
                                 acceptItemIfPresent(output, "molten_dread_bucket");
+                                acceptItemIfPresent(output, "molten_dread_soulsteel_bucket");
                                 acceptItemIfPresent(output, "molten_dreadsteel_bucket");
                                 // ----- 诡厄巫法组 / 启示录组 / 阶梯组 -----
                                 acceptItemIfPresent(output, "molten_cursed_metal_bucket");
@@ -448,6 +450,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("sea_serpent_fang", "iceandfire");
         MATERIAL_SOURCE_MOD.put("stymphalian_feather", "iceandfire");
         MATERIAL_SOURCE_MOD.put("ghost_ingot", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("dread_soulsteel", "iceandfire");
         MATERIAL_SOURCE_MOD.put("crystallized_dragonbone", "iceandfire");
         MATERIAL_SOURCE_MOD.put("pixie_silver", "iceandfire");
         MATERIAL_SOURCE_MOD.put("sea_beast_scales", "iceandfire");

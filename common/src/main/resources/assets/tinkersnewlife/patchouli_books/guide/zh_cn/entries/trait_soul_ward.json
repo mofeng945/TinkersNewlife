@@ -1,0 +1,16 @@
+{
+  "name": "魂庇",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:dread_soulsteel",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "穿戴护甲和手持盾牌上的魂庇等级相加。受到伤害后获得独立免伤窗口，持续 0.5 + 0.2 × 总等级秒，最多 1.5 秒。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "免伤期间挨打不会刷新窗口，但护甲仍损失耐久，消耗量为正常的总等级倍。"
+    }
+  ]
+}

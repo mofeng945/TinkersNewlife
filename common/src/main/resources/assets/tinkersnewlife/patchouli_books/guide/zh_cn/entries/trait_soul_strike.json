@@ -1,0 +1,16 @@
+{
+  "name": "魂击",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:dread_soulsteel",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "近战、远程或弹射物攻击命中时，悚怖伤害绕过护甲和其他减伤，直接扣除生命。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "若目标在空中，伤害乘以（1 + 0.5 × 魂击等级）。"
+    }
+  ]
+}

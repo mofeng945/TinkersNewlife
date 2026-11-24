@@ -145,6 +145,7 @@ public class ModItems {
     //  矿石方块物品
     // ============================================================
 
+    public static final RegistryObject<Item> DREAD_SOULSTEEL = ITEMS.register("dread_soulsteel", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> CRYSTALLIZED_DRAGONBONE = ITEMS.register("crystallized_dragonbone", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> PIXIE_SILVER = ITEMS.register("pixie_silver", () -> new Item(new Item.Properties()));
 

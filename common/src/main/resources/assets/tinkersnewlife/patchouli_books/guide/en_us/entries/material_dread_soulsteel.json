@@ -1,0 +1,24 @@
+{
+  "name": "Dread Soulsteel",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:dread_soulsteel",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Tier 4 cast material from Ice and Fire. At 1600°C alloy 100 mB molten dread, 125 mB liquid ectoplasm, 90 mB molten steel and 100 mB molten sapphire for 180 mB (two ingots)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Cast heads, bindings, handles, bow limbs, grips, maille, four armor platings, shield plating and shield cores. Use a gear cast for the core (360 mB), or a plate cast for shield plating (270 mB); assemble both into a plate shield."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Head: 355 durability, iron tier, 3 mining speed, 4 attack. Handle: +5% durability, attack damage and speed. Limb: 355 durability, +0.1 draw, +0.5 velocity, −0.1 accuracy. Grip: +5% durability, −0.1 accuracy, 2.5 attack. These parts and bindings grant $(l:trait_soul_strike)Soul Strike$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Plating durability/armor: helmet 210/3, chest 325/8, legs 295/6, boots 215/2. Each has 1.5 toughness and 0.5 displayed knockback resistance. Shield plating has 300 durability, 1.5 toughness and 1 displayed knockback resistance. Maille and shield cores have no stats. All seven grant $(l:trait_soul_ward)Soul Ward$()."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_dread_soulsteel_still",
+    "amount": 90
+  },
+  "temperature": 1600,
+  "output": "tinkersnewlife:dread_soulsteel",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ]
+}

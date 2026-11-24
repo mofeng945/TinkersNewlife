@@ -1,0 +1,16 @@
+{
+  "name": "Soul Ward",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:dread_soulsteel",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Soul Ward levels add up across worn armor and held shields. Taking damage opens a separate immunity window lasting 0.5 + 0.2 seconds per total level, capped at 1.5 seconds."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Further hits during the window do not extend it. Armor still wears normally, multiplied by the total Soul Ward level."
+    }
+  ]
+}

@@ -67,6 +67,8 @@ public final class IceAndFireFluids {
             1500, 5000, 800, 0xFF6A0DAD,
             FluidRegistrar.lavaProps(MapColor.COLOR_PURPLE));
 
+    public static final FluidRegistrar.FluidEntry MOLTEN_DREAD_SOULSTEEL = REG.entry("molten_dread_soulsteel",
+            2000, 10000, 1900, 0xFF184F68, FluidRegistrar.lavaProps(MapColor.COLOR_BLUE));
     public static final FluidRegistrar.FluidEntry MOLTEN_DREADSTEEL = REG.entry("molten_dreadsteel",
             2000, 8000, 1700, 0xFF2F2F2F,
             FluidRegistrar.lavaProps(MapColor.COLOR_BLACK));

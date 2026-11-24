@@ -3,6 +3,9 @@
     "com/mofengbaizhi/tinkersnewlife/mixin/MomoBossMusicMixin": {
       "getSituationalMusic": "Lnet/minecraft/client/Minecraft;m_91107_()Lnet/minecraft/sounds/Music;"
     },
+    "com/mofengbaizhi/tinkersnewlife/mixin/SoulStrikeSourceMixin": {
+      "hurt": "Lnet/minecraft/world/entity/LivingEntity;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
+    },
     "com/mofengbaizhi/tinkersnewlife/mixin/DragonSlayerShieldMixin": {
       "isDamageSourceBlocked": "Lnet/minecraft/world/entity/LivingEntity;m_21275_(Lnet/minecraft/world/damagesource/DamageSource;)Z"
     },
@@ -61,6 +64,9 @@
     "searge": {
       "com/mofengbaizhi/tinkersnewlife/mixin/MomoBossMusicMixin": {
         "getSituationalMusic": "Lnet/minecraft/client/Minecraft;m_91107_()Lnet/minecraft/sounds/Music;"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/SoulStrikeSourceMixin": {
+        "hurt": "Lnet/minecraft/world/entity/LivingEntity;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
       },
       "com/mofengbaizhi/tinkersnewlife/mixin/DragonSlayerShieldMixin": {
         "isDamageSourceBlocked": "Lnet/minecraft/world/entity/LivingEntity;m_21275_(Lnet/minecraft/world/damagesource/DamageSource;)Z"

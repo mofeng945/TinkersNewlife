@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
+    {"id": "tinkersnewlife:molten_dread_soulsteel_bucket", "required": false},
     "tinkersnewlife:gheloth_blood_bucket",
     "tinkersnewlife:molten_nicholas_blessing_bucket",
     "tinkersnewlife:hastur_malice_bucket",

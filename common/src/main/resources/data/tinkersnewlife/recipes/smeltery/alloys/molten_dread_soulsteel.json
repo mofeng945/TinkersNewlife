@@ -1,0 +1,32 @@
+{
+  "type": "tconstruct:alloy",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ],
+  "inputs": [
+    {
+      "fluid": "tinkersnewlife:molten_dread_still",
+      "amount": 100
+    },
+    {
+      "fluid": "tinkersnewlife:liquid_ectoplasm_still",
+      "amount": 125
+    },
+    {
+      "tag": "forge:molten_steel",
+      "amount": 90
+    },
+    {
+      "tag": "forge:molten_sapphire",
+      "amount": 100
+    }
+  ],
+  "result": {
+    "fluid": "tinkersnewlife:molten_dread_soulsteel_still",
+    "amount": 180
+  },
+  "temperature": 1600
+}

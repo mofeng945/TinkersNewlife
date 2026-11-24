@@ -55,6 +55,9 @@ import java.util.function.Consumer;
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class TruePierce {
+    // Treat the inner damage slices as a single hit for the Soul Ward timer.
+    private static final ThreadLocal<LivingEntity> WARD_MULTI_HIT = new ThreadLocal<>();
+    public static boolean applyingSlicesTo(LivingEntity target) { return WARD_MULTI_HIT.get() == target; }
 
     private TruePierce() {
     }
@@ -619,6 +622,8 @@ public final class TruePierce {
         // ⭐ 同心戒：互为同伴的两名玩家互相免疫术式与领域效果 —— 穿透（真伤）也不例外。
         //    必须挡在这里：本方法是"差额直接 setHealth 补齐"的，事件层（LivingAttackEvent）拦不住它 ✗
         if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(attacker, target)) return 0.0F;
+        if (com.mofengbaizhi.tinkersnewlife.content.modifier.SoulWardModifier.isProtected(target)
+                && com.mofengbaizhi.tinkersnewlife.content.modifier.SoulWardModifier.tryBlockDirect(target, source(target.level(), attacker), damage)) return 0.0F;
         // ⭐ 咒力伤害记账（死亡信息统一成"被诅咒致死"）：穿透走的是"差额 setHealth 补齐"，
         //    死亡可能不在 hurt() 里发生，但标记在 hurt() 之前打上就够 ——
         //    见 CurseDeath 的说明（天逆鉾/游云/领域/术式的穿透都路过这里 ✓）
@@ -646,9 +651,12 @@ public final class TruePierce {
         float hpBefore = target.getHealth();
         // ⭐⭐ §1231 **穿透前记一次"真身血"** ✗ —— ⭐ 用来算"这一击实际打掉多少" ✓
         float rawBefore = rawHealth(target);
+        LivingEntity outerPierceTarget = WARD_MULTI_HIT.get();
+        WARD_MULTI_HIT.set(target);
         try {
             applyInner(attacker, target, damage);
         } finally {
+            if (outerPierceTarget == null) WARD_MULTI_HIT.remove(); else WARD_MULTI_HIT.set(outerPierceTarget);
             if (transcend) AbsoluteDefense.end(attacker);
         }
 
@@ -690,6 +698,7 @@ public final class TruePierce {
             } catch (Throwable ignored) {
             }
         }
+        if (tnlDealt > 0) com.mofengbaizhi.tinkersnewlife.content.modifier.SoulWardModifier.recordHit(target);
         return tnlDealt;
     }
 

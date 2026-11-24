@@ -1,0 +1,16 @@
+{
+  "name": "Soul Strike",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:dread_soulsteel",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Melee and ranged hits deal dread damage directly to health, bypassing armor and other damage reductions."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Against an airborne target, multiply damage by (1 + 0.5 × Soul Strike level)."
+    }
+  ]
+}

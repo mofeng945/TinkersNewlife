@@ -1,0 +1,52 @@
+{
+  "default": [
+    {
+      "level": 1,
+      "name": "tinkersnewlife:soul_strike"
+    }
+  ],
+  "perStat": {
+    "tconstruct:plating_helmet": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_ward"
+      }
+    ],
+    "tconstruct:plating_chestplate": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_ward"
+      }
+    ],
+    "tconstruct:plating_leggings": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_ward"
+      }
+    ],
+    "tconstruct:plating_boots": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_ward"
+      }
+    ],
+    "tconstruct:maille": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_ward"
+      }
+    ],
+    "tconstruct:shield_core": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_ward"
+      }
+    ],
+    "tconstruct:plating_shield": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_ward"
+      }
+    ]
+  }
+}

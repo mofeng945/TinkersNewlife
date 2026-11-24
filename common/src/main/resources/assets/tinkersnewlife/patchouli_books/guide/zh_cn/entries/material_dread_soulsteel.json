@@ -1,0 +1,24 @@
+{
+  "name": "悚域魂钢",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:dread_soulsteel",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动的 T4 浇筑材料。100 mB 液态悚怖 + 125 mB 液态灵质 + 90 mB 熔融钢 + 100 mB 熔融蓝宝石，在 1600°C 下合成 180 mB 熔融悚域魂钢，即两锭。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "可浇筑头部、绑定结、手柄、弓臂、弓把、锁链基底、四种护甲镶板、盾牌镶板和盾芯。盾芯用齿轮模（360 mB），盾牌镶板用板模（270 mB），二者可再装成镶板盾。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "头部：耐久355／铁级／挖速3／近战4。手柄：耐久、近战伤害、攻速各 +5%，挖速不变。弓臂：耐久355／拉速+0.1／初速+0.5／精度−0.1。弓把：耐久+5%／精度−0.1／近战2.5。上述部件和绑定结有$(l:trait_soul_strike)魂击$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "头、胸、腿、靴镶板耐久／护甲为210／3、325／8、295／6、215／2；韧性1.5，击退抗性0.5。盾镶板耐久300、韧性1.5、击退抗性1。锁链与盾芯无额外属性。七类甲盾部件均有$(l:trait_soul_ward)魂庇$()。"
+    }
+  ]
+}
