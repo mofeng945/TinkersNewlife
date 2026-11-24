@@ -24,6 +24,12 @@ def values(tag):
         result[name] = required
     return result
 
+for texture_path in ASSETS.glob('mantle/fluid_texture/*.json'):
+    texture = load(texture_path)
+    if 'camera' in texture:
+        opacity = texture.get('camera_opacity')
+        assert type(opacity) in (int, float) and 0 <= opacity <= 1, ('invalid camera_opacity', texture_path)
+
 names = set()
 for source in ROOT.glob('*/src/main/java/**/*Fluids.java'):
     names.update(re.findall(r'\bentry\(\s*"([a-z0-9_]+)"', source.read_text('utf8')))

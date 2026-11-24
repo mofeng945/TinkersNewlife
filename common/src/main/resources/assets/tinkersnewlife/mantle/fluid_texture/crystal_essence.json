@@ -2,6 +2,7 @@
   "still": "tinkersnewlife:block/crystal_essence_still",
   "flowing": "tinkersnewlife:block/crystal_essence_flowing",
   "camera": "tinkersnewlife:block/crystal_essence_camera",
+  "camera_opacity": 0.1,
   "color": "FFFFFFFF",
   "fog": {
     "calculate_color": true,

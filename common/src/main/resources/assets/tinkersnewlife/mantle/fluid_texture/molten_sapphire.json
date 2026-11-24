@@ -2,6 +2,7 @@
   "still": "tinkersnewlife:block/molten_sapphire_still",
   "flowing": "tinkersnewlife:block/molten_sapphire_flowing",
   "camera": "tinkersnewlife:block/molten_sapphire_camera",
+  "camera_opacity": 0.1,
   "color": "FFFFFFFF",
   "fog": {
     "calculate_color": true,
