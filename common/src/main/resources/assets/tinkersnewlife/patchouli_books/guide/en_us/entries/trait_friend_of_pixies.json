@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Equip armor or a shield with this $(l:material_pixie_silver)Pixie Silver$() trait and pixies will keep their distance and cannot steal from you. A jar containing a pixie in your inventory grants a boon based on its color. The boon level is your total equipped Friend of Pixies level, capped as listed on the next page."
+      "text": "Equip armor or a shield with this $(l:material_pixie_silver)Pixie Silver$() trait and pixies will keep their distance and cannot steal from you. At three or more combined trait levels, carrying a jar containing a pixie grants a boon based on its color. The boon level is your total equipped Friend of Pixies level, capped as listed on the next page."
     },
     {
       "type": "patchouli:text",

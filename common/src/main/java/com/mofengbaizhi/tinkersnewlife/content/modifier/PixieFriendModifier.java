@@ -41,7 +41,7 @@ public final class PixieFriendModifier extends Modifier {
     @SubscribeEvent public static void tick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player) || player.tickCount % 10 != 0) return;
         int rank = rank(player);
-        if (rank <= 0) return;
+        if (rank < 3) return; // Only jar boons require three combined levels.
         int colors = jarMask(player.getOffhandItem());
         for (var stack : player.getInventory().items) { // 36 storage slots, including the hotbar
             colors |= jarMask(stack);
