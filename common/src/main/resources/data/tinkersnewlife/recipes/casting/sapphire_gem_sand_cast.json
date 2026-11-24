@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "iceandfire"
+    }
+  ],
+  "cast": {
+    "tag": "tconstruct:casts/single_use/gem"
+  },
+  "cast_consumed": true,
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_sapphire_still",
+    "amount": 100
+  },
+  "result": "iceandfire:sapphire_gem",
+  "cooling_time": 90
+}

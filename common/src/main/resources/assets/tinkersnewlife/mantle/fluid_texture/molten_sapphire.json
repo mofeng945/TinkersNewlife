@@ -1,0 +1,12 @@
+{
+  "still": "tinkersnewlife:block/molten_sapphire_still",
+  "flowing": "tinkersnewlife:block/molten_sapphire_flowing",
+  "camera": "tinkersnewlife:block/molten_sapphire_camera",
+  "color": "FFFFFFFF",
+  "fog": {
+    "calculate_color": true,
+    "end": 2,
+    "shape": "sphere",
+    "start": 0.25
+  }
+}

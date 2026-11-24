@@ -1,0 +1,12 @@
+{
+  "still": "tinkersnewlife:block/crystal_essence_still",
+  "flowing": "tinkersnewlife:block/crystal_essence_flowing",
+  "camera": "tinkersnewlife:block/crystal_essence_camera",
+  "color": "FFFFFFFF",
+  "fog": {
+    "calculate_color": true,
+    "end": 2,
+    "shape": "sphere",
+    "start": 0.25
+  }
+}

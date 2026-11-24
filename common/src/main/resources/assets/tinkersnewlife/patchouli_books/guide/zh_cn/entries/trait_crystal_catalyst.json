@@ -1,0 +1,20 @@
+{
+  "name": "触媒",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:crystallized_dragonbone",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "每级增加 20% 耐久，有挖掘速度的工具每级再提升 5% 挖掘速度。已存在的龙钢、灵锭和悚怖钢材料特性均额外增加与触媒等级相同的等级；不会凭空获得这些特性。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "近战、远程或弹射物攻击命中时，根据使用者所处群系触发效果。沙漠：施加饥饿，亡灵还会受到日光灼烧。热带雨林或沼泽：中毒 I。寒冷群系：霜冻。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "海洋：剥夺目标氧气，并造成一次溺水伤害。下界：凋零 I。末地：阻止目标传送。持续类群系效果均为每级 2 秒。"
+    }
+  ]
+}

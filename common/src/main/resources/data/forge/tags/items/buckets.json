@@ -107,6 +107,50 @@
     {
       "id": "tinkersnewlife:liquid_lightning_bucket",
       "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_sapphire_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:crystal_essence_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:flowing_stardust_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:liquid_ectoplasm_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:liquid_evil_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:liquid_holy_light_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_etherium_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_pixie_silver_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_sinister_glow_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_void_metal_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:watcher_ectoplasm_bucket",
+      "required": false
     }
   ]
 }

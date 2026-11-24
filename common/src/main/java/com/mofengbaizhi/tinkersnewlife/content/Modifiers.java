@@ -19,6 +19,7 @@ public class Modifiers {
     public static final StaticModifier<SupervisorModifier> SUPERVISOR =
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
+    public static final StaticModifier<CrystalCatalystModifier> CRYSTAL_CATALYST = MODIFIERS.register("crystal_catalyst", CrystalCatalystModifier::new);
     public static final StaticModifier<PixieTreasureModifier> PIXIE_TREASURE = MODIFIERS.register("pixie_treasure", PixieTreasureModifier::new);
     public static final StaticModifier<PixieFriendModifier> FRIEND_OF_PIXIES = MODIFIERS.register("friend_of_pixies", PixieFriendModifier::new);
 

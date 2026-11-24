@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:molten_sapphire_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_sapphire_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:crystal_essence_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:crystal_essence_flowing",
+      "required": false
+    }
+  ]
+}

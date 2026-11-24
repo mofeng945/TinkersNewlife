@@ -1,0 +1,24 @@
+{
+  "name": "晶化龙骨",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:crystallized_dragonbone",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "将冰火传说的蓝宝石熔成熔融蓝宝石，每颗 100 mB。将熔融绿宝石、熔融钻石和熔融蓝宝石各 100 mB 在 1450°C 合金，得到 100 mB 晶华。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "在浇铸台上放置一根冰火传说龙骨，浇入 100 mB 晶华，得到一根晶化龙骨。它是四阶部件台材料，每根 1 个材料单位，可制作头部、手柄、绑定结、弓臂和弓把；每个部件赋予一级$(l:trait_crystal_catalyst)触媒$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "头部：耐久 750，钻石级，挖速 5，近战伤害 7.5。手柄：耐久 +20%、伤害 +15%、攻速 −8%，挖速不变。绑定结没有额外数值。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "弓臂：耐久 750、拉弓速度 −0.2、初速 +1.5、精确度 −0.1。弓把：耐久 +20%、精确度 −0.1、近战伤害 5.5。"
+    }
+  ]
+}

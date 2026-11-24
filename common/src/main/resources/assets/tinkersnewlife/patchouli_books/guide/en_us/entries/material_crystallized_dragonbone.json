@@ -1,0 +1,24 @@
+{
+  "name": "Crystallized Dragonbone",
+  "category": "tinkersnewlife:materials",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:crystallized_dragonbone",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Melt one Ice and Fire sapphire into 100 mB of molten sapphire. Alloy 100 mB each of molten emerald, molten diamond and molten sapphire at 1450°C to yield 100 mB of crystal essence."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Pour 100 mB of crystal essence over one Ice and Fire dragon bone on a casting table to make one crystallized dragonbone. Each bone is one unit of tier 4 Part Builder material for heads, handles, bindings, bow limbs and grips. Each part grants one level of $(l:trait_crystal_catalyst)Catalyst$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Head: 750 durability, diamond harvest tier, 5 mining speed and 7.5 melee damage. Handle: +20% durability, +15% damage, −8% attack speed and unchanged mining speed. Bindings have no extra stats."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Limb: 750 durability, −0.2 draw speed, +1.5 velocity and −0.1 accuracy. Grip: +20% durability, −0.1 accuracy and 5.5 melee damage."
+    }
+  ]
+}

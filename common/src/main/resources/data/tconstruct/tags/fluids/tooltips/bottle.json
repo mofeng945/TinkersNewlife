@@ -1,0 +1,37 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:fire_blood_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:fire_blood_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:ice_blood_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:ice_blood_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:lightning_blood_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:lightning_blood_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:liquid_lightning_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:liquid_lightning_flowing",
+      "required": false
+    }
+  ]
+}

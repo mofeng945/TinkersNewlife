@@ -1,0 +1,20 @@
+{
+  "name": "Catalyst",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:crystallized_dragonbone",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Each level adds 20% durability and, on tools with mining speed, 5% mining speed. Existing Dragonsteel, Ghost Ingot and Dreadsteel material traits each gain levels equal to the Catalyst level. Missing traits are not granted."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Melee, ranged and projectile hits respond to the biome of the wielder. Deserts inflict Hunger and subject undead targets to sunlight burning; jungles and swamps inflict Poison I; cold biomes inflict Frost."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Oceans drain oxygen and deal one hit of drowning damage; the Nether inflicts Wither I; the End prevents teleportation. Biome effects with a duration last two seconds per level."
+    }
+  ]
+}

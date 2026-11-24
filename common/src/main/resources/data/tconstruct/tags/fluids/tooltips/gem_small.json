@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:molten_dread_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dread_flowing",
+      "required": false
+    }
+  ]
+}

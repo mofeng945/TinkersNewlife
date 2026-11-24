@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:molten_sapphire_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_sapphire_flowing",
+      "required": false
+    },
+    {
+      "id": "#tinkersinnovation:molten_sapphire",
+      "required": false
+    }
+  ]
+}

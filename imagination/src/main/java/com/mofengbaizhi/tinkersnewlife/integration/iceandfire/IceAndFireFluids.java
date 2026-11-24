@@ -57,6 +57,11 @@ public final class IceAndFireFluids {
             2000, 10000, 1100, 0xFFEFA2D7,
             FluidRegistrar.lavaProps(MapColor.COLOR_PINK));
 
+    public static final FluidRegistrar.FluidEntry MOLTEN_SAPPHIRE = REG.entry("molten_sapphire",
+            2000, 10000, 1450, 0xFF1C48DA, FluidRegistrar.lavaProps(MapColor.COLOR_BLUE));
+    public static final FluidRegistrar.FluidEntry CRYSTAL_ESSENCE = REG.entry("crystal_essence",
+            2000, 10000, 1750, 0xFF5BE1DF, FluidRegistrar.lavaProps(MapColor.COLOR_CYAN));
+
     // ---- 悚怖（冰火悚怖碎片） ----
     public static final FluidRegistrar.FluidEntry MOLTEN_DREAD = REG.entry("molten_dread",
             1500, 5000, 800, 0xFF6A0DAD,

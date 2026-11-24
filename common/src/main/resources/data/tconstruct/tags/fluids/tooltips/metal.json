@@ -1,0 +1,149 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:molten_arcane_ingot_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_arcane_ingot_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_cursed_metal_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_cursed_metal_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dark_metal_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dark_metal_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_fire_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_fire_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_ice_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_ice_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_lightning_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_lightning_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dreadsteel_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dreadsteel_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_durandal_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_durandal_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_etherium_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_etherium_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_ghost_ingot_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_ghost_ingot_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_mithril_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_mithril_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_pixie_silver_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_pixie_silver_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_pyrium_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_pyrium_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_sinister_glow_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_sinister_glow_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_void_metal_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_void_metal_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:holy_spirit_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:holy_spirit_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:magic_gold_essence_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:magic_gold_essence_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:origin_polymer_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:origin_polymer_flowing",
+      "required": false
+    }
+  ]
+}
