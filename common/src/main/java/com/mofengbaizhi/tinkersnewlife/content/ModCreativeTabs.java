@@ -146,7 +146,7 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.ENERGY_CONVERTER.get());
 
                                 // ----- §910 帕秋莉的百宝书（吞噬帕秋莉书 ⇒ 一本里查阅全部 ✓）-----
-                                output.accept(ModItems.PATCHOULI_COMPENDIUM.get());
+                                if (com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isPatchouli()) output.accept(ModItems.PATCHOULI_COMPENDIUM.get());
 
                                 // ----- §1096 唱片「墨封白织的唱片」（放进原版唱片机 ⇒ 16 格内的 fufu 一起跳舞 ✓）-----
                                 output.accept(ModItems.MUSIC_DISC_DOLL_MUSIC.get());

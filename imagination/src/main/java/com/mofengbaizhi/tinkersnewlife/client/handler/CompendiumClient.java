@@ -145,6 +145,7 @@ public final class CompendiumClient {
      */
     @SubscribeEvent
     public static void onMousePressed(ScreenEvent.MouseButtonPressed.Pre event) {
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isPatchouli()) return;
         if (event.getButton() != 1) return;                              // 只认右键 ✓
         if (!(event.getScreen() instanceof AbstractContainerScreen<?> screen)) return;
 

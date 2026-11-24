@@ -229,6 +229,8 @@ public class CompendiumItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isPatchouli()) return InteractionResultHolder.pass(stack);
+
         // 普通右键 = 打开"查阅"界面（纯客户端 ✓ 数据就在手上这叠的 NBT 里 ⇒ 不用发包 ✓）
         if (level.isClientSide) {
             // ⚠ 客户端类**不能**在公共代码里直接引用（§801/§813 的坑 ✗）⇒ 走 DistExecutor 甩过去 ✓

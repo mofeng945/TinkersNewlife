@@ -502,10 +502,14 @@ public class ModItems {
      * ⇒ 帕秋莉不在场时那条分支永不执行 ⇒ 该类<b>永远不会被加载</b> ✓
      * （这正是本仓 {@code integration/**} 一直强调的"用 isLoaded 闸门 ＋ 分支挡住类加载" ✓）。
      */
+    private static final class PatchouliGuideFactory {
+        private static Item create() { return new vazkii.patchouli.common.item.ItemModBook(); }
+    }
+
     public static final RegistryObject<Item> GUIDE_BOOK =
             ITEMS.register("guide_book", () -> com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader
                     .isPatchouli()
-                    ? new vazkii.patchouli.common.item.ItemModBook()
+                    ? PatchouliGuideFactory.create()
                     : new Item(new Item.Properties().stacksTo(1)));
 
     /**

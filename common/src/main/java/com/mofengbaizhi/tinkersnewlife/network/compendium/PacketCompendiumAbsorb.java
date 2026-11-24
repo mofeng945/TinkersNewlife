@@ -78,7 +78,7 @@ public class PacketCompendiumAbsorb {
     public static void handle(PacketCompendiumAbsorb packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
-            if (player == null) return;
+            if (player == null || !com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isPatchouli()) return;
 
             LOG.info("[百宝书] 收到吞噬请求：书id={} 物品={} 来源={}（0光标/1主手/2背包/3创造光标·客户端已登记）",
                     packet.bookId, packet.itemId, packet.source);
