@@ -1,5 +1,6 @@
 {
-  "color": "FF184F68",
+  "color": "FF537586",
+  "texture": "tinkersnewlife:dread_soulsteel_blue_temper",
   "fallbacks": [
     "metal"
   ],
@@ -26,37 +27,37 @@
       "palette": [
         {
           "grey": 0,
-          "path": "tinkersnewlife:generator/dread_soulsteel_32",
+          "path": "tinkersnewlife:generator/dread_soulsteel_blue_temper",
           "color": "FF222222"
         },
         {
           "grey": 63,
-          "path": "tinkersnewlife:generator/dread_soulsteel_32",
+          "path": "tinkersnewlife:generator/dread_soulsteel_blue_temper",
           "color": "FF707070"
         },
         {
           "grey": 102,
-          "path": "tinkersnewlife:generator/dread_soulsteel_32",
+          "path": "tinkersnewlife:generator/dread_soulsteel_blue_temper",
           "color": "FF969696"
         },
         {
           "grey": 140,
-          "path": "tinkersnewlife:generator/dread_soulsteel_32",
+          "path": "tinkersnewlife:generator/dread_soulsteel_blue_temper",
           "color": "FFB5B5B5"
         },
         {
           "grey": 178,
-          "path": "tinkersnewlife:generator/dread_soulsteel_32",
+          "path": "tinkersnewlife:generator/dread_soulsteel_blue_temper",
           "color": "FFD4D4D4"
         },
         {
           "grey": 216,
-          "path": "tinkersnewlife:generator/dread_soulsteel_32",
+          "path": "tinkersnewlife:generator/dread_soulsteel_blue_temper",
           "color": "FFEBEBEB"
         },
         {
           "grey": 255,
-          "path": "tinkersnewlife:generator/dread_soulsteel_32",
+          "path": "tinkersnewlife:generator/dread_soulsteel_blue_temper",
           "color": "FFFFFFFF"
         }
       ]
