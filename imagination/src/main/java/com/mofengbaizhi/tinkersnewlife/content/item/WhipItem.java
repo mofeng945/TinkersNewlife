@@ -265,18 +265,19 @@ public class WhipItem extends ModifiableItem {
      */
     @Override
     public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
-        if (!(entity instanceof Player player) || player.level().isClientSide) {
-            return false;
+        if (entity instanceof Player player && stack == player.getMainHandItem()) requestLash(player);
+        return false;
+    }
+
+    /** Both vanilla fallbacks and the explicit multiplayer input share one server-side gate. */
+    public static void requestLash(Player player) {
+        if (player.level().isClientSide || !player.isAlive() || player.isSpectator() || player.isUsingItem()
+                || com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.blocksUse(player)) return;
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof WhipItem) || isBroken(stack)) return;
+        if (WhipLashEntity.startLash(player) && !player.getAbilities().instabuild) {
+            ToolDamageUtil.damageAnimated(ToolStack.from(stack), 1, player, InteractionHand.MAIN_HAND);
         }
-        if (isBroken(stack)) {
-            return false;
-        }
-        // §1057 冷却 ＝ 攻速（attackPeriodTicks）✓ —— startLash 内部判断冷却并重置攻击冷却 ✓
-        WhipLashEntity.startLash(player);
-        if (!player.getAbilities().instabuild) {
-            ToolDamageUtil.damageAnimated(ToolStack.from(stack), 1, player, player.getUsedItemHand());
-        }
-        return false;                             // 不取消这次挥击本身 ✓
     }
 
     /**
@@ -289,7 +290,7 @@ public class WhipItem extends ModifiableItem {
     public boolean onLeftClickEntity(ItemStack stack, Player player, net.minecraft.world.entity.Entity entity) {
         // 打实体时挥击包**不一定**会来 ✓ ⇒ 这里补一次抽击 ✓（冷却判断在 startLash 里 ✓）
         if (!player.level().isClientSide && !isBroken(stack)) {
-            WhipLashEntity.startLash(player);
+            requestLash(player);
         }
         return true;                              // ⚠ 无论如何都取消这次近战伤害 ✓
     }

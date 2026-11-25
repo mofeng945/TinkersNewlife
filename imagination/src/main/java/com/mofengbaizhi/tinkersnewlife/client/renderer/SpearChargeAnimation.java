@@ -5,7 +5,16 @@ import com.mojang.math.Axis;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * <b>长矛蓄力/冲刺动画</b>（§844）—— 照搬 MC 1.21.11 原版 {@code SpearAnimations} 的数学 ✓。
@@ -54,7 +63,91 @@ public final class SpearChargeAnimation {
     private static final float ATTACK_DOWN = 0.075F;     // 下压多少
     private static final float ATTACK_PITCH = -70.0F;    // 绕 XP 转多少度 ✓
 
+    private static final Map<LivingEntity, VisualUse> VISUAL_USES = new WeakHashMap<>();
+
+    private static final class VisualUse {
+        final Item item;
+        float held;
+        int lastUseTick;
+
+        VisualUse(Item item) {
+            this.item = item;
+        }
+    }
+
     private SpearChargeAnimation() {}
+
+    /** Render-only clock shared by the first-person item, third-person arm, and third-person item. */
+    public static float visualTime(LivingEntity entity, float partialTick) {
+        if (!holdingSpear(entity)) {
+            VISUAL_USES.remove(entity);
+            return 0.0F;
+        }
+        Item item = entity.getMainHandItem().getItem();
+        VisualUse state = VISUAL_USES.get(entity);
+        if (state != null && state.item != item) {
+            VISUAL_USES.remove(entity);
+            state = null;
+        }
+        if (usingSpear(entity)) {
+            if (state == null) {
+                state = new VisualUse(item);
+                VISUAL_USES.put(entity, state);
+            }
+            state.held = Math.min(ATTACK_END, entity.getTicksUsingItem() + partialTick);
+            state.lastUseTick = entity.tickCount;
+            return state.held;
+        }
+        if (state == null) return 0.0F;
+
+        float remaining;
+        if (entity instanceof net.minecraft.client.player.LocalPlayer player) {
+            // Cooldown is a remaining fraction: 1 at release, 0 at the end.
+            remaining = player.getCooldowns().getCooldownPercent(item, partialTick);
+        } else {
+            // Observers don't receive another player's item cooldowns. Only unwind a use we saw.
+            int elapsed = Math.max(0, entity.tickCount - state.lastUseTick - 1);
+            remaining = 1.0F - (elapsed + partialTick)
+                    / com.mofengbaizhi.tinkersnewlife.content.item.SpearItem.RETRACT_TICKS;
+        }
+        if (remaining <= 0.0F) {
+            VISUAL_USES.remove(entity);
+            return 0.0F;
+        }
+        // Early release unwinds the last visible pose, not the fully extended pose.
+        return state.held * remaining;
+    }
+
+    /** Ease the switch between the vanilla grip and the authored pose without changing phase times. */
+    public static float visualWeight(float time) {
+        float p = Mth.clamp(time / (RAISE_END * 0.5F), 0.0F, 1.0F);
+        return p * p * (3.0F - 2.0F * p);
+    }
+
+    /** Interpolate translations, rotations and scale separately so the model doesn't shear. */
+    public static Matrix4f blendTransform(Matrix4f from, Matrix4f to, float weight) {
+        if (weight <= 0.0F) return new Matrix4f(from);
+        if (weight >= 1.0F) return new Matrix4f(to);
+        Vector3f position = from.getTranslation(new Vector3f()).lerp(to.getTranslation(new Vector3f()), weight);
+        Quaternionf rotation = from.getUnnormalizedRotation(new Quaternionf())
+                .slerp(to.getUnnormalizedRotation(new Quaternionf()), weight);
+        Vector3f scale = from.getScale(new Vector3f()).lerp(to.getScale(new Vector3f()), weight);
+        return new Matrix4f().translationRotateScale(position, rotation, scale);
+    }
+
+    /** Additional forward stroke in camera space; authored model-space angles remain untouched. */
+    public static void firstPersonStroke(PoseStack pose, float time) {
+        float p = progress(time, RAISE_END, ATTACK_END);
+        pose.translate(0.0D, 0.0D, -0.16D * p * p * (3.0F - 2.0F * p));
+    }
+
+    public static void applyTransform(PoseStack pose, Matrix4f transform) {
+        pose.last().pose().mul(transform);
+        org.joml.Matrix3f normal = new org.joml.Matrix3f().set(transform);
+        if (Math.abs(normal.determinant()) > 1.0E-6F) {
+            pose.last().normal().mul(normal.invert().transpose());
+        }
+    }
 
     // ============================================================
     //  进度与缓和（照原版语义 ✓）
@@ -198,9 +291,7 @@ public final class SpearChargeAnimation {
      */
     public static void thirdPersonArm(float[] armRotX, float[] armRotY, float[] armRotZ,
                                       boolean rightArm, float headRotX, float headRotY,
-                                      float timeHeld, float retractProgress) {
-        // §911 收回同样用"有效时间倒着走"这一招 ✓
-        if (timeHeld <= 0.0F) timeHeld = THRUST_END * (1.0F - Mth.clamp(retractProgress, 0.0F, 1.0F));
+                                      float timeHeld) {
         int invert = rightArm ? 1 : -1;
         float yRot = -0.1F * (float) invert + headRotY;
         float xRot = -1.5707964F + headRotX + 0.8F;
@@ -322,7 +413,7 @@ public final class SpearChargeAnimation {
     /** 这个生物手上"正在使用"的是不是我们的长矛 ✓ */
     public static boolean usingSpear(LivingEntity entity) {
         ItemStack use = entity.getUseItem();
-        return !use.isEmpty()
+        return entity.isUsingItem() && entity.getUsedItemHand() == InteractionHand.MAIN_HAND
                 && use.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.SpearItem;
     }
 }

@@ -121,7 +121,7 @@ public class WhipLashEntity extends Entity {
      * （用户口径：「<b>攻速只影响冷却</b>」✓ —— 不影响力度/射程 ✓，驱动长度恒为 3＋4 ✓）；
      * 同时兼作"挥击包与命中包同 tick 都来、只甩一次"的闸门 ✓。
      */
-    private static final Map<UUID, Integer> NEXT_LASH_TICK = new HashMap<>();
+    private static final Map<Player, Integer> NEXT_LASH_TICK = new java.util.WeakHashMap<>();
 
     private final WhipPhysics physics = new WhipPhysics();
     private final WhipPhysics.Drive drive = new WhipPhysics.Drive();
@@ -157,19 +157,20 @@ public class WhipLashEntity extends Entity {
 
     /** 冷却是否已好 ✓ —— 攻速越快 ⇒ 间隔越短 ⇒ 抽得越频繁 ✓（与力度/射程无关 ✓） */
     public static boolean isLashReady(Player player) {
-        Integer next = NEXT_LASH_TICK.get(player.getUUID());
+        Integer next = NEXT_LASH_TICK.get(player);
         return next == null || player.tickCount >= next;
     }
 
     /** 左键：一次抽击 ✓（<b>冷却</b>按攻速算 ✓；抽击动作本身恒为 3＋4 tick ✓） */
-    public static void startLash(Player player) {
+    public static boolean startLash(Player player) {
         if (!isLashReady(player)) {
-            return;
+            return false;
         }
-        NEXT_LASH_TICK.put(player.getUUID(), player.tickCount + WhipItem.attackPeriodTicks(player));
+        NEXT_LASH_TICK.put(player, player.tickCount + WhipItem.attackPeriodTicks(player));
         // 照参照 beginPrecisionNow ✓：重置攻击冷却 ⇒ 准星上的攻击指示器与鞭子冷却同步 ✓
         player.resetAttackStrengthTicker();
         spawn(player, PHASE_LASH);
+        return true;
     }
 
     /** §1058 <b>不受抽击冷却限制</b>地挥一鞭 ✓ —— 完美格挡/反射时用 ✓（视觉与判定都要立刻出现 ✓） */
@@ -186,7 +187,9 @@ public class WhipLashEntity extends Entity {
             //   ⚠ 已失效的旧记录要顺手清掉 ✗（它可能被 tickLifetime 自行 discard 了 ✓）
             WhipLashEntity existing = ACTIVE_LASHES.get(player.getUUID());
             if (existing != null) {
-                if (existing.isAlive() && !existing.isRemoved()) {
+                if (existing.level() == player.level() && existing.isAlive() && !existing.isRemoved()) {
+                    existing.setPhase(PHASE_LASH);
+                    existing.setRetractTick(0);
                     existing.setBowstringVariant(bowstringVariantOf(player));   // 中途换过弓弦材料也跟着更新 ✓
                     existing.restartLash(player);                              // §1118h 顺带按当前所在侧决定方向 ✓
                     return;
@@ -359,6 +362,16 @@ public class WhipLashEntity extends Entity {
         return owner.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1.0D : 1.0D;
     }
 
+    @Override
+    public void remove(RemovalReason reason) {
+        if (!this.level().isClientSide) {
+            Player owner = resolveOwner();
+            if (owner != null) ACTIVE_LASHES.remove(owner.getUUID(), this);
+            else ACTIVE_LASHES.values().removeIf(lash -> lash == this);
+        }
+        super.remove(reason);
+    }
+
     // ==================== 主循环 ====================
 
     @Override
@@ -381,6 +394,7 @@ public class WhipLashEntity extends Entity {
             this.contactedTargets.clear();
         }
         this.age++;
+        if (!this.level().isClientSide) this.setPos(owner.getX(), owner.getY(), owner.getZ());
 
         Vec3 aim = owner.getViewVector(1.0F);
         Vec3 forward = new Vec3(aim.x, 0.0D, aim.z);

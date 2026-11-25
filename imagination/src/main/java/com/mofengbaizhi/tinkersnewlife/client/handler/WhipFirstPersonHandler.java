@@ -68,6 +68,16 @@ public final class WhipFirstPersonHandler {
     private WhipFirstPersonHandler() {
     }
 
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onAttackInput(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
+        var player = Minecraft.getInstance().player;
+        if (event.isAttack() && event.getHand() == InteractionHand.MAIN_HAND && player != null
+                && !player.isSpectator() && !player.isUsingItem()
+                && player.getMainHandItem().getItem() instanceof WhipItem) {
+            TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.PacketWhipLash());
+        }
+    }
+
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
         LocalPlayer player = Minecraft.getInstance().player;

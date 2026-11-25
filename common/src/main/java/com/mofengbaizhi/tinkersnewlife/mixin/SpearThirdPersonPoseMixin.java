@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.SpearChargeAnimation;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -41,34 +42,24 @@ public abstract class SpearThirdPersonPoseMixin {
     private void tinkersnewlife$spearChargePose(LivingEntity entity, float limbSwing, float limbSwingAmount,
                                                 float ageInTicks, float netHeadYaw, float headPitch,
                                                 CallbackInfo ci) {
-        tinkersnewlife$applySpearPose(entity);
+        tinkersnewlife$applySpearPose(entity, ageInTicks - entity.tickCount);
     }
 
     @Inject(method = "m_6973_(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", remap = false, at = @At("TAIL"))
     private void tinkersnewlife$spearChargePoseSrg(LivingEntity entity, float limbSwing, float limbSwingAmount,
                                                    float ageInTicks, float netHeadYaw, float headPitch,
                                                    CallbackInfo ci) {
-        tinkersnewlife$applySpearPose(entity);
+        tinkersnewlife$applySpearPose(entity, ageInTicks - entity.tickCount);
     }
 
     /** 共用：正在蓄力 ⇒ 把主手那条手臂摆成"端矛"的样子 ✓（原版 thirdPersonHandUse ✓） */
-    private void tinkersnewlife$applySpearPose(LivingEntity entity) {
-        // §911：使用中 ✓ 或"刚松手正在收回"（主手仍拿着长矛且冷却在跑 ✓）都摆这个姿势 ✓
-        boolean using = SpearChargeAnimation.usingSpear(entity);
-        if (!using && !SpearChargeAnimation.holdingSpear(entity)) return;
-        if (!using && !(entity instanceof net.minecraft.world.entity.player.Player p
-                && p.getCooldowns().isOnCooldown(entity.getMainHandItem().getItem()))) return;
+    private void tinkersnewlife$applySpearPose(LivingEntity entity, float partialTick) {
+        float time = SpearChargeAnimation.visualTime(entity, Mth.clamp(partialTick, 0.0F, 1.0F));
+        if (time <= 0.0F) return;
 
         HumanoidModel<?> self = (HumanoidModel<?>) (Object) this;
         boolean rightArm = entity.getMainArm() == HumanoidArm.RIGHT;
         int invert = rightArm ? 1 : -1;
-
-        // §911 收回进度 = 冷却百分比（松手那一刻是 1 ✓ 冷却走完是 0 ✓）
-        float retract = 0.0F;
-        if (!SpearChargeAnimation.usingSpear(entity)
-                && entity instanceof net.minecraft.world.entity.player.Player p) {
-            retract = p.getCooldowns().getCooldownPercent(entity.getMainHandItem().getItem(), 0.0F);
-        }
 
         // ★ §923：**优先播动画文件里的 `arm` 轨道** ✓
         //   （用户口径：「**第三人称重画动画**」✓ —— 他在 Blockbench 里把手臂骨骼命名为 `arm` ✓
@@ -83,16 +74,12 @@ public abstract class SpearThirdPersonPoseMixin {
         float[] yRot = new float[1];
         float[] zRot = new float[1];
         SpearChargeAnimation.thirdPersonArm(xRot, yRot, zRot, rightArm,
-                self.head.xRot, self.head.yRot, entity.getTicksUsingItem(), retract);
+                self.head.xRot, self.head.yRot, time);
 
         com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip clip =
                 com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip.spearAnimation();
         if (clip != null) {
-            float effective = SpearChargeAnimation.usingSpear(entity)
-                    ? entity.getTicksUsingItem()
-                    : SpearChargeAnimation.ATTACK_END
-                        * (1.0F - net.minecraft.util.Mth.clamp(retract, 0.0F, 1.0F));
-            float[] d = clip.armRot(effective);
+            float[] d = clip.armRot(time);
             if (d != null) {
                 xRot[0] += d[0];
                 yRot[0] += (invert == 1 ? d[1] : -d[1]);   // 左手镜像 ✓
@@ -101,8 +88,9 @@ public abstract class SpearThirdPersonPoseMixin {
         }
 
         ModelPart arm = invert == 1 ? self.rightArm : self.leftArm;
-        arm.xRot = xRot[0];
-        arm.yRot = yRot[0];
-        arm.zRot = zRot[0];
+        float weight = SpearChargeAnimation.visualWeight(time);
+        arm.xRot = Mth.lerp(weight, arm.xRot, xRot[0]);
+        arm.yRot = Mth.lerp(weight, arm.yRot, yRot[0]);
+        arm.zRot = Mth.lerp(weight, arm.zRot, zRot[0]);
     }
 }

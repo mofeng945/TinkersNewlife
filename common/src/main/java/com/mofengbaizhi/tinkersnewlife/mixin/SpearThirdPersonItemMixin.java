@@ -9,10 +9,8 @@ import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
@@ -78,27 +76,12 @@ public abstract class SpearThirdPersonItemMixin {
                 || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         if (!thirdPerson) return;
 
-        boolean using = SpearChargeAnimation.usingSpear(entity);
-        float retract = 0.0F;
-        if (!using) {
-            // 收回阶段（主手仍是长矛 ＋ 冷却在跑 ✓ 和第一/第三人称手臂同一口径 ✓）
-            if (!SpearChargeAnimation.holdingSpear(entity)) return;
-            if (!(entity instanceof Player player) || !player.getCooldowns().isOnCooldown(stack.getItem())) return;
-            retract = player.getCooldowns().getCooldownPercent(stack.getItem(), 0.0F);
-        }
-
-        AnimationClip clip = AnimationClip.spearAnimation();
-        if (clip == null || !clip.hasItemThird()) return;
-
-        float effective = using
-                ? entity.getTicksUsingItem()
-                : SpearChargeAnimation.ATTACK_END * (1.0F - Mth.clamp(retract, 0.0F, 1.0F));
         HumanoidArm arm = ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
                 ? HumanoidArm.RIGHT : HumanoidArm.LEFT;
-        // ★ §935：先让"蓄力时的显示变换"**精确等于** §931/§932 那套 ✓（替换 ✓ 不是叠加 ✗）
-        tinkersnewlife$applyChargeTransform(pose, stack, entity, ctx);
-        // 再允许动画文件额外叠一点（`item_third` ✓ 没写/全 0 就等于没叠 ✓）
-        clip.applyItemThird(pose, effective, arm, tinkersnewlife$displayTransform(stack, entity, ctx));
+        if (arm != entity.getMainArm()) return;
+        float time = SpearChargeAnimation.visualTime(entity, Minecraft.getInstance().getFrameTime());
+        if (time <= 0.0F) return;
+        tinkersnewlife$applyChargeTransform(pose, stack, entity, ctx, arm, time);
     }
 
     // ── §935 蓄力时"想要"的第三人称显示变换 ────────────────────────────────────
@@ -121,9 +104,9 @@ public abstract class SpearThirdPersonItemMixin {
      * ⇒ 传**右手**的值即可 ✓ 镜像后正好等于 json 里左手那份 `[-90,90,-55]` ✓）。
      */
     private static void tinkersnewlife$applyChargeTransform(PoseStack pose, ItemStack stack, LivingEntity entity,
-                                                            ItemDisplayContext ctx) {
+                                                            ItemDisplayContext ctx, HumanoidArm arm, float time) {
         try {
-            boolean leftHand = ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
+            boolean leftHand = arm == HumanoidArm.LEFT;
             BakedModel model = Minecraft.getInstance().getItemRenderer()
                     .getModel(stack, entity.level(), entity, 0);
             ItemTransform oldTransform = model.getTransforms().getTransform(ctx);
@@ -139,26 +122,22 @@ public abstract class SpearThirdPersonItemMixin {
                     new org.joml.Vector3f(CHARGE_SCALE, CHARGE_SCALE, CHARGE_SCALE),
                     new org.joml.Vector3f(0.0F, 0.0F, 0.0F)).apply(leftHand, newStack);
 
-            Matrix4f delta = new Matrix4f(newStack.last().pose())
-                    .mul(new Matrix4f(oldStack.last().pose()).invert());
-            pose.last().pose().mul(delta);
-        } catch (Throwable ignored) {
-            // 取不到就什么都不做 ✓（退化成原版 + item_third ✓ 不崩 ✓）
-        }
-    }
-
-    /** 取该物品第三人称的显示变换矩阵 ✓（{@code M} ✓；取不到返回 null ⇒ 退化成"直接加法" ✓ 不崩 ✓） */
-    private static Matrix4f tinkersnewlife$displayTransform(ItemStack stack, LivingEntity entity,
-                                                            ItemDisplayContext ctx) {
-        try {
-            BakedModel model = Minecraft.getInstance().getItemRenderer()
-                    .getModel(stack, entity.level(), entity, 0);
-            ItemTransform transform = model.getTransforms().getTransform(ctx);
-            PoseStack tmp = new PoseStack();
-            transform.apply(ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND, tmp);
-            return new Matrix4f(tmp.last().pose());
-        } catch (Throwable t) {
-            return null;
+            Matrix4f oldDisplay = oldStack.last().pose();
+            if (Math.abs(oldDisplay.determinant()) <= 1.0E-6F) return;
+            Matrix4f chargeDisplay = newStack.last().pose();
+            AnimationClip clip = AnimationClip.spearAnimation();
+            Matrix4f target = chargeDisplay;
+            if (clip != null && clip.hasItemThird()) {
+                // Conjugate with the active display so the authored track remains model-local.
+                PoseStack track = new PoseStack();
+                clip.applyItemThird(track, time, arm, chargeDisplay);
+                target = track.last().pose().mul(chargeDisplay);
+            }
+            Matrix4f delta = SpearChargeAnimation.blendTransform(oldDisplay, target,
+                    SpearChargeAnimation.visualWeight(time)).mul(new Matrix4f(oldDisplay).invert());
+            SpearChargeAnimation.applyTransform(pose, delta);
+        } catch (RuntimeException ignored) {
+            // Unknown display transform: keep vanilla rendering.
         }
     }
 }

@@ -483,6 +483,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.content.modifier.PixieTreasureModifier.Glow::new,
                 com.mofengbaizhi.tinkersnewlife.content.modifier.PixieTreasureModifier.Glow::handle);
 
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWhipLash.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWhipLash::encode,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWhipLash::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWhipLash::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 
