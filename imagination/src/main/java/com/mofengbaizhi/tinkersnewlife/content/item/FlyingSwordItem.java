@@ -30,6 +30,25 @@ import java.util.UUID;
 
 public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
 
+    /** A Curios AttributeModifiers list replaces the item's defaults in vanilla ItemStack. */
+    @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
+    public static final class MeleeAttributes {
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void restore(net.minecraftforge.event.ItemAttributeModifierEvent event) {
+            var stack = event.getItemStack();
+            var slot = net.minecraft.world.entity.EquipmentSlot.MAINHAND;
+            if (event.getSlotType() != slot || !(stack.getItem() instanceof FlyingSwordItem sword)
+                    || stack.getTag() == null || !stack.getTag().contains("AttributeModifiers", net.minecraft.nbt.Tag.TAG_LIST)) return;
+            var defaults = sword.getAttributeModifiers(slot, stack);
+            for (var attribute : List.of(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE,
+                    net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED)) {
+                if (!event.getOriginalModifiers().containsKey(attribute) && !event.getModifiers().containsKey(attribute)) {
+                    defaults.get(attribute).forEach(modifier -> event.addModifier(attribute, modifier));
+                }
+            }
+        }
+    }
+
     public static final ToolDefinition FLYING_SWORD_DEFINITION =
             ToolDefinition.create(new ResourceLocation(TinkersNewlife.MOD_ID, "flying_sword"));
 
