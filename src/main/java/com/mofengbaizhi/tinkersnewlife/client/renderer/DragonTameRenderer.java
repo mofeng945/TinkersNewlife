@@ -60,7 +60,7 @@ public final class DragonTameRenderer {
             var dragon = resolve(visual.dragonId(), visual.dragonUuid());
             boolean active = visual.phase() == DragonTameVisual.ACTIVE;
             if (active && (dragon == null || !dragon.isAlive())) continue;
-            Vec3 feet = dragon == null ? visual.feet() : dragon.getPosition(partial);
+            Vec3 feet = visual.feet();
             if (feet.distanceToSqr(camera) > 112 * 112) continue;
             if (active) {
                 Entity player = resolve(visual.playerId(), visual.playerUuid());

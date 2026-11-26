@@ -19,7 +19,7 @@ import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
+public class DragonStaffTrait extends Modifier implements TooltipModifierHook, slimeknights.tconstruct.library.modifiers.hook.build.ToolStatsModifierHook {
 
     public static final String MODIFIER_ID = "dragon_staff";
     private static final ResourceLocation KEY_SLOTS = new ResourceLocation(TinkersNewlife.MOD_ID, "dragon_staff_slots");
@@ -34,7 +34,7 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
+        hookBuilder.addHook(this, ModifierHooks.TOOLTIP, ModifierHooks.TOOL_STATS);
     }
 
     @Override
@@ -49,7 +49,6 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
         // 槽位信息
         Tag tag = tool.getPersistentData().get(KEY_SLOTS);
         ListTag slots = tag instanceof ListTag ? (ListTag) tag : new ListTag();
-        int storedCount = 0; // 统计已存储的龙
         for (int i = 0; i < maxSlots; i++) {
             if (i < slots.size()) {
                 CompoundTag entry = slots.getCompound(i);
@@ -62,7 +61,6 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
                         "modifier.tinkersnewlife.dragon_staff.slot.stored";
                 tooltip.add(Component.literal("§7槽位 " + (i + 1) + ": §f" + displayName + " §7- ")
                         .append(Component.translatable(statusKey)));
-                if (state == 1) storedCount++;
             } else {
                 tooltip.add(Component.literal("§7槽位 " + (i + 1) + ": ")
                         .append(Component.translatable("modifier.tinkersnewlife.dragon_staff.slot.empty")));
@@ -73,19 +71,22 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
         tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_staff.slots", 
                 slots.size(), maxSlots));
 
-        // 显示攻击加成（如果存储了龙）
-        if (storedCount > 0) {
-            float bonus = storedCount * level * ATTACK_BONUS_PER_DRAGON * 100;
-            tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_staff.attack_bonus",
-                    String.format("%.1f", bonus)));
-        }
-
         // 按键提示
         if (tooltipKey == TooltipKey.SHIFT) {
             tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_staff.skill_hint"));
         } else {
             tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_staff.shift_hint"));
         }
+    }
+
+    @Override
+    public void addToolStats(slimeknights.tconstruct.library.tools.nbt.IToolContext tool, ModifierEntry modifier,
+                             slimeknights.tconstruct.library.tools.stat.ModifierStatsBuilder stats) {
+        if (!(tool.getPersistentData().get(KEY_SLOTS) instanceof ListTag slots)) return;
+        int stored = 0;
+        for (int i = 0; i < slots.size(); i++) if (slots.getCompound(i).getInt("state") == 1) stored++;
+        if (stored > 0) slimeknights.tconstruct.library.tools.stat.ToolStats.ATTACK_DAMAGE.multiply(
+                stats, 1d + stored * modifier.getLevel() * ATTACK_BONUS_PER_DRAGON);
     }
 
     public static int getMaxSlots(int level) {

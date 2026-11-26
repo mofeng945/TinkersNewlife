@@ -25,7 +25,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -89,8 +88,9 @@ public class DragonStaffHandler {
         return tag instanceof ListTag ? (ListTag) tag : new ListTag();
     }
 
-    private static void setSlots(IToolStackView tool, ListTag slots) {
+    private static void setSlots(ToolStack tool, ListTag slots) {
         tool.getPersistentData().put(KEY_SLOTS, slots);
+        tool.rebuildStats();
     }
 
     // ---------- 主人绑定 ----------
@@ -144,6 +144,7 @@ public class DragonStaffHandler {
         if (checkCooldown(player.getMainHandItem(), player)) {
             if (player.isShiftKeyDown()) tryRelease(player, tool);
             else tryRecycle(player, tool, target);
+            tool.updateStack(player.getMainHandItem());
         }
     }
 
@@ -426,6 +427,7 @@ public class DragonStaffHandler {
         entry.putInt("posZ", target.getBlockZ());
         slots.add(entry);
         setSlots(tool, slots);
+        tool.updateStack(player.getMainHandItem());
         if (!target.hasCustomName()) target.setCustomName(Component.literal(dragonName));
         player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.success"), true);
         spawnHeartParticles(target);
@@ -611,40 +613,6 @@ public class DragonStaffHandler {
             server.sendParticles(ParticleTypes.FIREWORK, pos.x + dx, pos.y + dy, pos.z + dz, 0, 0.1, 0.1, 0.1, 0.1);
         }
         server.sendParticles(ParticleTypes.HAPPY_VILLAGER, pos.x, pos.y, pos.z, 20, 0.5, 0.5, 0.5, 0.1);
-    }
-
-    // ---------- 伤害加成 ----------
-    @SubscribeEvent
-    public static void onLivingHurt(LivingHurtEvent event) {
-        // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 龙杖"每龙 +攻击"不再对它再加一遍 ✗
-        //    否则同一次命中被加两遍 ✗（见 util/DamagePipeline）
-        if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
-        // ⭐§833 匠魂二次伤害（流血等）不算攻击命中 ⇒ "每龙 +攻击"不再被每一跳流血重复加一遍 ✗
-        if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
-        if (!(event.getSource().getEntity() instanceof Player player)) return;
-        ToolStack tool = getTool(player);
-        if (tool == null) return;
-        if (!isOwner(tool, player)) return;
-
-        ListTag slots = getSlots(tool);
-        int storedCount = 0;
-        for (int i = 0; i < slots.size(); i++) {
-            CompoundTag entry = slots.getCompound(i);
-            if (entry.getInt("state") == 1) {
-                storedCount++;
-            }
-        }
-
-        // ⭐ 引用 Trait 的公开常量，避免双份硬编码漂移
-        float bonus = storedCount * ToolHelper.getActiveModifierLevel(tool, DRAGON_STAFF_ID) * DragonStaffTrait.ATTACK_BONUS_PER_DRAGON;
-        if (bonus > 0) {
-            event.setAmount(event.getAmount() * (1.0f + bonus));
-            if (player.level() instanceof ServerLevel server) {
-                Vec3 pos = event.getEntity().position();
-                server.sendParticles(ParticleTypes.ENCHANT, pos.x, pos.y + 1, pos.z,
-                        5, 0.3, 0.3, 0.3, 0.1);
-            }
-        }
     }
 
     // ---------- 龙识别与死亡状态 ----------

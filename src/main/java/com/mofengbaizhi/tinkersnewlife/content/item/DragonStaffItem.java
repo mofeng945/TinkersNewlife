@@ -35,6 +35,20 @@ public class DragonStaffItem extends ModifiableItem {
         super(properties, DRAGON_STAFF_DEFINITION);
     }
 
+    private static final ResourceLocation ATTACK_STATS_MIGRATED = TinkersNewlife.prefix("dragon_staff_attack_stats_v1");
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity, int slot, boolean selected) {
+        super.inventoryTick(stack, level, entity, slot, selected);
+        if (level.isClientSide) return;
+        var tool = slimeknights.tconstruct.library.tools.nbt.ToolStack.from(stack);
+        if (!tool.getPersistentData().getBoolean(ATTACK_STATS_MIGRATED)) {
+            tool.rebuildStats();
+            tool.getPersistentData().putBoolean(ATTACK_STATS_MIGRATED, true);
+            tool.updateStack(stack);
+        }
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level,
                                 List<Component> tooltip, TooltipFlag flag) {
