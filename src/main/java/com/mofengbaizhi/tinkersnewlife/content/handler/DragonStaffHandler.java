@@ -51,7 +51,10 @@ public class DragonStaffHandler {
     // 常量
     private static final int SKILL_XP_COST = 88;
     private static final int SEARCH_RADIUS = 16;
-    private static final double SUCCESS_CHANCE = 0.5;
+    private static double tamingChance(LivingEntity dragon) {
+        double healthFraction = (double) dragon.getHealth() / dragon.getMaxHealth();
+        return 0.20 + 0.75 * (1.0 - Math.max(0.20, healthFraction));
+    }
     private static final int TAMING_DURATION_TICKS = 60;
     private static final int INTERACT_COOLDOWN_TICKS = 20;
     private static final int HEART_PARTICLE_COUNT = 30;
@@ -373,7 +376,8 @@ public class DragonStaffHandler {
             holdStill(task.player, task.playerAnchor);
             holdStill(task.target, task.dragonAnchor);
             if (task.remainingTicks <= 0) {
-                boolean success = task.player.level().random.nextDouble() <= SUCCESS_CHANCE;
+                boolean success = task.target instanceof LivingEntity dragon
+                        && task.player.level().random.nextDouble() < tamingChance(dragon);
                 if (success) success = handleSuccess(task.player, task.tool, task.target);
                 else handleFailure(task.player, task.target);
                 finishVisual(task, success);
