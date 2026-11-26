@@ -492,6 +492,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketWhipLash::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWhipLash::handle);
 
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Sync.class,
+                com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Sync::encode,
+                com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Sync::new,
+                com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Sync::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 

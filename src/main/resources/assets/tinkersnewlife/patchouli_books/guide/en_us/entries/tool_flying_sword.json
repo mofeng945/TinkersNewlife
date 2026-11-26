@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:flying_sword",
-                      "text":  "$(bold)Flying Sword$()$(br2)Obtaining: craft it at the $(bold)Tinker Station$() — combining parts such as a Broad Sword Blade + a Tough Handle.$(br2)Features: a blade forged with Tinkers' Construct for sword-riding flight.$(li)$(bold)right-click to launch$() the flying sword; it automatically returns after striking an enemy$(li)equipping it in the $(bold)feet curio slot$() (Curios) grants $(bold)flight$()$(li)press the bound key (default R) to switch between $(bold)Normal / Tracking$() modes"
+                      "text":  "$(bold)Flying Sword$()$(br2)Obtaining: find an Ancient Cultivation Manual Fragment in a Bastion Remnant chest and right-click to read and consume it. Once unlocked for your player, craft it at the $(bold)Tinker Station or Tinker Anvil$() — combining parts such as a Broad Sword Blade + a Tough Handle.$(br2)Features: a blade forged with Tinkers' Construct for sword-riding flight.$(li)$(bold)right-click to launch$() the flying sword; it automatically returns after striking an enemy$(li)equipping it in the $(bold)feet curio slot$() (Curios) grants $(bold)flight$()$(li)press the bound key to switch between $(bold)Normal / Tracking$() modes"
                   },
                   {
                       "type":  "patchouli:text",

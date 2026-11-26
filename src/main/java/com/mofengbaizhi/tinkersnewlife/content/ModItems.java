@@ -371,6 +371,9 @@ public class ModItems {
                         com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader
                                 .createModularStaff(new Item.Properties().stacksTo(1)));
 
+        public static final RegistryObject<Item> ANCIENT_CULTIVATION_PAGE = ITEMS.register("ancient_cultivation_page",
+                () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCultivationPageItem(new Item.Properties()));
+
         public static final RegistryObject<FlyingSwordItem> FLYING_SWORD =
         ITEMS.register("flying_sword",
                 () -> new FlyingSwordItem(new Item.Properties().stacksTo(1))); // 耐久可自行调整
