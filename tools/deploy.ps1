@@ -1,38 +1,11 @@
-﻿<#
-.SYNOPSIS
-  把四个子项目（common / cursed / imagination / apostle）build\libs 下的 jar 部署到实例。
-.PARAMETER IncludeNL
-  额外写入 [NL]NewLifestyle 实例。**默认不写**。
-.NOTES
-  §1255 三模拆分：产物从"根 build\libs 一个"改成"四个子项目各一个"。
-  ⚠ 本文件含中文 ⇒ **必须 UTF-8 带 BOM 保存**（PS 5.1 否则按 ANSI 读会语法错）。
-#>
-param(
-    [switch]$IncludeNL,
-    # ⭐ §1258 用户口径 ✓：⭐ 三个新 mod **先不打成独立包** ✗ ⭐ 全部先合在一个包里 ✓
-    #   ⇒ ⭐ 默认只部署 :common 那一个 jar ✓；⭐ 将来要真拆时加 -AllJars ✓。
-    [switch]$AllJars
-)
+﻿# Deploy the current root-project JAR. Include NL only with -IncludeNL.
+param([switch]$IncludeNL)
 $ErrorActionPreference = 'Stop'
-
 $repo = Split-Path -Parent $PSScriptRoot
-
-# ⭐ §1255 四处产物（⭐ 顺序固定 ✗ ⭐ 便于日志核对 ✓）
-# ⭐ §1258 默认只收 :common（⭐ 用户口径：⭐ 切出来的先都打在一个包里 ✓）
-$modDirs = if ($AllJars) { @('common', 'cursed', 'imagination', 'apostle') } else { @('common') }
-$jars = @()
-foreach ($d in $modDirs) {
-    $libs = Join-Path $repo ($d + '\build\libs')
-    if (-not (Test-Path -LiteralPath $libs)) { continue }
-    $jars += Get-ChildItem -LiteralPath $libs -Filter '*.jar' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -notmatch 'sources|javadoc' }
-}
-if ($jars.Count -eq 0) {
-    Write-Host 'ERROR: 四个子项目的 build\libs 下都没有 jar，先跑 gradlew build'
-    exit 1
-}
-Write-Host ("构建产物 {0} 个：" -f $jars.Count)
-foreach ($j in $jars) { Write-Host ("  {0} ({1} 字节)" -f $j.Name, $j.Length) }
+$versionLine = Select-String -LiteralPath (Join-Path $repo 'gradle.properties') -Pattern '^mod_version=(.+)$'
+if (@($versionLine).Count -ne 1) { throw 'Cannot resolve mod_version' }
+$version = $versionLine.Matches[0].Groups[1].Value.Trim()
+$jars = @(Get-Item -LiteralPath (Join-Path $repo "build\libs\tinkersnewlife-$version.jar"))
 
 # ⚠ 判据按**命令行**匹配：早期写成"任何 java.exe 在跑就拒绝"会误判我自己的 gradle 守护进程。
 $procs = @()

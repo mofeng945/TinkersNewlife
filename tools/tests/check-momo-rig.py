@@ -5,7 +5,7 @@ Run from any directory with Python 3. No game files or external packages needed.
 import json
 from pathlib import Path
 
-assets = Path(__file__).resolve().parents[2] / 'cursed/src/main/resources/assets/tinkersnewlife'
+assets = Path(__file__).resolve().parents[2] / 'src/main/resources/assets/tinkersnewlife'
 def bones(name):
     model = json.loads((assets / 'geo' / name).read_bytes())['minecraft:geometry'][0]
     return {bone['name']: bone for bone in model['bones']}

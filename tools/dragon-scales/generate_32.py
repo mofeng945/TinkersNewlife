@@ -4,7 +4,7 @@ from PIL import Image
 from io import BytesIO
 
 root = Path(__file__).resolve().parents[2]
-tex = root / 'common/src/main/resources/assets/tinkersnewlife/textures'
+tex = root / 'src/main/resources/assets/tinkersnewlife/textures'
 base = Image.open(tex / 'generator/dragon_scales_32.png').convert('RGBA')
 assert base.size == (32, 32), base.size
 mask = Image.open(tex / 'item/tool/parts/shield_plating_32.png').convert('RGBA')

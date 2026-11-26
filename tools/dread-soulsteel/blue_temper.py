@@ -7,7 +7,7 @@ import sys
 from PIL import Image, ImageDraw
 
 root = Path(__file__).resolve().parents[2]
-res = root / 'common/src/main/resources'
+res = root / 'src/main/resources'
 tex = res / 'assets/tinkersnewlife/textures/generator'
 old = '_tinkersnewlife_dread_soulsteel.png'
 new = '_tinkersnewlife_dread_soulsteel_blue_temper.png'

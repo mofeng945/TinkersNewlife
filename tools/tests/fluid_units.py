@@ -9,7 +9,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[2]
-RES = ROOT / 'common/src/main/resources'
+RES = ROOT / 'src/main/resources'
 DATA = RES / 'data'
 ASSETS = RES / 'assets/tinkersnewlife'
 
@@ -31,7 +31,7 @@ for texture_path in ASSETS.glob('mantle/fluid_texture/*.json'):
         assert type(opacity) in (int, float) and 0 <= opacity <= 1, ('invalid camera_opacity', texture_path)
 
 names = set()
-for source in ROOT.glob('*/src/main/java/**/*Fluids.java'):
+for source in ROOT.glob('src/main/java/**/*Fluids.java'):
     names.update(re.findall(r'\bentry\(\s*"([a-z0-9_]+)"', source.read_text('utf8')))
 assert {'molten_sapphire', 'crystal_essence', 'molten_pixie_silver'} <= names
 bucket_tag = values(DATA / 'forge/tags/items/buckets.json')

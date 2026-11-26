@@ -18,13 +18,9 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-# §1255 three-mod split: resources now live in four subprojects (common/cursed/
-# imagination/apostle). Scan all of them; a missing one is skipped silently.
-$resDirs = @('common', 'cursed', 'imagination', 'apostle') |
-    ForEach-Object { Join-Path $root ($_ + '\src\main\resources') } |
-    Where-Object { Test-Path -LiteralPath $_ }
-if ($resDirs.Count -eq 0) {
-    Write-Host 'ERROR: no subproject resources dir found (expected common/src/main/resources)'
+$resDirs = @(Join-Path $root 'src\main\resources')
+if (-not (Test-Path -LiteralPath $resDirs[0] -PathType Container)) {
+    Write-Host 'ERROR: missing src/main/resources'
     exit 2
 }
 $js   = Join-Path $PSScriptRoot 'check-json-strict.js'

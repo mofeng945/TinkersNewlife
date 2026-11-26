@@ -23,8 +23,6 @@ KEYS = [
 ]
 
 files = [
-    "common/src/main/resources/assets/tinkersnewlife/lang/zh_cn.json",
-    "common/src/main/resources/assets/tinkersnewlife/lang/en_us.json",
     "src/main/resources/assets/tinkersnewlife/lang/zh_cn.json",
     "src/main/resources/assets/tinkersnewlife/lang/en_us.json",
 ]

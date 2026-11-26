@@ -1,4 +1,4 @@
-﻿# TNL957 v2：从"能在这套环境里跑起来的真货"里取合法集（★forge 板 + 两个参考模组 ✓）
+# TNL957 v2：从"能在这套环境里跑起来的真货"里取合法集（★forge 板 + 两个参考模组 ✓）
 import io, json, os, re, zipfile, glob
 CAND = []
 for root in (r"C:\Users\ASUS\.gradle\caches", r"D:\tex\.minecraft\libraries", r"D:\tex\.minecraft\versions"):
@@ -39,15 +39,15 @@ print("  合法 attributes 组合 = %d 种" % len(legal_attr))
 # TNL958 新增：★GLSL 低级错误检查（vec2 上不许出现 .z/.w 的 swizzle）
 import re as _re
 bad = 0
-for _f in sorted(glob.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")
-                 + glob.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")):
+for _f in sorted(glob.glob("src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")
+                 + glob.glob("src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")):
     _src = io.open(_f, encoding="utf-8").read()
     for _m in _re.finditer(r"vUv\s*\.\s*([xyzw]{2,4})", _src):
         if any(c in "zw" for c in _m.group(1)):
             print("  [FAIL] %s 里 vUv（vec2）用了非法 swizzle .%s" % (os.path.basename(_f), _m.group(1)))
             bad += 1
 
-for f in sorted(glob.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.json")):
+for f in sorted(glob.glob("src/main/resources/assets/tinkersnewlife/shaders/core/*.json")):
     errs = []
     d = json.loads(io.open(f, encoding="utf-8").read())
     extra = set(d.keys()) - legal_keys
@@ -70,7 +70,7 @@ print("  === 结论：bad %d ===" % bad)
 # TNL970 新增：GLSL 与 json 交叉对账（这类错以前只能等启动才知道）
 import glob as _g, io as _io, json as _json, os as _os, re as _re
 bad2 = 0
-for _j in sorted(_g.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.json")):
+for _j in sorted(_g.glob("src/main/resources/assets/tinkersnewlife/shaders/core/*.json")):
     _d = _json.loads(_io.open(_j, encoding="utf-8").read())
     _js = set(x["name"] for x in _d.get("uniforms", []))
     _jattr = set(_d.get("attributes", []))
@@ -104,7 +104,7 @@ print("  === GLSL 对账：bad %d ===" % bad2)
 import glob as _g2, io as _io2, os as _os2, re as _re2
 bad3 = 0
 KEY = ["neb", "neb2", "deep", "cloud", "col", "starMask", "localUv", "uv", "suv", "g", "cell", "ru"]
-for _f in sorted(_g2.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")):
+for _f in sorted(_g2.glob("src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")):
     _lines = _io2.open(_f, encoding="utf-8").read().split("\n")
     errs = []
     for _v in KEY:
@@ -138,10 +138,10 @@ print("  === 低级错误检查：bad %d ===" % bad3)
 # TNL1051 two hard checks that would have caught tonight's three GLSL accidents
 import glob as _g3, io as _io3, os as _os3, re as _re3
 bad4 = 0
-for _f in sorted(_g3.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")
-                 + _g3.glob("imagination/src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")
-                 + _g3.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")
-                 + _g3.glob("imagination/src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")):
+for _f in sorted(_g3.glob("src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")
+
+                 + _g3.glob("src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")
+                ):
     _raw = _io3.open(_f, encoding="utf-8").read()
     # strip comments first: the escaped Chinese in our comments used to look like calls
     _src = "\n".join(l.split("//")[0] for l in _raw.split("\n"))

@@ -53,8 +53,8 @@ EN = {
 
 repo = sys.argv[1] if len(sys.argv) > 1 else "."
 files = [
-    ("common/src/main/resources/assets/tinkersnewlife/lang/zh_cn.json", ZH),
-    ("common/src/main/resources/assets/tinkersnewlife/lang/en_us.json", EN),
+    ("src/main/resources/assets/tinkersnewlife/lang/zh_cn.json", ZH),
+    ("src/main/resources/assets/tinkersnewlife/lang/en_us.json", EN),
 ]
 
 for rel, table in files:

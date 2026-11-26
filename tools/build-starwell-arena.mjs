@@ -153,7 +153,7 @@ for(let k=0;k<8;k++){
 // Eight of nine base blocks: finish from the southern service aisle at (0,1,1).
 for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z++)put(x,1,z,x===0&&z===1?'air':'iron_block');
 put(0,2,0,'beacon');for(let y=3;y<=F+4;y++)put(0,y,0,y===F+4?'glass':'air');
-const ir=b.build(); const dir='imagination/src/main/resources/data/tinkersnewlife/structures';fs.mkdirSync(dir,{recursive:true});
+const ir=b.build(); const dir='src/main/resources/data/tinkersnewlife/structures';fs.mkdirSync(dir,{recursive:true});
 const name=path.join(dir,'starwell_arena.nbt');const bytes=serializeStructure(ir,'nbt');fs.writeFileSync(name,bytes);
 const round=parseStructureAuto(new Uint8Array(fs.readFileSync(name)),name),reg=round.regions[0];
 const cell=(x,y,z)=>reg.palette[reg.blocks[x+X+(z+Z)*reg.size.x+y*reg.size.x*reg.size.z]].name.split(':').pop();

@@ -1,0 +1,31 @@
+// Dependencies for the single Forge MDK project.
+repositories {
+    maven { url = 'https://api.modrinth.com/maven'; name = 'Modrinth' }
+    maven { url = 'https://www.cursemaven.com' }
+    flatDir { dir rootProject.file('libs') }
+}
+
+// Keep JEI's compile API compatible with NL; optional integrations are compile-only
+// unless explicitly required for a development run. Local JARs are not embedded.
+dependencies {
+    compileOnly fg.deobf('blank:geckolib-forge-1.20.1:4.8.4')
+    runtimeOnly fg.deobf('blank:geckolib-forge-1.20.1:4.8.4')
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation fg.deobf("maven.modrinth:Cg6Uc79H:SOJzuYxC")
+    implementation fg.deobf("maven.modrinth:rxIIYO6c:kJ9LD194")
+    runtimeOnly fg.deobf("maven.modrinth:u6dRKJwZ:4r3Kp7U7")
+    compileOnly fg.deobf("blank:jei-1.20.1-forge:15.21.0.144")
+    compileOnly fg.deobf("blank:Patchouli-1.20.1:85-FORGE")
+    runtimeOnly fg.deobf("blank:Patchouli-1.20.1:85-FORGE")
+    compileOnly files(rootProject.file('libs/goety-2.5.54.5_mapped_official_1.20.1.jar'))
+    implementation fg.deobf("maven.modrinth:vvuO3ImH:IPQlZkz1")
+    compileOnly fg.deobf("blank:Jade-1.20.1-Forge:11.13.3")
+    compileOnly fg.deobf("blank:Mekanism-1.20.1:10.4.16.80")
+    compileOnly fg.deobf("blank:appliedenergistics2-forge:15.4.10")
+    compileOnly fg.deobf("blank:create-1.20.1:6.0.8")
+    compileOnly fg.deobf("blank:Ponder-Forge-1.20.1:1.0.91")
+    compileOnly fg.deobf("blank:flywheel-forge-1.20.1:1.0.5")
+    compileOnly fg.deobf("blank:Vampirism-1.20.1:1.10.16")
+    compileOnly fg.deobf("blank:SlashBladeResharped-1.20.1:1.9.65")
+    compileOnly files(rootProject.file("libs/MixinExtras-0.5.4.jar"))
+}

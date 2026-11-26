@@ -22,7 +22,7 @@ powershell -ExecutionPolicy Bypass -File tools/check-json.ps1
 # ② 构建（必须 BUILD SUCCESSFUL）
 ./gradlew build --console=plain
 
-# ③ 打单一合并 jar（推荐）
+# 仅打发行 JAR 时，可用兼容入口
 ./gradlew singleJar --console=plain
 ```
 
@@ -30,19 +30,19 @@ powershell -ExecutionPolicy Bypass -File tools/check-json.ps1
 
 ## 部署
 
-- `tools/deploy.ps1` 会硬编码拷贝到**两个实例**（测试包 + NL 包），
-  **检测到任何 Minecraft 在跑就全部拒绝** —— 盖运行中的 jar 会 `NoClassDefFoundError`。
-- 两边务必校对 **MD5 一致**。
+- [部署脚本](<tools/deploy.ps1>)默认更新测试包，加 `-IncludeNL` 才包含 NL；跳过运行中的实例，复制后核对 MD5。
 
-## 模块结构
+## 项目结构
+
+整个仓库是一个 ForgeGradle 项目，只注册 `tinkersnewlife`。原四部分保留 Java 包名，不再分别编译或打包。
 
 | 目录 | 作用 |
 | --- | --- |
-| `common/` | 主体：物品、方块、材料、流体、强化、数据包、资源包、混入 |
-| `imagination/` | “幻想系”内容：便携设备、工具包等 |
-| `cursed/` | “诅术/头衔”系统 |
-| `apostle/` | 使徒增强模块 |
-| `art/` | 美术相关模块 |
+| `src/main/java/` | 全部 Java 源码与联动 |
+| `src/main/resources/` | Forge 入口元数据、Mixin 配置、数据包和美术资源 |
+| `src/generated/resources/` | `runData` 的资源输出目录 |
+| `gradle/` | Forge 依赖配置与 Gradle Wrapper |
+| `art/` | 美术资料 |
 | `tools/` | 开发脚本（校验、部署、生成等） |
 | `docs/开发备忘录.md` | **开发纪要（按节号追加，旧节不改）** |
 

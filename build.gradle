@@ -1,52 +1,71 @@
-// ============================================================
-//  §1255 三模拆分：根构建只做聚合
-//  结构：:common（公共层 + 现有全部内容，过渡期）  :cursed（咒术）  :imagination（奇想）  :apostle（使徒增强）
-//  gradlew build 会顺带构建所有子项目，现有流程一个字不用改。
-// ============================================================
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '6.0.54'
+}
 
-subprojects {
-    plugins.withId('java') {
-        tasks.withType(JavaCompile).configureEach {
-            options.encoding = 'UTF-8'
+version = mod_version
+group = mod_group_id
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', layout.buildDirectory.file('createSrgToMcp/output.srg').get().asFile.path
+            mods { "${mod_id}" { source sourceSets.main } }
+        }
+        client { property 'forge.enabledGameTestNamespaces', mod_id }
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+        gameTestServer { property 'forge.enabledGameTestNamespaces', mod_id }
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources'), '--existing', file('src/main/resources')
         }
     }
 }
 
-// ============================================================
-//  §1269 **把四个子项目的产物合成一个 jar** (user: keep it ONE jar first)
-//  -- the source stays split into four Gradle projects (ready for the real
-//     split later), but the shipped artifact is a SINGLE jar again.
-//  -- mods.toml / pack.mcmeta come from :common only, so the mod id stays
-//     `tinkersnewlife` and nothing about the installed mod changes.
-// ============================================================
-tasks.register('singleJar', Jar) {
-    // §1270 ONE-JAR MODE: the merged jar must declare ONLY modId `tinkersnewlife`,
-    // so the three separate @Mod entry classes have to be kept OUT of it.
-    // (Otherwise Forge says: "mods.toml missing metadata for modid
-    //  tinkersnewlife_cursed" + "has mods that were not found" and refuses to load.)
-    dependsOn ':common:reobfJar', ':cursed:reobfJar', ':imagination:reobfJar', ':apostle:reobfJar'
-    archiveBaseName = 'tinkersnewlife'
-    archiveVersion = mod_version
-    archiveClassifier = ''
-    destinationDirectory = file("$rootDir/build/libs")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude 'com/mofengbaizhi/tinkersnewlife/cursed/TinkersNewlifeCursed*.class'
-    exclude 'com/mofengbaizhi/tinkersnewlife/imagination/TinkersNewlifeImagination*.class'
-    exclude 'com/mofengbaizhi/tinkersnewlife/apostle/TinkersNewlifeApostle*.class'
-    manifest {
-        attributes('MixinConfigs': 'tinkersnewlife.mixins.json')
-    }
-    from({ zipTree(project(':cursed').tasks.named('jar').get().archiveFile.get().asFile) }) {
-        exclude 'META-INF/**'
-    }
-    from({ zipTree(project(':imagination').tasks.named('jar').get().archiveFile.get().asFile) }) {
-        exclude 'META-INF/**'
-    }
-    from({ zipTree(project(':apostle').tasks.named('jar').get().archiveFile.get().asFile) }) {
-        exclude 'META-INF/**'
-    }
-    // TNL1420 ★common 必须放**最后** ✗ 否则 common/build 里残留的旧 .class 会通过
-    // duplicatesStrategy.EXCLUDE **抢先**占位，把 cursed/imagination 里的新类盖掉 ✗
-    // （2026-11-09 实锤：imagination 的村民折扣修复连续两版没进包 ✓）
-    from({ zipTree(project(':common').tasks.named('jar').get().archiveFile.get().asFile) })
+sourceSets.main.resources.srcDir 'src/generated/resources'
+apply from: file('gradle/forge-dependencies.gradle')
+
+tasks.named('processResources', ProcessResources).configure {
+    def metadata = [
+        minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+        forge_version: forge_version, forge_version_range: forge_version_range,
+        loader_version_range: loader_version_range,
+        mod_id: mod_id, mod_name: mod_name, mod_license: mod_license,
+        mod_version: mod_version, mod_authors: mod_authors, mod_description: mod_description
+    ]
+    inputs.properties metadata
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) { expand metadata + [project: project] }
+}
+
+tasks.named('jar', Jar).configure {
+    exclude '.cache/**'
+    manifest { attributes('MixinConfigs': 'tinkersnewlife.mixins.json') }
+    finalizedBy 'reobfJar'
+}
+
+// Existing tools can still request the release JAR without assembling subproject JARs.
+tasks.register('singleJar') {
+    group = 'build'
+    description = 'Build the single reobfuscated Forge mod JAR.'
+    dependsOn 'reobfJar'
+}
+
+publishing {
+    publications { register('mavenJava', MavenPublication) { artifact jar } }
+    repositories { maven { url = layout.projectDirectory.dir('mcmodsrepo') } }
 }
