@@ -92,6 +92,7 @@ public class ModCreativeTabs {
                                 // ⭐ §1118r 邪灵辉锭（诡厄巫法＋神秘遗物**同时在场**才条件注册 ✓）：
                                 //   用 acceptItemIfPresent ⇒ 未注册时返回 null ⇒ **自动跳过** ✓
                                 acceptItemIfPresent(output, "sinister_glow_ingot");
+                                acceptItemIfPresent(output, "stellar_steel");
         // 纯合金流体的"物品形态"（浇铸回环的另一半）：物品本身常驻注册，但铁魔法不在场时拿不到流体，
         // 所以在创造栏里只在铁魔法加载时显示 ✓
         if (anyLoaded("irons_spellbooks")) {
@@ -291,6 +292,7 @@ public class ModCreativeTabs {
                                 acceptItemIfPresent(output, "liquid_evil_bucket");
                                 acceptItemIfPresent(output, "watcher_ectoplasm_bucket");
                                 acceptItemIfPresent(output, "flowing_stardust_bucket");
+                                acceptItemIfPresent(output, "molten_stellar_steel_bucket");
                                 // ⭐ §1118w 熔融以太（合金的第六种原料 ✓ 同条件注册 ✓ 取不到即跳过 ✓）
                                 acceptItemIfPresent(output, "molten_etherium_bucket");
                                 // ----- 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2 -----
@@ -450,6 +452,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("sea_serpent_fang", "iceandfire");
         MATERIAL_SOURCE_MOD.put("stymphalian_feather", "iceandfire");
         MATERIAL_SOURCE_MOD.put("ghost_ingot", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("stellar_steel", "enigmaticlegacy");
         MATERIAL_SOURCE_MOD.put("dread_soulsteel", "iceandfire");
         MATERIAL_SOURCE_MOD.put("crystallized_dragonbone", "iceandfire");
         MATERIAL_SOURCE_MOD.put("pixie_silver", "iceandfire");

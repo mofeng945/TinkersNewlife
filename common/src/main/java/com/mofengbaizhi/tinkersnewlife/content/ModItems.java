@@ -58,6 +58,8 @@ public class ModItems {
      * <p>贴图是**5 帧竖排动画条** ✓ ＋ {@code .png.mcmeta} 里 {@code frametime: 4} ✓
      * ⇒ 5 × 4 ＝ <b>20 tick ＝ 1 秒**一个循环**</b> ✓（用户口径 ✓）。
      */
+    public static final DeferredRegister<Item> ENIGMATIC_ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, TinkersNewlife.MOD_ID);
+    public static final RegistryObject<Item> STELLAR_STEEL = ENIGMATIC_ITEMS.register("stellar_steel", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> SINISTER_GLOW_INGOT =
             LINKED_ITEMS.register("sinister_glow_ingot",
                     () -> new Item(new Item.Properties()));

@@ -3,6 +3,17 @@
     "com/mofengbaizhi/tinkersnewlife/mixin/MomoBossMusicMixin": {
       "getSituationalMusic": "Lnet/minecraft/client/Minecraft;m_91107_()Lnet/minecraft/sounds/Music;"
     },
+    "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntDamageSourceMixin": {
+      "is(Lnet/minecraft/tags/TagKey;)Z": "Lnet/minecraft/world/damagesource/DamageSource;m_269533_(Lnet/minecraft/tags/TagKey;)Z"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntArrowMixin": {
+      "onHitEntity": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_5790_(Lnet/minecraft/world/phys/EntityHitResult;)V",
+      "Lnet/minecraft/world/entity/Entity;getType()Lnet/minecraft/world/entity/EntityType;": "Lnet/minecraft/world/entity/Entity;m_6095_()Lnet/minecraft/world/entity/EntityType;"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntWitherMixin": {
+      "hurt": "Lnet/minecraft/world/entity/boss/wither/WitherBoss;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z",
+      "Lnet/minecraft/world/entity/boss/wither/WitherBoss;isPowered()Z": "Lnet/minecraft/world/entity/boss/wither/WitherBoss;m_7090_()Z"
+    },
     "com/mofengbaizhi/tinkersnewlife/mixin/SoulStrikeSourceMixin": {
       "hurt": "Lnet/minecraft/world/entity/LivingEntity;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
     },
@@ -64,6 +75,17 @@
     "searge": {
       "com/mofengbaizhi/tinkersnewlife/mixin/MomoBossMusicMixin": {
         "getSituationalMusic": "Lnet/minecraft/client/Minecraft;m_91107_()Lnet/minecraft/sounds/Music;"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntDamageSourceMixin": {
+        "is(Lnet/minecraft/tags/TagKey;)Z": "Lnet/minecraft/world/damagesource/DamageSource;m_269533_(Lnet/minecraft/tags/TagKey;)Z"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntArrowMixin": {
+        "onHitEntity": "Lnet/minecraft/world/entity/projectile/AbstractArrow;m_5790_(Lnet/minecraft/world/phys/EntityHitResult;)V",
+        "Lnet/minecraft/world/entity/Entity;getType()Lnet/minecraft/world/entity/EntityType;": "Lnet/minecraft/world/entity/Entity;m_6095_()Lnet/minecraft/world/entity/EntityType;"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntWitherMixin": {
+        "hurt": "Lnet/minecraft/world/entity/boss/wither/WitherBoss;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z",
+        "Lnet/minecraft/world/entity/boss/wither/WitherBoss;isPowered()Z": "Lnet/minecraft/world/entity/boss/wither/WitherBoss;m_7090_()Z"
       },
       "com/mofengbaizhi/tinkersnewlife/mixin/SoulStrikeSourceMixin": {
         "hurt": "Lnet/minecraft/world/entity/LivingEntity;m_6469_(Lnet/minecraft/world/damagesource/DamageSource;F)Z"

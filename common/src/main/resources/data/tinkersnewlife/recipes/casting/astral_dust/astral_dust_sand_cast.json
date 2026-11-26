@@ -6,7 +6,6 @@
   "result": "enigmaticlegacy:astral_dust",
   "cooling_time": 60,
   "conditions": [
-    { "type": "forge:mod_loaded", "modid": "goety" },
     { "type": "forge:mod_loaded", "modid": "enigmaticlegacy" }
   ]
 }

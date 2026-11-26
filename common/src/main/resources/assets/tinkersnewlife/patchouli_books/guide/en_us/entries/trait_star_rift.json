@@ -1,0 +1,12 @@
+{
+  "name": "Star Rift",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:stellar_steel",
+  "flag": "mod:enigmaticlegacy",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Each level adds 5% durability, 8% mining speed, and 10% final damage."
+    }
+  ]
+}

@@ -129,8 +129,10 @@ public class ModFluids {
                     1500, 6000, 1800, 0xFF1C0030,
                     FluidRegistrar.waterProps(MapColor.COLOR_BLACK));
 
+    public static final FluidRegistrar ENIGMATIC_FLUIDS = new FluidRegistrar(TinkersNewlife.MOD_ID);
+    public static final FluidRegistrar.FluidEntry MOLTEN_STELLAR_STEEL = ENIGMATIC_FLUIDS.entry("molten_stellar_steel", 2000, 10000, 2300, 0xFF4D88EC, FluidRegistrar.lavaProps(MapColor.COLOR_BLUE));
     public static final FluidRegistrar.FluidEntry FLOWING_STARDUST =
-            LINKED_REGISTRAR.entry("flowing_stardust",
+            ENIGMATIC_FLUIDS.entry("flowing_stardust",
                     1200, 4000, 2000, 0xFF9F37CA,
                     FluidRegistrar.waterProps(MapColor.COLOR_MAGENTA));
 

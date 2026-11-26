@@ -19,6 +19,9 @@ public class Modifiers {
     public static final StaticModifier<SupervisorModifier> SUPERVISOR =
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
+    public static final StaticModifier<StarRiftModifier> STAR_RIFT = MODIFIERS.register("star_rift", StarRiftModifier::new);
+    public static final StaticModifier<DimensionalHuntModifier> DIMENSIONAL_HUNT = MODIFIERS.register("dimensional_hunt", DimensionalHuntModifier::new);
+    public static final StaticModifier<StarAegisModifier> STAR_AEGIS = MODIFIERS.register("star_aegis", StarAegisModifier::new);
     public static final StaticModifier<SoulStrikeModifier> SOUL_STRIKE = MODIFIERS.register("soul_strike", SoulStrikeModifier::new);
     public static final StaticModifier<SoulWardModifier> SOUL_WARD = MODIFIERS.register("soul_ward", SoulWardModifier::new);
     public static final StaticModifier<CrystalCatalystModifier> CRYSTAL_CATALYST = MODIFIERS.register("crystal_catalyst", CrystalCatalystModifier::new);

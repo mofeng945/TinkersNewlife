@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "enigmaticlegacy"
+    }
+  ],
+  "ingredient": {
+    "item": "tinkersnewlife:stellar_steel"
+  },
+  "value": 1,
+  "needed": 1,
+  "material": "tinkersnewlife:stellar_steel"
+}

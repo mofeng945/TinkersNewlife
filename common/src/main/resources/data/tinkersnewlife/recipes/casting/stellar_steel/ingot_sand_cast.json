@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/single_use/ingot"
+  },
+  "cast_consumed": true,
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_stellar_steel_still",
+    "amount": 90
+  },
+  "result": "tinkersnewlife:stellar_steel",
+  "cooling_time": 85,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "enigmaticlegacy"
+    }
+  ]
+}

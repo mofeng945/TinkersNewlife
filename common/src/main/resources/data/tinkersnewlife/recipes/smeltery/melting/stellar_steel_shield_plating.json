@@ -1,0 +1,20 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "type": "tconstruct:material",
+    "item": "tinkersnewlife:shield_plating",
+    "material": "tinkersnewlife:stellar_steel"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_stellar_steel_still",
+    "amount": 270
+  },
+  "temperature": 2000,
+  "time": 147,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "enigmaticlegacy"
+    }
+  ]
+}

@@ -5,6 +5,9 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
+    "DimensionalHuntDamageSourceMixin",
+    "DimensionalHuntArrowMixin",
+    "DimensionalHuntWitherMixin",
     "SoulStrikeSourceMixin",
     "PixieStealGoalMixin",
     "MyrmexHiveReputationMixin",

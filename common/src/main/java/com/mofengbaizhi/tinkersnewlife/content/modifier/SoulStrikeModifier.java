@@ -37,10 +37,10 @@ public final class SoulStrikeModifier extends Modifier {
             this.rank = rank;
         }
         @Override public boolean is(TagKey<DamageType> tag) {
-            return tag.equals(DamageTypeTags.BYPASSES_ARMOR) || tag.equals(DamageTypeTags.BYPASSES_SHIELD)
+            return tag.equals(DamageTypeTags.BYPASSES_ARMOR) || (tag.equals(DamageTypeTags.BYPASSES_SHIELD) && !DimensionalHuntModifier.hasHunt(this))
                     || tag.equals(DamageTypeTags.BYPASSES_COOLDOWN) || tag.equals(DamageTypeTags.BYPASSES_RESISTANCE)
                     || tag.equals(DamageTypeTags.BYPASSES_ENCHANTMENTS) || tag.equals(DamageTypeTags.BYPASSES_EFFECTS)
-                    || (tag.equals(DamageTypeTags.IS_PROJECTILE) && getDirectEntity() instanceof Projectile) || super.is(tag);
+                    || (tag.equals(DamageTypeTags.IS_PROJECTILE) && getDirectEntity() instanceof Projectile && !DimensionalHuntModifier.hasHunt(this)) || super.is(tag);
         }
     }
 
@@ -71,6 +71,9 @@ public final class SoulStrikeModifier extends Modifier {
         if (!target.getRootVehicle().onGround() && !target.isInFluidType()) {
             amount = (float)Math.min(Float.MAX_VALUE, amount * (1.0 + 0.5 * hit.rank));
         }
+        // Direct health settlement does not emit LivingDamageEvent, so apply the final tool modifier here once.
+        if (hit.getEntity() instanceof LivingEntity user) amount = StarRiftModifier.scale(amount, StarRiftModifier.weaponRank(hit, user));
+        if (DimensionalHuntModifier.hasHunt(hit)) amount *= .9f;
         if (SoulWardModifier.tryBlockDirect(target, hit, amount)) return;
         float before = target.getHealth();
         target.getCombatTracker().recordDamage(hit, amount);

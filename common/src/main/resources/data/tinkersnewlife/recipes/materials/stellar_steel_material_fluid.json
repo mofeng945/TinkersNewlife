@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_stellar_steel_still",
+    "amount": 90
+  },
+  "temperature": 2000,
+  "output": "tinkersnewlife:stellar_steel",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "enigmaticlegacy"
+    }
+  ]
+}

@@ -138,6 +138,10 @@ public class TinkersNewlife {
         FumoMoDoll.init();
         // 注册各类内容
         ModItems.ITEMS.register(modEventBus);
+        if (IntegrationLoader.isLoaded(IntegrationLoader.ENIGMATIC_LEGACY)) {
+            ModItems.ENIGMATIC_ITEMS.register(modEventBus);
+            ModFluids.ENIGMATIC_FLUIDS.register(modEventBus);
+        }
         com.mofengbaizhi.tinkersnewlife.content.curse.CurseAffinityAttribute.ATTRIBUTES.register(modEventBus);
         // ⭐ §1118r 联动物品「邪灵辉锭」：**只在诡厄巫法 ＋ 神秘遗物同时在场时**才把条件表挂到总线 ✓
         //   ⚠ 不能塞进 ModItems.ITEMS ✗（那张表无条件挂 ⇒ 一定会注册 ✓ ⇒ 做不到"条件注册" ✗）

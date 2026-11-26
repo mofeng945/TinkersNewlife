@@ -1,0 +1,12 @@
+{
+  "name": "星裂",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:stellar_steel",
+  "flag": "mod:enigmaticlegacy",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "每级提升 5% 耐久、8% 挖掘速度以及 10% 最终伤害。"
+    }
+  ]
+}

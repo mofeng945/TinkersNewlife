@@ -1,0 +1,12 @@
+{
+  "name": "星辰钢",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:stellar_steel",
+  "flag": "mod:enigmaticlegacy",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "三级材料，可制作通用、远程及盔甲部件。125 mB 流动星空与 90 mB 熔融钢在 2000°C 合成 90 mB 熔融星辰钢。可浇筑锭、头部、绑定结、手柄、弓臂、弓把、锁链基底、各部位镶板与盾牌基底。$(br)$(l:trait_star_rift)星裂$(), $(l:trait_dimensional_hunt)维度狩猎$(), $(l:trait_star_aegis)星庇$()"
+    }
+  ]
+}

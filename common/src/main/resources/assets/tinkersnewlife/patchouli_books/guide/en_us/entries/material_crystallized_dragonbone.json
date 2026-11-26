@@ -18,7 +18,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Limb: 750 durability, −0.2 draw speed, +1.5 velocity and −0.1 accuracy. Grip: +20% durability, −0.1 accuracy and 5.5 melee damage."
+      "text": "Limb: 750 durability, −0.2 draw speed, +1.5 velocity and −0.1 accuracy. Grip: +20% durability, −0.1 accuracy and 5.5 melee damage. Limbs and grips also grant Crystalshot, letting the bow spend durability to shoot crystal shards."
     }
   ]
 }

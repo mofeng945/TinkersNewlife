@@ -1,0 +1,12 @@
+{
+  "name": "维度狩猎",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:stellar_steel",
+  "flag": "mod:enigmaticlegacy",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "箭矢能够突破闪避或无视弹射物的效果，但不能无视格挡。此特性不随等级叠加。"
+    }
+  ]
+}

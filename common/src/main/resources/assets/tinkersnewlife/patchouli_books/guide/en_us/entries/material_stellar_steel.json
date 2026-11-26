@@ -1,0 +1,12 @@
+{
+  "name": "Stellar Steel",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:stellar_steel",
+  "flag": "mod:enigmaticlegacy",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Tier 3 material for general, ranged, and armor parts. Alloy 125 mB Flowing Stardust with 90 mB Molten Steel at 2,000°C to make 90 mB Molten Stellar Steel. Cast ingots, heads, bindings, handles, limbs, grips, maille, all plating, and shield cores.$(br)$(l:trait_star_rift)Star Rift$(), $(l:trait_dimensional_hunt)Dimensional Hunt$(), $(l:trait_star_aegis)Star Aegis$()"
+    }
+  ]
+}

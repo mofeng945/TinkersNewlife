@@ -4,5 +4,11 @@
       "name": "tinkersnewlife:crystal_catalyst",
       "level": 1
     }
-  ]
+  ],
+  "perStat": {
+    "tconstruct:ranged": [
+      { "name": "tinkersnewlife:crystal_catalyst", "level": 1 },
+      { "name": "tconstruct:crystalshot", "level": 1 }
+    ]
+  }
 }

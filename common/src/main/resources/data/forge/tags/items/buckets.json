@@ -1,7 +1,10 @@
 {
   "replace": false,
   "values": [
-    {"id": "tinkersnewlife:molten_dread_soulsteel_bucket", "required": false},
+    {
+      "id": "tinkersnewlife:molten_dread_soulsteel_bucket",
+      "required": false
+    },
     "tinkersnewlife:gheloth_blood_bucket",
     "tinkersnewlife:molten_nicholas_blessing_bucket",
     "tinkersnewlife:hastur_malice_bucket",
@@ -151,6 +154,10 @@
     },
     {
       "id": "tinkersnewlife:watcher_ectoplasm_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_stellar_steel_bucket",
       "required": false
     }
   ]

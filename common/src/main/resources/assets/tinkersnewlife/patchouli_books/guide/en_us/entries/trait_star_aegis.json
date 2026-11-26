@@ -1,0 +1,12 @@
+{
+  "name": "Star Aegis",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:stellar_steel",
+  "flag": "mod:enigmaticlegacy",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Extra damage reduction depends on total Star Aegis levels, armor, and toughness. The formula caps these inputs at 8, 20, and 12, respectively."
+    }
+  ]
+}

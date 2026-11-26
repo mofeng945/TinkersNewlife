@@ -1,0 +1,12 @@
+{
+  "name": "Dimensional Hunt",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:stellar_steel",
+  "flag": "mod:enigmaticlegacy",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Arrows can overcome dodges and projectile immunity, but can still be blocked. This trait does not stack with level."
+    }
+  ]
+}

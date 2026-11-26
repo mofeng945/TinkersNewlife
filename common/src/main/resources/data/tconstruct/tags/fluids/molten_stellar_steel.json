@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:molten_stellar_steel_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_stellar_steel_flowing",
+      "required": false
+    }
+  ]
+}

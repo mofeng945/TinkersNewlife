@@ -1,0 +1,12 @@
+{
+  "name": "星庇",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:stellar_steel",
+  "flag": "mod:enigmaticlegacy",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "额外减伤取决于全身星庇总等级、护甲和韧性；参与计算的等级最高 8，护甲最高 20，韧性最高 12。"
+    }
+  ]
+}

@@ -1,8 +1,14 @@
 {
   "replace": false,
   "values": [
-    {"id": "tinkersnewlife:molten_dread_soulsteel_still", "required": false},
-    {"id": "tinkersnewlife:molten_dread_soulsteel_flowing", "required": false},
+    {
+      "id": "tinkersnewlife:molten_dread_soulsteel_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dread_soulsteel_flowing",
+      "required": false
+    },
     {
       "id": "tinkersnewlife:molten_arcane_ingot_still",
       "required": false
@@ -145,6 +151,14 @@
     },
     {
       "id": "tinkersnewlife:origin_polymer_flowing",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_stellar_steel_still",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_stellar_steel_flowing",
       "required": false
     }
   ]

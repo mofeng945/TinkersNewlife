@@ -1,0 +1,23 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/gear"
+  },
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_stellar_steel_still",
+    "amount": 360
+  },
+  "result": {
+    "item": "tconstruct:shield_core",
+    "nbt": {
+      "Material": "tinkersnewlife:stellar_steel"
+    }
+  },
+  "cooling_time": 170,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "enigmaticlegacy"
+    }
+  ]
+}
