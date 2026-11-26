@@ -372,7 +372,14 @@ public class ModItems {
                                 .createModularStaff(new Item.Properties().stacksTo(1)));
 
         public static final RegistryObject<Item> ANCIENT_CULTIVATION_PAGE = ITEMS.register("ancient_cultivation_page",
-                () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCultivationPageItem(new Item.Properties()));
+                () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCultivationPageItem(new Item.Properties(),
+                        com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Manual.FLYING_SWORD));
+        public static final RegistryObject<Item> ANCIENT_WEAPON_MANUAL = ITEMS.register("ancient_weapon_manual",
+                () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCultivationPageItem(new Item.Properties(),
+                        com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Manual.TANG_HENG_DAO));
+        public static final RegistryObject<Item> ANCIENT_DRAGON_TAMING_MANUAL = ITEMS.register("ancient_dragon_taming_manual",
+                () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCultivationPageItem(new Item.Properties(),
+                        com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Manual.DRAGON_STAFF));
 
         public static final RegistryObject<FlyingSwordItem> FLYING_SWORD =
         ITEMS.register("flying_sword",

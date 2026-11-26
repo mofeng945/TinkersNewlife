@@ -23,6 +23,8 @@
     "SoulBodyGravityMixin",
     "ToolkitTabPacketMixin",
     "FlyingSwordStationMenuMixin",
+    "AncientManualChestMixin",
+    "DragonManualSmithingMixin",
     "VirtualBlockEntityMixin",
     "SlotMixin",
     "BlockDropsMixin",

@@ -11,17 +11,22 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 public final class AncientCultivationPageItem extends Item {
-    public AncientCultivationPageItem(Properties properties) { super(properties); }
+    private final FlyingSwordUnlock.Manual manual;
+
+    public AncientCultivationPageItem(Properties properties, FlyingSwordUnlock.Manual manual) {
+        super(properties);
+        this.manual = manual;
+    }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack page = player.getItemInHand(hand);
         if (player instanceof ServerPlayer serverPlayer && !player.isSpectator()) {
-            if (FlyingSwordUnlock.unlock(serverPlayer)) {
+            if (FlyingSwordUnlock.unlock(serverPlayer, manual)) {
                 if (!player.getAbilities().instabuild) page.shrink(1);
-                player.displayClientMessage(Component.translatable("message.tinkersnewlife.flying_sword.unlocked"), true);
+                player.displayClientMessage(Component.translatable("message.tinkersnewlife." + manual.messageKey + ".unlocked"), true);
             } else {
-                player.displayClientMessage(Component.translatable("message.tinkersnewlife.flying_sword.already_unlocked"), true);
+                player.displayClientMessage(Component.translatable("message.tinkersnewlife." + manual.messageKey + ".already_unlocked"), true);
             }
         }
         return InteractionResultHolder.sidedSuccess(page, level.isClientSide);

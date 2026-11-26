@@ -22,7 +22,6 @@ import java.util.List;
 public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
 
     public static final String MODIFIER_ID = "dragon_staff";
-    private static final ResourceLocation KEY_MODE = new ResourceLocation(TinkersNewlife.MOD_ID, "dragon_staff_mode");
     private static final ResourceLocation KEY_SLOTS = new ResourceLocation(TinkersNewlife.MOD_ID, "dragon_staff_slots");
     
     private static final int BASE_SLOTS = 3;
@@ -30,7 +29,7 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
 
     // ⭐ 攻击加成系数（Trait 与 Handler 共用，避免双份硬编码漂移）
     /** 每存储一条龙提供的攻击伤害加成 */
-    public static final float ATTACK_BONUS_PER_DRAGON = 20.0f;
+    public static final float ATTACK_BONUS_PER_DRAGON = 0.10f;
 
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
@@ -46,13 +45,6 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
 
         int level = modifier.getLevel();
         int maxSlots = getMaxSlots(level);
-
-        // 模式
-        int mode = tool.getPersistentData().getInt(KEY_MODE);
-        String modeKey = mode == 0 ?
-                "modifier.tinkersnewlife.dragon_staff.mode.recycle" :
-                "modifier.tinkersnewlife.dragon_staff.mode.release";
-        tooltip.add(Component.translatable(modeKey));
 
         // 槽位信息
         Tag tag = tool.getPersistentData().get(KEY_SLOTS);
@@ -83,7 +75,7 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
 
         // 显示攻击加成（如果存储了龙）
         if (storedCount > 0) {
-            float bonus = storedCount * ATTACK_BONUS_PER_DRAGON;
+            float bonus = storedCount * level * ATTACK_BONUS_PER_DRAGON * 100;
             tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_staff.attack_bonus",
                     String.format("%.1f", bonus)));
         }

@@ -11,7 +11,7 @@
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)Controls$():$(li)press the $(bold)bound key$() to use the taming skill (consumes 200 levels of experience) and begin taming wild dragons around you$(li)$(bold)Sneak + Right Click$() to switch between $(bold)Reclaim / Release$() modes$(li)in Reclaim mode, right-click a dragon to store it inside the staff (the slots increase as the staff levels up)$(li)in Release mode, right-click to release a tamed dragon in front of you$(br2)Once taming succeeds, the dragon is recorded in the staff, so you can carry it with you and release it in battle to fight by your side."
+                      "text":  "Use an Ice and Fire dragon horn, paper, and its Dragon Command Staff to make an Ancient Dragon Taming Manual Fragment; only the paper is consumed. Read it first.$(li)Press the bound key to try taming a nearby wild dragon for 88 experience levels.$(li)Right-click your dragon to store it; sneak-right-click to release one.$(li)Left-click your dragon to cycle its orders. Left-click other creatures to attack normally.$(br2)Damage bonus: stored dragons × trait level × 10%."
                   }
               ],
     "flag":  "mod:iceandfire"

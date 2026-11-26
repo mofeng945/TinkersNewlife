@@ -3,7 +3,16 @@
     "com/mofengbaizhi/tinkersnewlife/mixin/MomoBossMusicMixin": {
       "getSituationalMusic": "Lnet/minecraft/client/Minecraft;m_91107_()Lnet/minecraft/sounds/Music;"
     },
-    "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntDamageSourceMixin": {
+    "com/mofengbaizhi/tinkersnewlife/mixin/DragonManualSmithingMixin": {
+      "selectedRecipe": "f_40242_",
+      "onTake": "Lnet/minecraft/world/inventory/SmithingMenu;m_142365_(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V",
+      "shrinkStackInSlot": "Lnet/minecraft/world/inventory/SmithingMenu;m_40270_(I)V"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/AncientManualChestMixin": {
+        "unpackLootTable": "Lnet/minecraft/world/level/block/entity/RandomizableContainerBlockEntity;m_59640_(Lnet/minecraft/world/entity/player/Player;)V",
+        "Lnet/minecraft/world/level/storage/loot/LootTable;fill(Lnet/minecraft/world/Container;Lnet/minecraft/world/level/storage/loot/LootParams;J)V": "Lnet/minecraft/world/level/storage/loot/LootTable;m_287188_(Lnet/minecraft/world/Container;Lnet/minecraft/world/level/storage/loot/LootParams;J)V"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntDamageSourceMixin": {
       "is(Lnet/minecraft/tags/TagKey;)Z": "Lnet/minecraft/world/damagesource/DamageSource;m_269533_(Lnet/minecraft/tags/TagKey;)Z"
     },
     "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntArrowMixin": {
@@ -75,6 +84,15 @@
     "searge": {
       "com/mofengbaizhi/tinkersnewlife/mixin/MomoBossMusicMixin": {
         "getSituationalMusic": "Lnet/minecraft/client/Minecraft;m_91107_()Lnet/minecraft/sounds/Music;"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/DragonManualSmithingMixin": {
+        "selectedRecipe": "f_40242_",
+        "onTake": "Lnet/minecraft/world/inventory/SmithingMenu;m_142365_(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V",
+        "shrinkStackInSlot": "Lnet/minecraft/world/inventory/SmithingMenu;m_40270_(I)V"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/AncientManualChestMixin": {
+        "unpackLootTable": "Lnet/minecraft/world/level/block/entity/RandomizableContainerBlockEntity;m_59640_(Lnet/minecraft/world/entity/player/Player;)V",
+        "Lnet/minecraft/world/level/storage/loot/LootTable;fill(Lnet/minecraft/world/Container;Lnet/minecraft/world/level/storage/loot/LootParams;J)V": "Lnet/minecraft/world/level/storage/loot/LootTable;m_287188_(Lnet/minecraft/world/Container;Lnet/minecraft/world/level/storage/loot/LootParams;J)V"
       },
       "com/mofengbaizhi/tinkersnewlife/mixin/DimensionalHuntDamageSourceMixin": {
         "is(Lnet/minecraft/tags/TagKey;)Z": "Lnet/minecraft/world/damagesource/DamageSource;m_269533_(Lnet/minecraft/tags/TagKey;)Z"

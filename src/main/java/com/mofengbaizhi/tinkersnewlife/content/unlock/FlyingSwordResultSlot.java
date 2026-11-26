@@ -1,6 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.unlock;
 
-import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import slimeknights.tconstruct.library.recipe.tinkerstation.building.ToolBuildingRecipe;
@@ -22,22 +21,21 @@ public final class FlyingSwordResultSlot extends LazyResultSlot {
 
     public static boolean isLockedAssembly(TinkerStationBlockEntity station, Player player) {
         return station.getLastRecipe() instanceof ToolBuildingRecipe building
-            && building.getOutput().asItem() == ModItems.FLYING_SWORD.get()
-            && (player == null || !FlyingSwordUnlock.isUnlocked(player));
+            && !FlyingSwordUnlock.canAssemble(player, building.getOutput().asItem());
     }
 
     @Override
     public ItemStack getItem() {
         // The lazy lookup must run first: it updates lastRecipe after inputs change.
         ItemStack result = super.getItem();
-        return result.is(ModItems.FLYING_SWORD.get()) && isLockedAssembly(station, viewer)
+        return !result.isEmpty() && isLockedAssembly(station, viewer)
             ? ItemStack.EMPTY : result;
     }
 
     @Override
     public boolean mayPickup(Player player) {
         ItemStack result = super.getItem();
-        return !(result.is(ModItems.FLYING_SWORD.get()) && isLockedAssembly(station, player))
+        return !(!result.isEmpty() && isLockedAssembly(station, player))
             && super.mayPickup(player);
     }
 

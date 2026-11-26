@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:tang_heng_dao",
-      "text": "$(bold)Tang Hengdao$()$(br2)Obtained by building it at the $(bold)Tinkers' Crafting Station$(): Small Blade + Broad Blade + Large Plate + Tough Binding + Tough Handle.$(br2)A weapon steeped in classical Chinese style, famed for its $(bold)slender blade$() and $(bold)nimble technique$()."
+      "text": "$(bold)Tang Hengdao$()$(br2)Your first unopened End City chest you open guarantees an Ancient Weapons Manual Fragment. Right-click to consume it and unlock assembly at a $(bold)Tinker Station or Tinker's Anvil$(): Small Blade + Broad Blade + Large Plate + Tough Binding + Tough Handle.$(br2)A weapon steeped in classical Chinese style, famed for its $(bold)slender blade$() and $(bold)nimble technique$()."
     },
     {
       "type": "patchouli:text",

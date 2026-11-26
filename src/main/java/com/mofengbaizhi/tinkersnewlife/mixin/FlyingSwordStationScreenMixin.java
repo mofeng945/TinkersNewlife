@@ -3,7 +3,6 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 import com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordResultSlot;
 import com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,12 +18,8 @@ public abstract class FlyingSwordStationScreenMixin {
     // The screen builds a fresh button list on init; leave the shared layout registry alone.
     @Inject(method = "lambda$init$0", at = @At("HEAD"), cancellable = true, require = 1)
     private void tinkersnewlife$hideLockedSword(StationSlotLayout layout, CallbackInfoReturnable<Boolean> cir) {
-        if (layout.getName().getNamespace().equals("tinkersnewlife")
-            && layout.getName().getPath().equals("flying_sword")) {
-            Player player = Minecraft.getInstance().player;
-            if (player == null || !FlyingSwordUnlock.isUnlocked(player)) {
-                cir.setReturnValue(false);
-            }
+        if (!FlyingSwordUnlock.canShowLayout(Minecraft.getInstance().player, layout.getName())) {
+            cir.setReturnValue(false);
         }
     }
 

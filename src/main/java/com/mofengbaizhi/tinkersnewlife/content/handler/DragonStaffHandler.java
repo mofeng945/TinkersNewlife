@@ -15,6 +15,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
@@ -45,19 +46,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DragonStaffHandler {
 
     // NBT 键
-    private static final ResourceLocation KEY_MODE = new ResourceLocation(TinkersNewlife.MOD_ID, "dragon_staff_mode");
     private static final ResourceLocation KEY_SLOTS = new ResourceLocation(TinkersNewlife.MOD_ID, "dragon_staff_slots");
     private static final ResourceLocation KEY_OWNER = new ResourceLocation(TinkersNewlife.MOD_ID, "staff_owner");
 
     // 常量
-    private static final int SKILL_XP_COST = 200;
+    private static final int SKILL_XP_COST = 88;
     private static final int SEARCH_RADIUS = 16;
     private static final double SUCCESS_CHANCE = 0.5;
     private static final int TAMING_DURATION_TICKS = 60;
     private static final int INTERACT_COOLDOWN_TICKS = 20;
     private static final int HEART_PARTICLE_COUNT = 30;
     private static final int ANGRY_PARTICLE_COUNT = 30;
-    private static final int CHAIN_STEPS = 30;
 
     private static final Map<UUID, TamingTask> TAMING_TASKS = new ConcurrentHashMap<>();
     private static final ModifierId DRAGON_STAFF_ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, DragonStaffTrait.MODIFIER_ID));
@@ -67,24 +66,24 @@ public class DragonStaffHandler {
         final Player player;
         final ToolStack tool;
         final Entity target;
+        final Vec3 playerAnchor;
+        final Vec3 dragonAnchor;
+        final Level level;
+        final ItemStack staff;
         int remainingTicks;
         TamingTask(Player player, ToolStack tool, Entity target, int duration) {
             this.player = player;
             this.tool = tool;
             this.target = target;
+            this.playerAnchor = player.position();
+            this.dragonAnchor = target.position();
+            this.level = player.level();
+            this.staff = player.getMainHandItem();
             this.remainingTicks = duration;
         }
     }
 
     // ---------- 基础 NBT 操作 ----------
-    private static int getMode(IToolStackView tool) {
-        return tool.getPersistentData().getInt(KEY_MODE);
-    }
-
-    private static void toggleMode(IToolStackView tool) {
-        tool.getPersistentData().putInt(KEY_MODE, getMode(tool) ^ 1);
-    }
-
     private static ListTag getSlots(IToolStackView tool) {
         Tag tag = tool.getPersistentData().get(KEY_SLOTS);
         return tag instanceof ListTag ? (ListTag) tag : new ListTag();
@@ -114,7 +113,7 @@ public class DragonStaffHandler {
         ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return null;
         if (ToolHelper.getActiveModifierLevel(tool, DRAGON_STAFF_ID) <= 0) return null;
-        ensureOwner(tool, player);
+        if (!player.level().isClientSide) ensureOwner(tool, player);
         return tool;
     }
 
@@ -134,59 +133,56 @@ public class DragonStaffHandler {
         player.getCooldowns().addCooldown(stack.getItem(), INTERACT_COOLDOWN_TICKS);
         return true;
     }
-    // ---------- 事件处理 ----------
-    @SubscribeEvent
-    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
-        Player player = event.getEntity();
-        if (player.level().isClientSide || !player.isShiftKeyDown()) return;
+    // Right-click a dragon to store it; sneaking right-click releases one at the existing release location.
+    private static void interact(Player player, Entity target) {
         ToolStack tool = getTool(player);
-        if (tool == null) return;
+        if (tool == null || TAMING_TASKS.containsKey(player.getUUID())) return;
         if (!isOwner(tool, player)) {
             player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.not_owner"), true);
             return;
         }
-        toggleMode(tool);
-        player.displayClientMessage(
-                Component.translatable("modifier.tinkersnewlife.dragon_staff.mode_switched",
-                        getMode(tool) == 0 ? Component.translatable("modifier.tinkersnewlife.dragon_staff.mode.recycle") : Component.translatable("modifier.tinkersnewlife.dragon_staff.mode.release")),
-                true);
+        if (checkCooldown(player.getMainHandItem(), player)) {
+            if (player.isShiftKeyDown()) tryRelease(player, tool);
+            else tryRecycle(player, tool, target);
+        }
+    }
+
+    @SubscribeEvent public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        Player player = event.getEntity();
+        if (event.getHand() == net.minecraft.world.InteractionHand.MAIN_HAND && !player.level().isClientSide && player.isShiftKeyDown()) interact(player, null);
+    }
+
+    @SubscribeEvent public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        Player player = event.getEntity();
+        if (event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !isDragon(event.getTarget()) || getTool(player) == null) return;
+        if (!player.level().isClientSide) interact(player, event.getTarget());
+        event.setCancellationResult(net.minecraft.world.InteractionResult.sidedSuccess(player.level().isClientSide));
         event.setCanceled(true);
     }
 
-    @SubscribeEvent
-    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+    @SubscribeEvent public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         Player player = event.getEntity();
-        if (player.level().isClientSide) return;
-        ToolStack tool = getTool(player);
-        if (tool == null) return;
-        if (!isOwner(tool, player)) {
-            player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.not_owner"), true);
-            return;
-        }
-        if (getMode(tool) == 0) {
-            if (!checkCooldown(player.getMainHandItem(), player)) return;
-            tryRecycle(player, tool, event.getTarget());
-            event.setCanceled(true);
-        }
+        if (event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !player.isShiftKeyDown() || getTool(player) == null) return;
+        if (!player.level().isClientSide) interact(player, null);
+        event.setCancellationResult(net.minecraft.world.InteractionResult.sidedSuccess(player.level().isClientSide));
+        event.setCanceled(true);
     }
 
-    @SubscribeEvent
-    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+    @SubscribeEvent public static void onAttackDragon(net.minecraftforge.event.entity.player.AttackEntityEvent event) {
         Player player = event.getEntity();
-        if (player.level().isClientSide) return;
+        Entity target = com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(event.getTarget());
+        if (!(target instanceof TamableAnimal dragon) || !isDragon(dragon) || !dragon.isOwnedBy(player)) return;
         ToolStack tool = getTool(player);
         if (tool == null) return;
-        if (!isOwner(tool, player)) {
-            player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.not_owner"), true);
-            return;
-        }
-        int mode = getMode(tool);
-        if (mode == 1) {
-            if (!checkCooldown(player.getMainHandItem(), player)) return;
-            tryRelease(player, tool);
-            event.setCanceled(true);
-        } else {
-            player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.wrong_mode_release"), true);
+        event.setCanceled(true);
+        if (player.level().isClientSide || !isOwner(tool, player) || !checkCooldown(player.getMainHandItem(), player)) return;
+        try {
+            int current = ((Number)dragon.getClass().getMethod("getCommand").invoke(dragon)).intValue();
+            int next = Math.floorMod(current + 1, 3);
+            dragon.getClass().getMethod("setCommand", int.class).invoke(dragon, next);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.dragon_command." + next), true);
+        } catch (ReflectiveOperationException failure) {
+            TinkersNewlife.LOGGER.debug("Cannot change Ice and Fire dragon command", failure);
         }
     }
 
@@ -318,7 +314,9 @@ public class DragonStaffHandler {
     public static void executeSkill(Player player) {
         if (player.level().isClientSide) return;
         ToolStack tool = getTool(player);
-        if (tool == null) {
+        if (tool == null) return;
+        if (!com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.canTameDragons(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.dragon_staff.manual_required"), true);
             return;
         }
         if (!isOwner(tool, player)) {
@@ -344,10 +342,14 @@ public class DragonStaffHandler {
             player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.no_dragon"), true);
             return;
         }
+        if (!checkCooldown(player.getMainHandItem(), player)) return;
         Entity target = dragons.get(player.level().random.nextInt(dragons.size()));
         player.giveExperienceLevels(-SKILL_XP_COST);
         TamingTask task = new TamingTask(player, tool, target, TAMING_DURATION_TICKS);
         TAMING_TASKS.put(player.getUUID(), task);
+        if (player instanceof net.minecraft.server.level.ServerPlayer sp && target instanceof LivingEntity dragon) {
+            com.mofengbaizhi.tinkersnewlife.network.DragonTameVisual.start(sp, dragon);
+        }
         player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.taming_start"), true);
     }
 
@@ -359,20 +361,38 @@ public class DragonStaffHandler {
         while (it.hasNext()) {
             Map.Entry<UUID, TamingTask> e = it.next();
             TamingTask task = e.getValue();
-            if (!task.player.isAlive() || !task.target.isAlive()) {
+            if (!task.player.isAlive() || !task.target.isAlive() || task.player.level() != task.level
+                    || task.target.level() != task.level || task.player.getMainHandItem() != task.staff
+                    || task.tool.isBroken() || hasOwner(task.target)) {
+                finishVisual(task, false);
                 it.remove();
                 continue;
             }
             task.remainingTicks--;
-            if (task.remainingTicks % 5 == 0) {
-                spawnConnectionParticles(task.player.level(), task.player.position(), task.target.position());
-            }
+            holdStill(task.player, task.playerAnchor);
+            holdStill(task.target, task.dragonAnchor);
             if (task.remainingTicks <= 0) {
                 boolean success = task.player.level().random.nextDouble() <= SUCCESS_CHANCE;
-                if (success) handleSuccess(task.player, task.tool, task.target);
+                if (success) success = handleSuccess(task.player, task.tool, task.target);
                 else handleFailure(task.player, task.target);
+                finishVisual(task, success);
                 it.remove();
             }
+        }
+    }
+
+    private static void holdStill(Entity entity, Vec3 anchor) {
+        entity.setDeltaMovement(Vec3.ZERO);
+        if (entity instanceof net.minecraft.world.entity.Mob mob) mob.getNavigation().stop();
+        if (entity.position().distanceToSqr(anchor) > 1.0E-6) {
+            if (entity instanceof net.minecraft.server.level.ServerPlayer sp) sp.connection.teleport(anchor.x, anchor.y, anchor.z, sp.getYRot(), sp.getXRot());
+            else entity.setPos(anchor.x, anchor.y, anchor.z);
+        }
+    }
+
+    private static void finishVisual(TamingTask task, boolean success) {
+        if (task.player instanceof net.minecraft.server.level.ServerPlayer sp && task.target instanceof LivingEntity dragon) {
+            com.mofengbaizhi.tinkersnewlife.network.DragonTameVisual.end(sp, dragon, success);
         }
     }
 
@@ -380,15 +400,15 @@ public class DragonStaffHandler {
     private static List<Entity> findWildDragons(Player player) {
         AABB aabb = new AABB(player.blockPosition()).inflate(SEARCH_RADIUS);
         return player.level().getEntitiesOfClass(Entity.class, aabb,
-                e -> isDragon(e) && isAliveDragon(e) && !hasOwner(e) && e.isAlive() && !e.isRemoved());
+                e -> isDragon(e) && isAliveDragon(e) && !hasOwner(e) && TAMING_TASKS.values().stream().noneMatch(task -> task.target == e) && e.isAlive() && !e.isRemoved());
     }
 
-    private static void handleSuccess(Player player, ToolStack tool, Entity target) {
+    private static boolean handleSuccess(Player player, ToolStack tool, Entity target) {
         if (!setOwner(target, player)) {
             player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.taming_fail_owner"), true);
             spawnAngryParticles(target);
             applyEffect(target, MobEffects.DAMAGE_BOOST, 30, 1);
-            return;
+            return false;
         }
         String dragonName = target.hasCustomName() ? target.getCustomName().getString() : generateDragonName(target.level());
         ListTag slots = getSlots(tool);
@@ -410,6 +430,7 @@ public class DragonStaffHandler {
         player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.success"), true);
         spawnHeartParticles(target);
         applyEffect(target, MobEffects.REGENERATION, 10, 1);
+        return true;
     }
 
     private static void handleFailure(Player player, Entity target) {
@@ -421,7 +442,8 @@ public class DragonStaffHandler {
     // ---------- 玩家登录/切换维度 ----------
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        TAMING_TASKS.remove(event.getEntity().getUUID());
+        var task = TAMING_TASKS.remove(event.getEntity().getUUID());
+        if (task != null) finishVisual(task, false);
     }
 
     @SubscribeEvent
@@ -554,18 +576,6 @@ public class DragonStaffHandler {
         }
     }
 
-    private static void spawnConnectionParticles(Level level, Vec3 from, Vec3 to) {
-        if (!(level instanceof ServerLevel server)) return;
-        for (int i = 0; i <= CHAIN_STEPS; i++) {
-            double t = (double) i / CHAIN_STEPS;
-            Vec3 pos = from.lerp(to, t);
-            server.sendParticles(ParticleTypes.END_ROD, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0);
-            if (i % 3 == 0) {
-                server.sendParticles(ParticleTypes.PORTAL, pos.x, pos.y + 0.5, pos.z, 1, 0, 0.1, 0, 0);
-            }
-        }
-    }
-
     private static void spawnHeartParticles(Entity target) {
         if (!(target.level() instanceof ServerLevel server)) return;
         Vec3 head = target.position().add(0, target.getBbHeight() + 0.5, 0);
@@ -626,9 +636,9 @@ public class DragonStaffHandler {
         }
 
         // ⭐ 引用 Trait 的公开常量，避免双份硬编码漂移
-        float bonus = storedCount * DragonStaffTrait.ATTACK_BONUS_PER_DRAGON;
+        float bonus = storedCount * ToolHelper.getActiveModifierLevel(tool, DRAGON_STAFF_ID) * DragonStaffTrait.ATTACK_BONUS_PER_DRAGON;
         if (bonus > 0) {
-            event.setAmount(event.getAmount() + bonus);
+            event.setAmount(event.getAmount() * (1.0f + bonus));
             if (player.level() instanceof ServerLevel server) {
                 Vec3 pos = event.getEntity().position();
                 server.sendParticles(ParticleTypes.ENCHANT, pos.x, pos.y + 1, pos.z,

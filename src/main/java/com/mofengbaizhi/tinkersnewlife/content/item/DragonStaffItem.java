@@ -17,10 +17,9 @@ import java.util.List;
  * 驯龙杖（Dragon Staff）
  * <p>
  * 功能说明：
- * 1. 右键切换模式（回收/释放），需潜行 + 右键
- * 2. 右键龙实体回收（模式0）
- * 3. 右键方块释放龙（模式1）
- * 4. 按 G 键执行驯服技能（需消耗经验）
+ * 1. 右键己方龙将其回收，潜行右键释放。
+ * 2. 左键己方龙切换行为，左键其他目标仍为攻击。
+ * 3. 阅读驯龙残卷后可用绑定按键执行驯服仪式，消耗 88 级经验。
  * </p>
  * <p>
  * 所有逻辑委托给 {@link com.mofengbaizhi.tinkersnewlife.content.handler.DragonStaffHandler}

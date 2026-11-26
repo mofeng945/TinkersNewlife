@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smithing_transform",
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "iceandfire" }
+  ],
+  "template": { "item": "iceandfire:dragon_horn" },
+  "base": { "item": "minecraft:paper" },
+  "addition": { "item": "iceandfire:dragon_stick" },
+  "result": { "item": "tinkersnewlife:ancient_dragon_taming_manual" }
+}
