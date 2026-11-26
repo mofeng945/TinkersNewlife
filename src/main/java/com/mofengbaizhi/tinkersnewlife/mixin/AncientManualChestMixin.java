@@ -40,10 +40,16 @@ public abstract class AncientManualChestMixin {
             manual = FlyingSwordUnlock.Manual.FLYING_SWORD;
         } else if (tnl$endCityTable.equals(lootId) && structures.getStructureWithPieceAt(chest.getBlockPos(), BuiltinStructures.END_CITY).isValid()) {
             manual = FlyingSwordUnlock.Manual.TANG_HENG_DAO;
+        } else if (new ResourceLocation("chests/nether_bridge").equals(lootId) && structures.getStructureWithPieceAt(chest.getBlockPos(), BuiltinStructures.FORTRESS).isValid()) {
+            manual = FlyingSwordUnlock.Manual.LONG_SHORT_BLADE;
         } else return;
         if (!FlyingSwordUnlock.claimChestPage(player, manual)) return;
-        ItemStack page = new ItemStack(manual == FlyingSwordUnlock.Manual.FLYING_SWORD
-                ? ModItems.ANCIENT_CULTIVATION_PAGE.get() : ModItems.ANCIENT_WEAPON_MANUAL.get());
+        ItemStack page = new ItemStack(switch (manual) {
+            case FLYING_SWORD -> ModItems.ANCIENT_CULTIVATION_PAGE.get();
+            case TANG_HENG_DAO -> ModItems.ANCIENT_WEAPON_MANUAL.get();
+            case LONG_SHORT_BLADE -> ModItems.ANCIENT_ASSASSINATION_MANUAL.get();
+            case DRAGON_STAFF -> throw new IllegalStateException("Not a chest manual");
+        });
         for (int i = 0; i < chest.getContainerSize(); i++) {
             if (chest.getItem(i).isEmpty()) {
                 chest.setItem(i, page);

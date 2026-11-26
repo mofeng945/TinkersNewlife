@@ -381,6 +381,10 @@ public class ModItems {
                 () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCultivationPageItem(new Item.Properties(),
                         com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Manual.DRAGON_STAFF));
 
+        public static final RegistryObject<Item> ANCIENT_ASSASSINATION_MANUAL = ITEMS.register("ancient_assassination_manual",
+                () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCultivationPageItem(new Item.Properties(),
+                        com.mofengbaizhi.tinkersnewlife.content.unlock.FlyingSwordUnlock.Manual.LONG_SHORT_BLADE));
+
         public static final RegistryObject<FlyingSwordItem> FLYING_SWORD =
         ITEMS.register("flying_sword",
                 () -> new FlyingSwordItem(new Item.Properties().stacksTo(1))); // 耐久可自行调整

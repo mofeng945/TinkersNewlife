@@ -60,6 +60,11 @@ public class ModCreativeTabs {
                                     }
                                 }
 
+                                output.accept(ModItems.ANCIENT_CULTIVATION_PAGE.get());
+                                output.accept(ModItems.ANCIENT_WEAPON_MANUAL.get());
+                                output.accept(ModItems.ANCIENT_ASSASSINATION_MANUAL.get());
+                                if (ModList.get().isLoaded("iceandfire")) output.accept(ModItems.ANCIENT_DRAGON_TAMING_MANUAL.get());
+
                                 // ----- 基础材料 -----
                                 output.accept(ModItems.GHELOTH_REMAINS.get());
                                 output.accept(ModItems.NICHOLAS_BLESSING.get());

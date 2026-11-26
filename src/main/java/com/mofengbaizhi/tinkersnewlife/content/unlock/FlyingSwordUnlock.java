@@ -25,7 +25,8 @@ public final class FlyingSwordUnlock {
     public enum Manual {
         FLYING_SWORD("tinkersnewlife_flying_sword_unlocked", "flying_sword"),
         TANG_HENG_DAO("tinkersnewlife_tang_heng_dao_unlocked", "tang_heng_dao"),
-        DRAGON_STAFF("tinkersnewlife_dragon_taming_unlocked", "dragon_staff");
+        DRAGON_STAFF("tinkersnewlife_dragon_taming_unlocked", "dragon_staff"),
+        LONG_SHORT_BLADE("tinkersnewlife_long_short_blade_unlocked", "long_short_blade");
 
         final String key;
         public final String messageKey;
@@ -41,6 +42,7 @@ public final class FlyingSwordUnlock {
     public static boolean canAssemble(Player player, Item item) {
         if (item == ModItems.FLYING_SWORD.get()) return has(player, Manual.FLYING_SWORD);
         if (item == ModItems.TANG_HENG_DAO.get()) return has(player, Manual.TANG_HENG_DAO);
+        if (item == ModItems.LONG_SHORT_BLADE.get()) return has(player, Manual.LONG_SHORT_BLADE);
         if (item == ModItems.DRAGON_STAFF.get()) return has(player, Manual.DRAGON_STAFF);
         return true;
     }
@@ -50,6 +52,7 @@ public final class FlyingSwordUnlock {
         return switch (id.getPath()) {
             case "flying_sword" -> has(player, Manual.FLYING_SWORD);
             case "tang_heng_dao" -> has(player, Manual.TANG_HENG_DAO);
+            case "long_short_blade" -> has(player, Manual.LONG_SHORT_BLADE);
             case "dragon_staff" -> has(player, Manual.DRAGON_STAFF);
             default -> true;
         };
