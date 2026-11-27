@@ -213,7 +213,8 @@ public final class DragonCardsScreen extends Screen {
     private static Component status(CompoundTag card) { return text(stored(card) ? "stored" : card.getBoolean("live") ? "released" : "snapshot"); }
     private static Component name(CompoundTag card) {
         String name = card.getString("name");
-        return name.isBlank() ? text("unnamed") : Component.literal(name);
+        Component label = name.isBlank() ? text("unnamed") : Component.literal(name);
+        return card.getBoolean("pitWinner") ? text("pit.winner", label) : label;
     }
     private static String stat(CompoundTag card, String key) {
         if (!card.contains(key, 99)) return "—";

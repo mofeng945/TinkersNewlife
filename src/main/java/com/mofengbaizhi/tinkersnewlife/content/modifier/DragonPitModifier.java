@@ -48,22 +48,37 @@ public final class DragonPitModifier extends Modifier {
         // Increasing max health never fills the new hearts.
     }
 
-    /** Keep the winner multiplier out of max-health-based release calculations (e.g. Kinship). */
-    public static void applyBaseReleaseBonuses(LivingEntity dragon, Runnable applyBonuses) {
-        AttributeInstance maxHealth = dragon.getAttribute(Attributes.MAX_HEALTH);
-        AttributeModifier multiplier = maxHealth == null ? null : maxHealth.getModifier(HEALTH_ID);
-        if (multiplier == null) {
-            applyBonuses.run();
-            return;
-        }
-        float health = dragon.getHealth();
-        maxHealth.removeModifier(HEALTH_ID);
-        try {
-            applyBonuses.run();
-        } finally {
-            maxHealth.addPermanentModifier(multiplier);
-            float preservedHealth = Math.min(health, dragon.getMaxHealth());
-            if (dragon.getHealth() != preservedHealth) dragon.setHealth(preservedHealth);
-        }
+    public static boolean isWinner(LivingEntity dragon) {
+        return dragon.getPersistentData().getBoolean(WINNER);
+    }
+
+    /** Remove only the release bonus. The earned growth is stored independently. */
+    public static void stripStoredAttribute(Attribute attribute, AttributeInstance instance) {
+        UUID id = MULTIPLIERS.get(attribute);
+        if (id != null) instance.removeModifier(id);
+    }
+
+    public static void stripReleaseBonus(LivingEntity dragon) {
+        MULTIPLIERS.forEach((attribute, id) -> {
+            var instance = dragon.getAttribute(attribute);
+            if (instance != null) instance.removeModifier(id);
+        });
+        if (dragon.getHealth() > dragon.getMaxHealth()) dragon.setHealth(dragon.getMaxHealth());
+    }
+
+    public static void awardWin(LivingEntity dragon, int participants) {
+        stripReleaseBonus(dragon);
+        dragon.getPersistentData().putBoolean(WINNER, true);
+        MULTIPLIERS.forEach((attribute, releaseId) -> {
+            var instance = dragon.getAttribute(attribute);
+            if (instance == null) return;
+            UUID growthId = UUID.nameUUIDFromBytes((WINNER + ":growth:" + releaseId)
+                    .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            var previous = instance.getModifier(growthId);
+            double multiplier = (previous == null ? 1 : 1 + previous.getAmount()) * (1 + participants * .025);
+            instance.removeModifier(growthId);
+            instance.addPermanentModifier(new AttributeModifier(growthId, WINNER + ".growth",
+                    multiplier - 1, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        });
     }
 }

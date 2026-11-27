@@ -427,6 +427,7 @@
   "message.tinkersnewlife.dragon_command.1": "Dragon: Sit",
   "message.tinkersnewlife.dragon_command.2": "Dragon: Follow",
   "item.tinkersnewlife.dragon_staff.desc2": "§7Right-click your dragon to store it",
+  "screen.tinkersnewlife.dragon_cards.pit.winner": "Dragon King · %s",
   "screen.tinkersnewlife.dragon_cards.title": "Dragon Cards",
   "screen.tinkersnewlife.dragon_cards.empty": "No dragons registered",
   "screen.tinkersnewlife.dragon_cards.page": "%s / %s",

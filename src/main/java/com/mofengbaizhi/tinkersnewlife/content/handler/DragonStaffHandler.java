@@ -159,7 +159,9 @@ public class DragonStaffHandler {
                     winner = -1;
                 } else {
                     dragon.load(survivor.getCompound("data"));
-                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.applyOnRelease(dragon, true);
+                    int participants = 0;
+                    for (int i = 0; i < roster.size(); i++) if (roster.getCompound(i).getInt("state") == 1) participants++;
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.awardWin(dragon, participants);
                     CompoundTag updated = new CompoundTag();
                     dragon.saveWithoutId(updated);
                     updated.putString("id", type.toString());
@@ -320,7 +322,9 @@ public class DragonStaffHandler {
             CompoundTag entry = slots.getCompound(i);
             if (entry.getString("uuid").equals(uuid.toString())) {
                 CompoundTag data = new CompoundTag();
+                com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(tamable);
                 target.save(data);
+                if (com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isWinner(tamable)) entry.putBoolean(PIT_WINNER, true);
                 entry.put("data", data);
                 entry.putInt("state", 1);
                 if (target.hasCustomName()) {
@@ -342,9 +346,11 @@ public class DragonStaffHandler {
                 player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.slots_full"), true);
                 return;
             }
-            CompoundTag data = new CompoundTag();
-            target.save(data);
             CompoundTag entry = new CompoundTag();
+            CompoundTag data = new CompoundTag();
+            com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(tamable);
+            target.save(data);
+            if (com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isWinner(tamable)) entry.putBoolean(PIT_WINNER, true);
             entry.putString("uuid", uuid.toString());
             entry.putString("type", ForgeRegistries.ENTITY_TYPES.getKey(target.getType()).toString());
             String name = target.hasCustomName() ? target.getCustomName().getString() : target.getName().getString();
@@ -399,10 +405,9 @@ public class DragonStaffHandler {
                 }
                 dragon.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
                 if (dragon instanceof LivingEntity livingDragon) {
-                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.applyBaseReleaseBonuses(livingDragon, () -> {
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(livingDragon);
                         com.mofengbaizhi.tinkersnewlife.content.modifier.DragonHusbandryModifier.applyOnRelease(tool, livingDragon, slots.size());
                         com.mofengbaizhi.tinkersnewlife.content.modifier.DragonKinshipModifier.applyOnRelease(tool, player, livingDragon);
-                    });
                     com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.applyOnRelease(livingDragon, entry.getBoolean(PIT_WINNER));
                 }
                 if (!player.level().addFreshEntity(dragon)) {

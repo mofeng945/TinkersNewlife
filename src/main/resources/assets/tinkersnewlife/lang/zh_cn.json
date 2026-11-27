@@ -427,6 +427,7 @@
   "message.tinkersnewlife.dragon_command.1": "龙：坐下",
   "message.tinkersnewlife.dragon_command.2": "龙：跟随",
   "item.tinkersnewlife.dragon_staff.desc2": "§7右键己方龙：收回",
+  "screen.tinkersnewlife.dragon_cards.pit.winner": "蛊王 · %s",
   "screen.tinkersnewlife.dragon_cards.title": "龙册",
   "screen.tinkersnewlife.dragon_cards.empty": "杖中没有登记的龙",
   "screen.tinkersnewlife.dragon_cards.page": "%s / %s",

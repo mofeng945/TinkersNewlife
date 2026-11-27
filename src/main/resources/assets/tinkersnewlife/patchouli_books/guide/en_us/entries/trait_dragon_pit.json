@@ -11,7 +11,7 @@
     {
       "type": "patchouli:text",
       "title": "Winner's Mark",
-      "text": "The winner earns a permanent mark that triples maximum health, attack damage, armor, and armor toughness, subject to attribute caps. The bonus cannot stack and does not restore current health."
+      "text": "Each win permanently increases maximum health, attack damage, armor, and armor toughness by 2.5% per participant. A marked winner triples those grown stats when released. Storing it removes only the release bonus. Releasing it again does not stack the tripling or restore current health."
     },
     {
       "type": "patchouli:text",

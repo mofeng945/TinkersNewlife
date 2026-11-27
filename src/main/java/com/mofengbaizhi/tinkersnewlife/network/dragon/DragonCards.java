@@ -49,6 +49,7 @@ public final class DragonCards {
             CompoundTag card = new CompoundTag();
             card.putString("uuid",id.toString()); card.putString("name",live != null ? live.getName().getString() : entry.getString("name"));
             card.putString("type",entry.getString("type")); card.putInt("state",entry.getInt("state")); card.putBoolean("live",live!=null);
+            card.putBoolean("pitWinner",entry.getBoolean("TnlDragonPitWinner"));
             card.putBoolean("male",data.getBoolean("Gender"));
             int days=Math.max(0,data.getInt("AgeTicks"))/24000;
             card.putInt("days",days); card.putInt("stage",Math.min(5,days/25+1));
@@ -58,6 +59,7 @@ public final class DragonCards {
                 var inst=live==null?null:live.getAttribute(stat);
                 card.putDouble(key,inst!=null?inst.getValue():attribute(data,stat));
             }
+            if (entry.getInt("state") == 1) card.putDouble("hp", Math.min(card.getDouble("hp"), card.getDouble("maxHp")));
             CompoundTag model=new CompoundTag(); model.putString("id",entry.getString("type"));
             for(String key:List.of("AgeTicks","Gender","Variant","CustomPose")) if(data.contains(key)) model.put(key,data.get(key).copy());
             ListTag armor=new ListTag();
@@ -71,7 +73,7 @@ public final class DragonCards {
     public static double attribute(CompoundTag data,Attribute stat) {
         String id=Objects.requireNonNull(ForgeRegistries.ATTRIBUTES.getKey(stat)).toString();
         for(Tag t:data.getList("Attributes",Tag.TAG_COMPOUND)) { var tag=(CompoundTag)t;
-            if (id.equals(tag.getString("Name"))) { AttributeInstance temp=new AttributeInstance(stat,a->{});temp.load(tag);return temp.getValue(); }}
+            if (id.equals(tag.getString("Name"))) { AttributeInstance temp=new AttributeInstance(stat,a->{});temp.load(tag);com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripStoredAttribute(stat,temp);return temp.getValue(); }}
         return stat.getDefaultValue();
     }
     public record Open(List<CompoundTag> cards, UUID token) {
