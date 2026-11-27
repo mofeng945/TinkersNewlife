@@ -53,7 +53,15 @@ public final class SleepwakeChurchPiece extends TemplateStructurePiece {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int x = minX; x <= maxX; x++) for (int z = minZ; z <= maxZ; z++) {
             int ground = level.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
-            if (lowFoundation) ground = Math.max(ground, templatePosition.getY() - SleepwakeChurchTerrain.MAX_FILL);
+            if (lowFoundation) {
+                int floor = templatePosition.getY();
+                int surface = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
+                boolean wet = !level.getFluidState(pos.set(x, ground, z)).isEmpty();
+                for (int y = floor; y < Math.min(surface, floor + HEIGHT); y++) {
+                    level.setBlock(pos.set(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+                }
+                ground = Math.max(ground, floor - (wet ? SleepwakeChurchTerrain.MAX_WATER_FILL : SleepwakeChurchTerrain.MAX_FILL));
+            }
             for (int y = ground; y < templatePosition.getY(); y++) {
                 pos.set(x, y, z);
                 var block = !lowFoundation || templatePosition.getY() - y <= SleepwakeChurchTerrain.STONE_COURSES

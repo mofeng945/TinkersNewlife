@@ -44,12 +44,15 @@ public class PacketSwingOffhand {
     }
 
     public static void handle(PacketSwingOffhand packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() ->
-                // ⚠ 绝不能在专服直接碰客户端类 ✗（§801 的教训 ✓）
-                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                        com.mofengbaizhi.tinkersnewlife.client.renderer.LongShortBladeSpinHandler
-                                .clientStartOffhandSwing()));
+        // ⚠ 绝不能在专服直接碰客户端类 ✗（§801 的教训 ✓）
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> Client::accept));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept() {
+            com.mofengbaizhi.tinkersnewlife.client.renderer.LongShortBladeSpinHandler.clientStartOffhandSwing();
+        }
     }
 
     /** ⭐ 服务端调用：告诉某个玩家"该挥副手了" ✓（⭐ 只发给他本人 ✓） */

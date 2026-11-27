@@ -43,8 +43,13 @@ public class PacketOpenWuWeiScreen {
     }
 
     public static void handle(PacketOpenWuWeiScreen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(new WuWeiScreen(packet.forms, packet.selected))));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.open(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open(PacketOpenWuWeiScreen packet) {
+            Minecraft.getInstance().setScreen(new WuWeiScreen(packet.forms, packet.selected));
+        }
     }
 }

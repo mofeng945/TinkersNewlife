@@ -2,6 +2,8 @@ package com.mofengbaizhi.tinkersnewlife.network.curse;
 
 import com.mofengbaizhi.tinkersnewlife.client.data.ClientCursedChant;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -35,7 +37,13 @@ public class PacketSyncCursedChant {
     }
 
     public static void handle(PacketSyncCursedChant packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> ClientCursedChant.update(packet.remaining, packet.total, packet.label));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketSyncCursedChant packet) {
+            ClientCursedChant.update(packet.remaining, packet.total, packet.label);
+        }
     }
 }

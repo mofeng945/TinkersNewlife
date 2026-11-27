@@ -218,7 +218,7 @@ public final class PortableDeviceSupport {
             try {
                 BlockEntity be = makeGhost(d[0], d[1]);
                 if (be != null) {
-                    be.setLevel(net.minecraft.client.Minecraft.getInstance().level);
+                    ClientGhosts.attachLevel(be);
                     out.add(be);
                 }
             } catch (Throwable ignored) {
@@ -226,6 +226,12 @@ public final class PortableDeviceSupport {
         }
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 客户端自己造侧栏幽灵 {} 个", out.size());
         return out;
+    }
+
+    private static final class ClientGhosts {
+        private static void attachLevel(BlockEntity ghost) {
+            ghost.setLevel(net.minecraft.client.Minecraft.getInstance().level);
+        }
     }
 
     /** 幽灵实体的统一口袋坐标（★远离一切工作台 ⇒ 侧栏检测扫不到邻居 ✓） */

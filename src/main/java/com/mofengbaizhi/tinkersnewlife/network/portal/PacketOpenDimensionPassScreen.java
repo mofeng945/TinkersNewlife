@@ -61,9 +61,14 @@ public class PacketOpenDimensionPassScreen {
     }
 
     public static void handle(PacketOpenDimensionPassScreen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                Minecraft.getInstance().setScreen(new DimensionPassScreen(
-                        packet.dimensions, packet.anchor, packet.lockedDimensionId, packet.lockedY))));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.open(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open(PacketOpenDimensionPassScreen packet) {
+            Minecraft.getInstance().setScreen(new DimensionPassScreen(
+                    packet.dimensions, packet.anchor, packet.lockedDimensionId, packet.lockedY));
+        }
     }
 }

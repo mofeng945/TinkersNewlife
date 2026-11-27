@@ -47,13 +47,18 @@ public class PacketStarfallHit {
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(this)));
+        ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketStarfallHit packet) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.level == null) {
                 return;
             }
-            StarfallHitCache.add(new Vec3(x, y, z), new Vec3(dx, dy, dz), mc.level.getGameTime());
-        }));
-        ctx.get().setPacketHandled(true);
+            StarfallHitCache.add(new Vec3(packet.x, packet.y, packet.z),
+                    new Vec3(packet.dx, packet.dy, packet.dz), mc.level.getGameTime());
+        }
     }
 }

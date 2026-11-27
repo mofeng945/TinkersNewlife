@@ -55,13 +55,16 @@ public class PacketSpiritState {
     }
 
     public static void handle(PacketSpiritState packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> {
-                    // 只在"正开着咒灵操术列表"时应用；其它界面/没开界面一律忽略
-                    if (Minecraft.getInstance().screen instanceof CursedSpiritScreen screen) {
-                        screen.applyState(packet.uids, packet.released);
-                    }
-                }));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.update(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void update(PacketSpiritState packet) {
+            // 只在"正开着咒灵操术列表"时应用；其它界面/没开界面一律忽略
+            if (Minecraft.getInstance().screen instanceof CursedSpiritScreen screen) {
+                screen.applyState(packet.uids, packet.released);
+            }
+        }
     }
 }

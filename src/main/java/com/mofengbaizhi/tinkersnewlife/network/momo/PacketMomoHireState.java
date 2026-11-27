@@ -52,18 +52,21 @@ public class PacketMomoHireState {
     }
 
     public static void handle(PacketMomoHireState packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> {
-                    if (Minecraft.getInstance().screen instanceof MomoTradeScreen screen
-                            && screen.matches(packet.momoId)) {
-                        screen.updateHireState(packet.hired, packet.employer, packet.remainingDays);
-                    } else if (Minecraft.getInstance().screen
-                            instanceof com.mofengbaizhi.tinkersnewlife.client.screen.MomoHireScreen hireScreen
-                            && hireScreen.matches(packet.momoId)) {
-                        // TNL1317 雇佣界面也要能收到"已雇佣/剩余天数"⇒ 续雇才看得出来 ✓
-                        hireScreen.updateHireState(packet.hired, packet.employer, packet.remainingDays);
-                    }
-                }));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.update(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void update(PacketMomoHireState packet) {
+            if (Minecraft.getInstance().screen instanceof MomoTradeScreen screen
+                    && screen.matches(packet.momoId)) {
+                screen.updateHireState(packet.hired, packet.employer, packet.remainingDays);
+            } else if (Minecraft.getInstance().screen
+                    instanceof com.mofengbaizhi.tinkersnewlife.client.screen.MomoHireScreen hireScreen
+                    && hireScreen.matches(packet.momoId)) {
+                // TNL1317 雇佣界面也要能收到"已雇佣/剩余天数"⇒ 续雇才看得出来 ✓
+                hireScreen.updateHireState(packet.hired, packet.employer, packet.remainingDays);
+            }
+        }
     }
 }

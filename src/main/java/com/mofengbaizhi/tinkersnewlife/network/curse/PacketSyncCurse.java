@@ -2,6 +2,8 @@ package com.mofengbaizhi.tinkersnewlife.network.curse;
 
 import com.mofengbaizhi.tinkersnewlife.client.data.ClientCurseData;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -73,9 +75,15 @@ public class PacketSyncCurse {
     }
 
     public static void handle(PacketSyncCurse packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> ClientCurseData.update(
-                packet.curse, packet.max, packet.domainActive, packet.infinite, packet.techniqueId,
-                packet.tamedMask, packet.affinity, packet.output, packet.restricted, packet.bound));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketSyncCurse packet) {
+            ClientCurseData.update(
+                    packet.curse, packet.max, packet.domainActive, packet.infinite, packet.techniqueId,
+                    packet.tamedMask, packet.affinity, packet.output, packet.restricted, packet.bound);
+        }
     }
 }

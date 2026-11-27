@@ -53,7 +53,13 @@ public record DragonTameVisual(ResourceLocation dimension, int playerId, UUID pl
     }
     public void handle(Supplier<NetworkEvent.Context> supplier) {
         var ctx = supplier.get();
-        ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> DragonTameRenderer.receive(this)));
+        ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(this)));
         ctx.setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(DragonTameVisual packet) {
+            DragonTameRenderer.receive(packet);
+        }
     }
 }

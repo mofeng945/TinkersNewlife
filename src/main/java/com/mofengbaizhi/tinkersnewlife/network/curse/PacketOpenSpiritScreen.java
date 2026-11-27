@@ -82,8 +82,13 @@ public class PacketOpenSpiritScreen {
     }
 
     public static void handle(PacketOpenSpiritScreen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(new CursedSpiritScreen(packet.mode, packet.rows))));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.open(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open(PacketOpenSpiritScreen packet) {
+            Minecraft.getInstance().setScreen(new CursedSpiritScreen(packet.mode, packet.rows));
+        }
     }
 }

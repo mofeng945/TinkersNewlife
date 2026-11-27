@@ -35,8 +35,13 @@ public class PacketWuWeiDisguise {
     }
 
     public static void handle(PacketWuWeiDisguise packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> ClientWuWeiData.setDisguise(packet.playerId, packet.formId)));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketWuWeiDisguise packet) {
+            ClientWuWeiData.setDisguise(packet.playerId, packet.formId);
+        }
     }
 }

@@ -3,6 +3,8 @@ package com.mofengbaizhi.tinkersnewlife.network.curse;
 import com.mofengbaizhi.tinkersnewlife.client.data.ClientVaultData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -29,7 +31,13 @@ public class PacketSyncCurseVault {
     }
 
     public static void handle(PacketSyncCurseVault packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> ClientVaultData.update(packet.pos, packet.power));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketSyncCurseVault packet) {
+            ClientVaultData.update(packet.pos, packet.power);
+        }
     }
 }

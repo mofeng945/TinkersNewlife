@@ -68,12 +68,16 @@ public class PacketMomoMenuOpen {
     }
 
     public static void handle(PacketMomoMenuOpen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.open(packet)));
+        ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open(PacketMomoMenuOpen packet) {
             Minecraft mc = Minecraft.getInstance();
             mc.setScreen(packet.kind == KIND_HIRE
                     ? new MomoHireScreen(packet.momoId, packet.favor)
                     : new MomoMenuScreen(packet.momoId, packet.favor));
-        }));
-        ctx.get().setPacketHandled(true);
+        }
     }
 }

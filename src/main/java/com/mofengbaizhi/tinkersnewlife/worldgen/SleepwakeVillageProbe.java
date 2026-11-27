@@ -9,19 +9,20 @@ import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStruct
 
 /** Reconstruct nearby village starts using seed/generator only: never loads chunks. */
 final class SleepwakeVillageProbe {
-    static boolean nearVillage(Structure.GenerationContext c, int x, int z) {
+    static java.util.List<net.minecraft.world.level.levelgen.structure.BoundingBox> collect(Structure.GenerationContext c) {
         var villages = TagKey.create(Registries.STRUCTURE, new ResourceLocation("minecraft", "village"));
         var sets = c.registryAccess().registryOrThrow(Registries.STRUCTURE_SET);
         var placementState = net.minecraft.world.level.chunk.ChunkGeneratorStructureState.createForNormal(
                 c.randomState(), c.seed(), c.biomeSource(), sets.asLookup());
-        boolean nearby = false;
+        var boxes = new java.util.ArrayList<net.minecraft.world.level.levelgen.structure.BoundingBox>();
         for (var set : sets) {
             if (!(set.placement() instanceof RandomSpreadStructurePlacement placement)) continue;
             if (set.structures().stream().noneMatch(e -> e.structure().is(villages))) continue;
             for (int rx=-1;rx<=1;rx++) for(int rz=-1;rz<=1;rz++) {
                 ChunkPos candidate=placement.getPotentialStructureChunk(c.seed(), c.chunkPos().x+rx*placement.spacing(),c.chunkPos().z+rz*placement.spacing());
                 if (!placement.isStructureChunk(placementState, candidate.x, candidate.z)) continue;
-                if (Math.abs(candidate.getMinBlockX()-x)>256 || Math.abs(candidate.getMinBlockZ()-z)>256) continue;
+                if (Math.abs(candidate.getMinBlockX()-c.chunkPos().getMinBlockX())>271
+                        || Math.abs(candidate.getMinBlockZ()-c.chunkPos().getMinBlockZ())>271) continue;
                 // Match vanilla weighted selection and retry order, not every possible entry.
                 var remaining = new java.util.ArrayList<>(set.structures());
                 var selection = new net.minecraft.world.level.levelgen.WorldgenRandom(
@@ -41,16 +42,23 @@ final class SleepwakeVillageProbe {
                     if(!start.isValid()) continue;
                     // A valid non-village wins this set; later village alternatives never spawn.
                     if (!entry.structure().is(villages)) break;
-                    var box=start.getBoundingBox();
-                    int dx=Math.max(Math.max(box.minX()- (x+50), x-box.maxX()),0);
-                    int dz=Math.max(Math.max(box.minZ()- (z+72), z-box.maxZ()),0);
-                    if (dx == 0 && dz == 0) return false;
-                    if (dx*dx+dz*dz<=2500) nearby = true;
+                    boxes.add(start.getBoundingBox());
                     break; // Vanilla stops at the first valid structure in this set.
                 }
             }
         }
-        return nearby;
+        return boxes;
+    }
+
+    static int relation(java.util.List<net.minecraft.world.level.levelgen.structure.BoundingBox> boxes, int x, int z) {
+        boolean nearby = false;
+        for (var box : boxes) {
+            int dx = Math.max(Math.max(box.minX() - (x + SleepwakeChurchPiece.WIDTH - 1), x - box.maxX()), 0);
+            int dz = Math.max(Math.max(box.minZ() - (z + SleepwakeChurchPiece.DEPTH - 1), z - box.maxZ()), 0);
+            if (dx == 0 && dz == 0) return -1;
+            if (dx * dx + dz * dz <= 2500) nearby = true;
+        }
+        return nearby ? 1 : 0;
     }
     private SleepwakeVillageProbe() {}
 }

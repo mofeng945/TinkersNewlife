@@ -69,12 +69,16 @@ public class PacketThrustGhost {
     }
 
     public static void handle(PacketThrustGhost packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() ->
-                // ⚠ 绝不能在这里直接碰客户端类 ✗（§801）
-                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                        com.mofengbaizhi.tinkersnewlife.client.renderer.ThrustGhostCache.add(
-                                packet.entityId, packet.x, packet.y, packet.z, packet.yaw, packet.pitch)));
+        // ⚠ 绝不能在这里直接碰客户端类 ✗（§801）
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketThrustGhost packet) {
+            com.mofengbaizhi.tinkersnewlife.client.renderer.ThrustGhostCache.add(
+                    packet.entityId, packet.x, packet.y, packet.z, packet.yaw, packet.pitch);
+        }
     }
 
     /**

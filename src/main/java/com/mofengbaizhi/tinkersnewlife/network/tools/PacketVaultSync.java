@@ -4,6 +4,8 @@ import com.mofengbaizhi.tinkersnewlife.client.screen.QuantumVaultScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
@@ -57,13 +59,17 @@ public class PacketVaultSync {
     }
 
     public static void handle(PacketVaultSync packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.update(packet)));
+        ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void update(PacketVaultSync packet) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.screen instanceof QuantumVaultScreen screen) {
                 screen.acceptSync(packet.windowId, packet.total, packet.entries);
             }
-        });
-        ctx.get().setPacketHandled(true);
+        }
     }
 
     public int windowId() {

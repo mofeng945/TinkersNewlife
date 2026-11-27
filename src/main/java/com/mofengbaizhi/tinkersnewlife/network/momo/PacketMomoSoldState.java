@@ -54,7 +54,12 @@ public class PacketMomoSoldState {
     }
 
     public static void handle(PacketMomoSoldState packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.update(packet)));
+        ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void update(PacketMomoSoldState packet) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.screen instanceof MomoTradeScreen screen && screen.matches(packet.momoId)) {
                 screen.updatePurchase(packet.sold, packet.favor);
@@ -62,7 +67,6 @@ public class PacketMomoSoldState {
                 mc.player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                         "message.tinkersnewlife.momo.bought"), true);
             }
-        }));
-        ctx.get().setPacketHandled(true);
+        }
     }
 }

@@ -2,6 +2,8 @@ package com.mofengbaizhi.tinkersnewlife.network.curse;
 
 import com.mofengbaizhi.tinkersnewlife.client.data.ClientForgeData;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -37,7 +39,13 @@ public class PacketSyncForge {
     }
 
     public static void handle(PacketSyncForge packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> ClientForgeData.update(packet.remaining, packet.total, packet.itemId));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketSyncForge packet) {
+            ClientForgeData.update(packet.remaining, packet.total, packet.itemId);
+        }
     }
 }

@@ -35,7 +35,12 @@ public class PacketBlackBirdCamera {
     }
 
     public static void handle(PacketBlackBirdCamera packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.update(packet)));
+        ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void update(PacketBlackBirdCamera packet) {
             Minecraft mc = Minecraft.getInstance();
             if (packet.attach) {
                 ClientLevel level = mc.level;
@@ -50,7 +55,6 @@ public class PacketBlackBirdCamera {
                     mc.setCameraEntity(mc.player);
                 }
             }
-        }));
-        ctx.get().setPacketHandled(true);
+        }
     }
 }

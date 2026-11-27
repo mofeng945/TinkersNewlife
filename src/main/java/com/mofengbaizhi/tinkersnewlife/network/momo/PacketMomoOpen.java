@@ -81,9 +81,14 @@ public class PacketMomoOpen {
     }
 
     public static void handle(PacketMomoOpen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(new MomoTradeScreen(
-                        packet.momoId, packet.offers, packet.hired, packet.employer, packet.favor, packet.sold))));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.open(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open(PacketMomoOpen packet) {
+            Minecraft.getInstance().setScreen(new MomoTradeScreen(
+                    packet.momoId, packet.offers, packet.hired, packet.employer, packet.favor, packet.sold));
+        }
     }
 }

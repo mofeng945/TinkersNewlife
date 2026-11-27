@@ -37,8 +37,13 @@ public class PacketProjectionStun {
     }
 
     public static void handle(PacketProjectionStun packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                ClientProjectionData.update(packet.stunned, packet.yaw, packet.pitch)));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketProjectionStun packet) {
+            ClientProjectionData.update(packet.stunned, packet.yaw, packet.pitch);
+        }
     }
 }

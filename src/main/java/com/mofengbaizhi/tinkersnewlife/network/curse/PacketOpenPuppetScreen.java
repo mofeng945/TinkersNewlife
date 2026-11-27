@@ -33,9 +33,14 @@ public class PacketOpenPuppetScreen {
     }
 
     public static void handle(PacketOpenPuppetScreen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(
-                        new PuppetSelectScreen(packet.ironCost, packet.snowCost))));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.open(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open(PacketOpenPuppetScreen packet) {
+            Minecraft.getInstance().setScreen(
+                    new PuppetSelectScreen(packet.ironCost, packet.snowCost));
+        }
     }
 }

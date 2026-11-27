@@ -21,7 +21,13 @@ public record PacketMomoBossMusic(ResourceLocation dimension, boolean playing) {
 
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
         var context = contextSupplier.get();
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MomoBossMusic.update(dimension, playing)));
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(this)));
         context.setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketMomoBossMusic packet) {
+            MomoBossMusic.update(packet.dimension, packet.playing);
+        }
     }
 }

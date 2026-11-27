@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.network.curse;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
@@ -43,7 +45,13 @@ public class PacketTitlesSync {
     }
 
     public static void handle(PacketTitlesSync packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> com.mofengbaizhi.tinkersnewlife.client.data.ClientTitles.set(packet.held, packet.selected));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketTitlesSync packet) {
+            com.mofengbaizhi.tinkersnewlife.client.data.ClientTitles.set(packet.held, packet.selected);
+        }
     }
 }

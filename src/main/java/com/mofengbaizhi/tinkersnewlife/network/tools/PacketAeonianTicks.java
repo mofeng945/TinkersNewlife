@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.network.tools;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
@@ -9,7 +11,7 @@ public record PacketAeonianTicks(int ticks) {
     public PacketAeonianTicks(FriendlyByteBuf buf) { this(buf.readVarInt()); }
     public void toBytes(FriendlyByteBuf buf) { buf.writeVarInt(ticks); }
     public static void handle(PacketAeonianTicks packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> Client.accept(packet.ticks));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet.ticks)));
         ctx.get().setPacketHandled(true);
     }
     private static final class Client {

@@ -42,9 +42,14 @@ public class PacketOpenCursedSpeechScreen {
     }
 
     public static void handle(PacketOpenCursedSpeechScreen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(
-                        new CursedSpeechScreen(packet.learned, packet.chant))));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.open(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open(PacketOpenCursedSpeechScreen packet) {
+            Minecraft.getInstance().setScreen(
+                    new CursedSpeechScreen(packet.learned, packet.chant));
+        }
     }
 }

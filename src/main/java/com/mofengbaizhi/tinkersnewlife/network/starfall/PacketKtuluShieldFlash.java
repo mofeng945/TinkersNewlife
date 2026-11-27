@@ -10,8 +10,6 @@ import java.util.function.Supplier;
 /** TNL907 ★免疫窗挡下 → 通知客户端闪金 ✓ */
 public class PacketKtuluShieldFlash {
 
-    private static long TNL$LOG = 0L;
-
     public PacketKtuluShieldFlash() {
     }
 
@@ -22,7 +20,14 @@ public class PacketKtuluShieldFlash {
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> Client::flash));
+        ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static long TNL$LOG = 0L;
+
+        private static void flash() {
             com.mofengbaizhi.tinkersnewlife.client.hud.KtuluBarFlash.trigger();
             if (System.currentTimeMillis() - TNL$LOG > 1500L) {      // TNL908 ★限流探针 ✓
                 TNL$LOG = System.currentTimeMillis();
@@ -30,7 +35,6 @@ public class PacketKtuluShieldFlash {
                         "TNL908 client received shield flash, strength={}",
                         com.mofengbaizhi.tinkersnewlife.client.hud.KtuluBarFlash.strength());
             }
-        }));
-        ctx.get().setPacketHandled(true);
+        }
     }
 }

@@ -30,8 +30,13 @@ public class PacketStuckArrow {
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                com.mofengbaizhi.tinkersnewlife.client.handler.StuckArrowClientHandler.onSync(this.id, this.present)));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(this)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketStuckArrow packet) {
+            com.mofengbaizhi.tinkersnewlife.client.handler.StuckArrowClientHandler.onSync(packet.id, packet.present);
+        }
     }
 }

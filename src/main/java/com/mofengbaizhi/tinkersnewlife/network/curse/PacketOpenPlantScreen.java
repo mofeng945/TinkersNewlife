@@ -29,8 +29,13 @@ public class PacketOpenPlantScreen {
     }
 
     public static void handle(PacketOpenPlantScreen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(new PlantSelectScreen(packet.cost))));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.open(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open(PacketOpenPlantScreen packet) {
+            Minecraft.getInstance().setScreen(new PlantSelectScreen(packet.cost));
+        }
     }
 }

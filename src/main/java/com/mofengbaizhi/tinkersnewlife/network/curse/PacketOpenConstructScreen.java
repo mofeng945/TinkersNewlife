@@ -23,8 +23,13 @@ public class PacketOpenConstructScreen {
     public void toBytes(FriendlyByteBuf buf) {}
 
     public static void handle(PacketOpenConstructScreen packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(new ConstructSelectScreen())));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> Client::open));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void open() {
+            Minecraft.getInstance().setScreen(new ConstructSelectScreen());
+        }
     }
 }

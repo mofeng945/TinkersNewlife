@@ -39,8 +39,13 @@ public class PacketMobDisguise {
     }
 
     public static void handle(PacketMobDisguise packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> ClientWuWeiData.setMobDisguise(packet.entityId, packet.formId)));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.accept(packet)));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept(PacketMobDisguise packet) {
+            ClientWuWeiData.setMobDisguise(packet.entityId, packet.formId);
+        }
     }
 }

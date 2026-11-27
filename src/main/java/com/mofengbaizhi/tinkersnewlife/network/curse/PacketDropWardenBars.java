@@ -34,9 +34,14 @@ public class PacketDropWardenBars {
     }
 
     public static void handle(PacketDropWardenBars packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> ServantBossBarCleaner::request));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> Client::accept));
         ctx.get().setPacketHandled(true);
+    }
+
+    private static final class Client {
+        private static void accept() {
+            ServantBossBarCleaner.request();
+        }
     }
 
     /** 便捷发送：广播给所有玩家（收到的一方自己判断该不该清） */
