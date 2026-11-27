@@ -33,7 +33,6 @@ public final class DragonViltrum {
     public static final ModifierId ID = new ModifierId(TinkersNewlife.prefix("dragon_viltrum"));
     private static final String ENABLED = "tnlDragonViltrum";
     private static final String READY_AT = "tnlViltrumReadyAt";
-    private static final float CHANCE = .05f;
     private static final int COOLDOWN = 400;
     private static final Map<UUID, Throw> THROWS = new HashMap<>();
     private static final Map<UUID, Throw> VICTIMS = new HashMap<>();
@@ -43,9 +42,10 @@ public final class DragonViltrum {
         final ServerLevel level;
         final LivingEntity dragon, victim;
         final DragonViltrumFlight.Plan plan;
+        final LivingEntity rider;
         int tick;
         Throw(ServerLevel level, LivingEntity dragon, LivingEntity victim, DragonViltrumFlight.Plan plan) {
-            this.level = level; this.dragon = dragon; this.victim = victim; this.plan = plan;
+            this.level = level; this.dragon = dragon; this.victim = victim; this.plan = plan; this.rider = dragon.getControllingPassenger();
         }
     }
 
@@ -63,16 +63,22 @@ public final class DragonViltrum {
         VICTIMS.remove(active.victim.getUUID(), active);
     }
 
-    @SubscribeEvent(priority = EventPriority.MONITOR)
-    public static void hit(LivingDamageEvent event) {
-        var source = event.getSource();
-        var victim = event.getEntity();
-        if (source instanceof DragDamage || !source.is(DamageTypes.MOB_ATTACK)
-                || !(source.getEntity() instanceof TamableAnimal dragon) || source.getDirectEntity() != dragon
-                || !(dragon.level() instanceof ServerLevel level) || !dragon.isTame()
-                || !dragon.getPersistentData().getBoolean(ENABLED) || dragon.getPersistentData().getLong(READY_AT) > level.getGameTime()
-                || !(event.getAmount() > 0) || !Float.isFinite(event.getAmount()) || event.getAmount() >= victim.getHealth()
-                || !eligible(dragon, victim) || !stageThree(dragon) || dragon.getRandom().nextFloat() >= CHANCE) return;
+    public static void activate(net.minecraft.server.level.ServerPlayer rider) {
+        if (!rider.isAlive() || rider.isSpectator() || !(rider.getVehicle() instanceof TamableAnimal dragon)
+                || dragon.getControllingPassenger() != rider || !dragon.isOwnedBy(rider)
+                || !(dragon.level() instanceof ServerLevel level) || !dragon.isAlive()
+                || !dragon.getPersistentData().getBoolean(ENABLED) || !stageThree(dragon)
+                || dragon.getPersistentData().getLong(READY_AT) > level.getGameTime()) return;
+        var origin = dragon.getBoundingBox().getCenter();
+        var forward = net.minecraft.world.phys.Vec3.directionFromRotation(0, dragon.getYRot());
+        double range = dragon.getBbWidth() * .5 + 6;
+        var victim = level.getEntitiesOfClass(LivingEntity.class, dragon.getBoundingBox().inflate(6), target -> {
+            var delta = target.getBoundingBox().getCenter().subtract(origin);
+            var flat = delta.multiply(1, 0, 1);
+            return target != rider && eligible(dragon, target) && flat.lengthSqr() <= range * range
+                    && forward.dot(flat.normalize()) >= .707 && dragon.hasLineOfSight(target);
+        }).stream().min(java.util.Comparator.comparingDouble(dragon::distanceToSqr)).orElse(null);
+        if (victim == null) return;
         var plan = DragonViltrumFlight.create(level, dragon, victim);
         if (plan == null) return;
         dragon.getPersistentData().putLong(READY_AT, level.getGameTime() + COOLDOWN);
@@ -85,7 +91,7 @@ public final class DragonViltrum {
     private static boolean eligible(TamableAnimal dragon, LivingEntity victim) {
         return victim != dragon && victim.level() == dragon.level() && victim.isAlive() && !victim.isSpectator()
                 && !dragon.isAlliedTo(victim) && !victim.isAlliedTo(dragon) && !dragon.isOwnedBy(victim)
-                && !dragon.isVehicle() && !dragon.isPassenger() && !dragon.isOrderedToSit()
+                && !dragon.isPassenger() && !dragon.isOrderedToSit()
                 && !victim.isVehicle() && !victim.isPassenger()
                 && victim.getBbWidth() < EntityType.IRON_GOLEM.getWidth() && victim.getBbHeight() < EntityType.IRON_GOLEM.getHeight()
                 && !THROWS.containsKey(dragon.getUUID()) && !VICTIMS.containsKey(dragon.getUUID())
@@ -106,7 +112,7 @@ public final class DragonViltrum {
             if (!dragon.isAlive() || !victim.isAlive() || dragon.isRemoved() || victim.isRemoved()
                     || dragon.level() != active.level || victim.level() != active.level
                     || !dragon.getPersistentData().getBoolean(ENABLED) || victim.isSpectator()
-                    || dragon.isVehicle() || dragon.isPassenger() || victim.isVehicle() || victim.isPassenger()) {
+                    || dragon.getControllingPassenger() != active.rider || active.rider == null || !active.rider.isAlive() || dragon.isPassenger() || victim.isVehicle() || victim.isPassenger()) {
                 end(active);
                 continue;
             }
@@ -139,6 +145,30 @@ public final class DragonViltrum {
     }
 
     @SubscribeEvent public static void shutdown(ServerStoppedEvent event) { THROWS.clear(); VICTIMS.clear(); }
+
+    public record Use() {
+        public Use(net.minecraft.network.FriendlyByteBuf ignored) { this(); }
+        public void encode(net.minecraft.network.FriendlyByteBuf ignored) {}
+        public void handle(java.util.function.Supplier<net.minecraftforge.network.NetworkEvent.Context> supplier) {
+            var ctx = supplier.get();
+            ctx.enqueueWork(() -> { if (ctx.getSender() != null) activate(ctx.getSender()); });
+            ctx.setPacketHandled(true);
+        }
+    }
+
+    @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = net.minecraftforge.api.distmarker.Dist.CLIENT)
+    public static final class ClientInput {
+        @SubscribeEvent(priority = EventPriority.LOWEST)
+        public static void use(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
+            if (!event.isUseItem() || event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;
+            var player = net.minecraft.client.Minecraft.getInstance().player;
+            if (player == null || !(player.getVehicle() instanceof TamableAnimal mount)) return;
+            var id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(mount.getType());
+            if (id != null && id.getNamespace().equals("iceandfire") && id.getPath().endsWith("_dragon")) {
+                TinkersNewlife.CHANNEL.sendToServer(new Use());
+            }
+        }
+    }
 
     private static final class DragDamage extends DamageSource {
         DragDamage(LivingEntity dragon) { super(dragon.damageSources().mobAttack(dragon).typeHolder(), dragon); }

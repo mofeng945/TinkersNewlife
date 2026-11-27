@@ -114,17 +114,18 @@ public final class DragonViltrumFlight {
     }
 
     private static boolean eligible(ServerLevel level, LivingEntity dragon, LivingEntity victim) {
-        return dragon != victim && eligible(level, dragon) && eligible(level, victim);
+        return dragon != victim && eligible(level, dragon) && eligible(level, victim) && !victim.isVehicle();
     }
 
     private static boolean eligible(ServerLevel level, LivingEntity entity) {
         return entity.level() == level && entity.isAlive() && !entity.isSpectator()
-                && !entity.isPassenger() && !entity.isVehicle() && !entity.noPhysics;
+                && !entity.isPassenger() && !entity.noPhysics;
     }
 
     private static List<AABB> hull(LivingEntity entity) {
         List<AABB> boxes = new ArrayList<>();
         boxes.add(entity.getBoundingBox());
+        for (var passenger : entity.getPassengers()) boxes.add(passenger.getBoundingBox());
         var parts = entity.getParts();
         if (parts != null) for (var part : parts) {
             if (part != null && !part.isRemoved()) boxes.add(part.getBoundingBox());
@@ -135,6 +136,7 @@ public final class DragonViltrumFlight {
     private static List<Entity> parts(LivingEntity dragon, LivingEntity victim) {
         List<Entity> parts = new ArrayList<>();
         addParts(parts, dragon);
+        parts.addAll(dragon.getPassengers());
         addParts(parts, victim);
         return parts;
     }
