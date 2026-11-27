@@ -125,6 +125,13 @@ public abstract class SpearThirdPersonItemMixin {
             Matrix4f oldDisplay = oldStack.last().pose();
             if (Math.abs(oldDisplay.determinant()) <= 1.0E-6F) return;
             Matrix4f chargeDisplay = newStack.last().pose();
+            // Both hands render the same diagonal sprite (tip at upper right), not mirrored geometry.
+            // Align that actual axis with the forward axis of the raised hand after applying its mirror.
+            var shaft = chargeDisplay.transformDirection(new org.joml.Vector3f(1, 1, 0)).normalize();
+            var correction = new org.joml.Quaternionf().rotationTo(shaft, new org.joml.Vector3f(0, 0, -1));
+            var grip = chargeDisplay.getTranslation(new org.joml.Vector3f());
+            chargeDisplay = new Matrix4f().translation(grip).rotate(correction)
+                    .mul(new Matrix4f(chargeDisplay).setTranslation(0f, 0f, 0f));
             AnimationClip clip = AnimationClip.spearAnimation();
             Matrix4f target = chargeDisplay;
             if (clip != null && clip.hasItemThird()) {
