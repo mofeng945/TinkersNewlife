@@ -33,7 +33,9 @@ public final class DragonCards {
 
     public static void syncStoredHealth(ServerPlayer player, ItemStack staff, ListTag slots) {
         var session = OPEN.get(player);
-        if (session != null && session.staff == staff && valid(player, session.token)) {
+        if (session != null && session.staff == staff && player.getMainHandItem() == staff
+                && player.isAlive() && !player.isSpectator() && player.level().dimension().location().equals(session.dimension)) {
+            OPEN.put(player, new Session(session.token, staff, player.level().getGameTime() + 2400, session.dimension));
             sendView(player, slots, session.token, true);
         }
     }
@@ -62,6 +64,7 @@ public final class DragonCards {
             CompoundTag card = new CompoundTag();
             card.putString("uuid",id.toString()); card.putString("name",live != null ? live.getName().getString() : entry.getString("name"));
             card.putString("type",entry.getString("type")); card.putInt("state",entry.contains("TnlDragonReviveAt") ? 2 : entry.getInt("state")); card.putBoolean("live",live!=null);
+            card.putLong("reviveAt", entry.getLong("TnlDragonReviveAt"));
             card.putBoolean("pitWinner",entry.getBoolean("TnlDragonPitWinner"));
             card.putBoolean("male",data.getBoolean("Gender"));
             int days=Math.max(0,data.getInt("AgeTicks"))/24000;

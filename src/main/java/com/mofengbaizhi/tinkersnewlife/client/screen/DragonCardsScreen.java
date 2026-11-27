@@ -55,7 +55,7 @@ public final class DragonCardsScreen extends Screen {
         if (!session.equals(token)) return false;
         for (var card : cards) for (var next : updated) {
             if (!card.getString("uuid").equals(next.getString("uuid"))) continue;
-            for (String key : List.of("hp", "maxHp", "state")) card.put(key, next.get(key).copy());
+            for (String key : List.of("hp", "maxHp", "state", "reviveAt")) card.put(key, next.get(key).copy());
             break;
         }
         return true;
@@ -156,7 +156,10 @@ public final class DragonCardsScreen extends Screen {
         if (!present) return;
         CompoundTag card = cards.get(neighbor(direction));
         centeredFit(gui, name(card), left + w / 2, y + 8, w - 8, 0xDBC8A3);
-        gui.drawCenteredString(font, direction < 0 ? "‹" : "›", left + w / 2, y + h / 2, 0xF8DFA7);
+        if (card.getInt("state") == 2) {
+            gui.fill(left + 1, y + 1, left + w - 1, y + h - 1, 0xA0454545);
+            cooldownRing(gui, left + w / 2, y + h / 2, Math.min(14, (w - 4) / 2), card);
+        } else gui.drawCenteredString(font, direction < 0 ? "‹" : "›", left + w / 2, y + h / 2, 0xF8DFA7);
         centeredFit(gui, status(card), left + w / 2, y + h - 16, w - 8, 0xD9BA89);
     }
 
@@ -176,7 +179,28 @@ public final class DragonCardsScreen extends Screen {
         centeredFit(gui, text("attack", stat(card, "attack")), mid, statsTop + 33, w - 12, 0xF0CA8D);
         boolean canRelease = stored(card) && !releaseLocked();
         String releaseLabel = canRelease ? "release" : stored(card) ? "pit.browse_only" : "unavailable";
-        centeredFit(gui, text(releaseLabel), mid, statsTop + 46, w - 12, canRelease ? 0xFFF2C7 : 0xB5A395);
+        if (card.getInt("state") == 2) {
+            gui.pose().pushPose();
+            gui.pose().translate(0, 0, 200);
+            gui.fill(x, y, x + w, y + h, 0xB05B5B5B);
+            cooldownRing(gui, mid, y + h / 2, Math.min(23, w / 4), card);
+            gui.pose().popPose();
+        } else centeredFit(gui, text(releaseLabel), mid, statsTop + 46, w - 12, canRelease ? 0xFFF2C7 : 0xB5A395);
+    }
+
+    private void cooldownRing(GuiGraphics gui, int x, int y, int radius, CompoundTag card) {
+        if (minecraft == null || minecraft.level == null || radius < 3) return;
+        long remaining = Math.max(0, card.getLong("reviveAt") - minecraft.level.getGameTime());
+        double progress = 1 - Math.min(1, remaining / 72000.0);
+        int outer = radius * radius, inner = (radius - 3) * (radius - 3);
+        for (int dy = -radius; dy <= radius; dy++) for (int dx = -radius; dx <= radius; dx++) {
+            int square = dx * dx + dy * dy;
+            if (square < inner || square > outer) continue;
+            double angle = (Math.atan2(dx, -dy) + 2 * Math.PI) % (2 * Math.PI);
+            gui.fill(x + dx, y + dy, x + dx + 1, y + dy + 1,
+                    angle < progress * 2 * Math.PI ? 0xFFEEEEEE : 0xFF303030);
+        }
+        if (radius >= 18) gui.drawCenteredString(font, Math.round(progress * 100) + "%", x, y - 4, 0xFFFFFFFF);
     }
 
     private void drawDragon(GuiGraphics gui, int mid, int y1, int y2, CompoundTag card) {
