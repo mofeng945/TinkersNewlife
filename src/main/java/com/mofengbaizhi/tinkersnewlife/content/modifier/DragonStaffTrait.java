@@ -46,26 +46,8 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook, s
         int level = modifier.getLevel();
         int maxSlots = getMaxSlots(level);
 
-        // 槽位信息
         Tag tag = tool.getPersistentData().get(KEY_SLOTS);
-        ListTag slots = tag instanceof ListTag ? (ListTag) tag : new ListTag();
-        for (int i = 0; i < maxSlots; i++) {
-            if (i < slots.size()) {
-                CompoundTag entry = slots.getCompound(i);
-                int state = entry.getInt("state");
-                String name = entry.getString("name");
-                String type = entry.getString("type");
-                String displayName = name.isEmpty() ? type : name;
-                String statusKey = state == 0 ?
-                        "modifier.tinkersnewlife.dragon_staff.slot.tamed" :
-                        "modifier.tinkersnewlife.dragon_staff.slot.stored";
-                tooltip.add(Component.literal("§7槽位 " + (i + 1) + ": §f" + displayName + " §7- ")
-                        .append(Component.translatable(statusKey)));
-            } else {
-                tooltip.add(Component.literal("§7槽位 " + (i + 1) + ": ")
-                        .append(Component.translatable("modifier.tinkersnewlife.dragon_staff.slot.empty")));
-            }
-        }
+        ListTag slots = tag instanceof ListTag list ? list : new ListTag();
 
         // 显示当前槽位状态
         tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_staff.slots", 

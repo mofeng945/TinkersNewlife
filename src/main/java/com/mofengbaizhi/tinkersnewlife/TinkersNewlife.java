@@ -502,6 +502,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.DragonTameVisual::new,
                 com.mofengbaizhi.tinkersnewlife.network.DragonTameVisual::handle);
 
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.Open.class,
+                com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.Open::encode, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.Open::new, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.Open::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.Release.class,
+                com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.Release::encode, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.Release::new, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.Release::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 

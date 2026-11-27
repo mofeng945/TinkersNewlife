@@ -3,10 +3,10 @@
   "conditions": [{ "type": "forge:mod_loaded", "modid": "iceandfire" }],
   "allow_crystal": false,
   "inputs": [
-    { "tag": "forge:ingots/silver", "amount": 64 },
-    { "item": "minecraft:diamond", "amount": 20 },
-    { "item": "minecraft:gold_ingot", "amount": 20 },
-    { "item": "tconstruct:silky_cloth", "amount": 2 }
+    { "tag": "forge:ingots/silver", "amount_needed": 64 },
+    { "item": "minecraft:diamond", "amount_needed": 20 },
+    { "item": "minecraft:gold_ingot", "amount_needed": 20 },
+    { "item": "tconstruct:silky_cloth", "amount_needed": 2 }
   ],
   "level": 1,
   "result": "tinkersnewlife:dragon_kinship",

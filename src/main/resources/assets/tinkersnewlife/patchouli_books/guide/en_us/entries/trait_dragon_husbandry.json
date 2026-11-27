@@ -1,0 +1,16 @@
+{
+    "name":  "Dragon Husbandry",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "flag":  "mod:iceandfire",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "Exclusive to the Dragon Staff. This single-level ability costs one ability slot, a ghast tear, two dragon breaths, nether wart and one Regeneration potion. Normal, extended and strong variants can be drinkable, splash or lingering."
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "For every dragon registered to this staff, including released dragons, each dragon the staff releases gains +10% maximum health and attack damage. Releasing again refreshes the bonus without stacking it or healing current health."
+                  }
+              ]
+}

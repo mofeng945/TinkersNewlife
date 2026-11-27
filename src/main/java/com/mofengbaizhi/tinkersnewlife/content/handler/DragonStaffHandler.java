@@ -91,9 +91,10 @@ public class DragonStaffHandler {
         return tag instanceof ListTag ? (ListTag) tag : new ListTag();
     }
 
-    private static void setSlots(ToolStack tool, ListTag slots) {
+    private static void setSlots(Player player, ToolStack tool, ListTag slots) {
         tool.getPersistentData().put(KEY_SLOTS, slots);
         tool.rebuildStats();
+        if (player.level() instanceof ServerLevel level) com.mofengbaizhi.tinkersnewlife.content.modifier.DragonHusbandryModifier.refreshReleased(tool, level, slots);
     }
 
     // ---------- 主人绑定 ----------
@@ -144,9 +145,12 @@ public class DragonStaffHandler {
             player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.not_owner"), true);
             return;
         }
-        if (checkCooldown(player.getMainHandItem(), player)) {
-            if (player.isShiftKeyDown()) tryRelease(player, tool);
-            else tryRecycle(player, tool, target);
+        if (player.isShiftKeyDown() && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+            com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.open(sp, getSlots(tool));
+            return;
+        }
+        if (target != null && checkCooldown(player.getMainHandItem(), player)) {
+            tryRecycle(player, tool, target);
             tool.updateStack(player.getMainHandItem());
         }
     }
@@ -158,7 +162,7 @@ public class DragonStaffHandler {
 
     @SubscribeEvent public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         Player player = event.getEntity();
-        if (event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !isDragon(event.getTarget()) || getTool(player) == null) return;
+        if (event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || (!player.isShiftKeyDown() && !isDragon(event.getTarget())) || getTool(player) == null) return;
         if (!player.level().isClientSide) interact(player, event.getTarget());
         event.setCancellationResult(net.minecraft.world.InteractionResult.sidedSuccess(player.level().isClientSide));
         event.setCanceled(true);
@@ -259,16 +263,18 @@ public class DragonStaffHandler {
         }
 
         target.remove(Entity.RemovalReason.DISCARDED);
-        setSlots(tool, slots);
+        setSlots(player, tool, slots);
         player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.recycled"), true);
     }
 
     // ---------- 释放 ----------
-    private static void tryRelease(Player player, ToolStack tool) {
+    public static void releaseSelected(net.minecraft.server.level.ServerPlayer player, UUID selected) {
+        ToolStack tool = getTool(player);
+        if (tool == null || !isOwner(tool, player) || TAMING_TASKS.containsKey(player.getUUID()) || !checkCooldown(player.getMainHandItem(),player)) return;
         ListTag slots = getSlots(tool);
         for (int i = slots.size() - 1; i >= 0; i--) {
             CompoundTag entry = slots.getCompound(i);
-            if (entry.getInt("state") == 1) {
+            if (entry.getInt("state") == 1 && selected.toString().equals(entry.getString("uuid"))) {
                 CompoundTag data = entry.getCompound("data");
                 ResourceLocation typeId = new ResourceLocation(entry.getString("type"));
                 EntityType<?> type = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.entityType(typeId);
@@ -297,6 +303,7 @@ public class DragonStaffHandler {
                 }
                 dragon.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
                 if (dragon instanceof LivingEntity livingDragon) {
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonHusbandryModifier.applyOnRelease(tool, livingDragon, slots.size());
                     com.mofengbaizhi.tinkersnewlife.content.modifier.DragonKinshipModifier.applyOnRelease(tool, player, livingDragon);
                 }
                 if (!player.level().addFreshEntity(dragon)) {
@@ -308,7 +315,8 @@ public class DragonStaffHandler {
                 entry.putInt("posX", dragon.getBlockX());
                 entry.putInt("posY", dragon.getBlockY());
                 entry.putInt("posZ", dragon.getBlockZ());
-                setSlots(tool, slots);
+                setSlots(player, tool, slots);
+                tool.updateStack(player.getMainHandItem());
                 player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.released"), true);
                 spawnReleaseParticles(dragon);
                 return;
@@ -433,7 +441,7 @@ public class DragonStaffHandler {
         entry.putInt("posY", target.getBlockY());
         entry.putInt("posZ", target.getBlockZ());
         slots.add(entry);
-        setSlots(tool, slots);
+        setSlots(player, tool, slots);
         tool.updateStack(player.getMainHandItem());
         if (!target.hasCustomName()) target.setCustomName(Component.literal(dragonName));
         player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.success"), true);
@@ -513,13 +521,14 @@ public class DragonStaffHandler {
                     continue;
                 }
                 Entity entity = serverLevel.getEntity(uuid);
-                if (entity == null || !entity.isAlive()) {
+                // A missing UUID may have moved to an unloaded chunk; keep its last card.
+                if (entity != null && !entity.isAlive()) {
                     slots.remove(i);
                     changed = true;
                 }
             }
             if (changed) {
-                setSlots(tool, slots);
+                setSlots(player, tool, slots);
                 tool.updateStack(stack);
             }
         }
@@ -544,7 +553,7 @@ public class DragonStaffHandler {
                 }
             }
             if (changed) {
-                setSlots(tool, slots);
+                setSlots(player, tool, slots);
                 tool.updateStack(stack);
             }
         }

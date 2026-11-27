@@ -1,0 +1,16 @@
+{
+    "name":  "驯养心得",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "flag":  "mod:iceandfire",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "驯龙杖专属，无等级，占 1 个能力槽。需要恶魂之泪、两份龙息、下界疣和一份再生药水。普通、延长及强化再生均可，支持饮用、喷溅和滞留形态。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "本杖每登记一条龙（含已释放），从本杖释放的龙就获得 +10% 生命上限和攻击力。重新释放只刷新加成，不叠加旧值，也不会恢复当前生命。"
+                  }
+              ]
+}

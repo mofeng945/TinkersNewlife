@@ -148,6 +148,9 @@ public class Modifiers {
     public static final StaticModifier<DragonKinshipModifier> DRAGON_KINSHIP =
             MODIFIERS.register("dragon_kinship", DragonKinshipModifier::new);
 
+    public static final StaticModifier<DragonHusbandryModifier> DRAGON_HUSBANDRY =
+            MODIFIERS.register("dragon_husbandry", DragonHusbandryModifier::new);
+
     public static final StaticModifier<DragonStaffTrait> DRAGON_STAFF =
             MODIFIERS.register("dragon_staff", DragonStaffTrait::new);
 

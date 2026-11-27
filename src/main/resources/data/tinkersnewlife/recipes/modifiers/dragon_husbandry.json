@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:modifier",
+  "conditions": [{ "type": "forge:mod_loaded", "modid": "iceandfire" }],
+  "allow_crystal": false,
+  "inputs": [
+    { "item": "minecraft:ghast_tear" },
+    { "item": "minecraft:dragon_breath", "amount_needed": 2 },
+    { "item": "minecraft:nether_wart" },
+    { "ingredient": [
+        { "type": "forge:partial_nbt", "items": ["minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion"], "nbt": "{Potion:\"minecraft:regeneration\"}" },
+        { "type": "forge:partial_nbt", "items": ["minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion"], "nbt": "{Potion:\"minecraft:long_regeneration\"}" },
+        { "type": "forge:partial_nbt", "items": ["minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion"], "nbt": "{Potion:\"minecraft:strong_regeneration\"}" }
+    ] }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:dragon_husbandry",
+  "slots": { "abilities": 1 },
+  "tools": { "item": "tinkersnewlife:dragon_staff" }
+}
