@@ -1,0 +1,12 @@
+{
+    "flag":  "\u0026mod:iceandfire,mod:goety",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "category":  "tinkersnewlife:traits",
+    "name":  "Spirit Form",
+    "pages":  [
+                  {
+                      "text":  "Costs one ability slot, 16 ectoplasm, 16 pixie dust, three leads and three signs. Released dragons are immune to in-wall suffocation and cramming and cannot damage terrain. Their hitboxes, reach and AI stay unchanged.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

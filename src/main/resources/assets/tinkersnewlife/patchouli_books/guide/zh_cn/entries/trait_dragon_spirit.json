@@ -1,0 +1,12 @@
+{
+    "flag":  "\u0026mod:iceandfire,mod:goety",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "category":  "tinkersnewlife:traits",
+    "name":  "灵体化",
+    "pages":  [
+                  {
+                      "text":  "仅用于驯龙杖，占一个能力槽。消耗 16 魂质、16 精灵尘、3 栓绳、3 告示牌。出战龙免疫卡墙窒息与实体挤压，禁止破坏地形；碰撞箱、攻击距离和 AI 不变。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

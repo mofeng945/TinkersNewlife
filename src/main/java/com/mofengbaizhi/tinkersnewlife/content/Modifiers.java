@@ -163,6 +163,7 @@ public class Modifiers {
         };
     }
     public static final StaticModifier<Modifier> DRAGON_BROTHERHOOD = MODIFIERS.register("dragon_brotherhood", Modifiers::dragonAbility);
+    public static final StaticModifier<Modifier> DRAGON_SPIRIT = MODIFIERS.register("dragon_spirit", Modifiers::dragonAbility);
     public static final StaticModifier<Modifier> DRAGON_FRENZY = MODIFIERS.register("dragon_frenzy", Modifiers::dragonAbility);
     public static final StaticModifier<Modifier> DRAGON_GROWTH = MODIFIERS.register("dragon_growth", Modifiers::dragonAbility);
     public static final StaticModifier<Modifier> DRAGON_NEST = MODIFIERS.register("dragon_nest", Modifiers::dragonAbility);

@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:modifier",
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "iceandfire" },
+    { "type": "forge:mod_loaded", "modid": "goety" }
+  ],
+  "allow_crystal": false,
+  "inputs": [
+    { "item": "goety:ectoplasm", "amount_needed": 16 },
+    { "item": "iceandfire:pixie_dust", "amount_needed": 16 },
+    { "item": "minecraft:lead", "amount_needed": 3 },
+    { "tag": "minecraft:signs", "amount_needed": 3 }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:dragon_spirit",
+  "slots": { "abilities": 1 },
+  "tools": { "item": "tinkersnewlife:dragon_staff" }
+}

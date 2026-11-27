@@ -323,6 +323,7 @@ public class DragonStaffHandler {
             if (entry.getString("uuid").equals(uuid.toString())) {
                 CompoundTag data = new CompoundTag();
                 com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(tamable);
+                DragonSpirit.mark(tamable, false);
                 DragonFrenzy.mark(tamable, false);
                 target.save(data);
                 if (com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isWinner(tamable)) entry.putBoolean(PIT_WINNER, true);
@@ -350,6 +351,7 @@ public class DragonStaffHandler {
             CompoundTag entry = new CompoundTag();
             CompoundTag data = new CompoundTag();
             com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(tamable);
+            DragonSpirit.mark(tamable, false);
             DragonFrenzy.mark(tamable, false);
             target.save(data);
             if (com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isWinner(tamable)) entry.putBoolean(PIT_WINNER, true);
@@ -422,6 +424,7 @@ public class DragonStaffHandler {
                 if (dragon instanceof LivingEntity livingDragon) {
                     DragonGrowthNest.markReleased(livingDragon, ToolHelper.getActiveModifierLevel(tool, GROWTH));
                     DragonFrenzy.mark(livingDragon, ToolHelper.getActiveModifierLevel(tool, FRENZY) > 0);
+                    DragonSpirit.mark(livingDragon, ToolHelper.getActiveModifierLevel(tool, new ModifierId(TinkersNewlife.prefix("dragon_spirit"))) > 0);
                     if (ToolHelper.getActiveModifierLevel(tool, NEST) > 0) DragonGrowthNest.applyNestRelease(livingDragon, wasFull);
                 }
                 entry.putInt("state", 0);
@@ -702,6 +705,7 @@ public class DragonStaffHandler {
         if (bond == null) return false;
         com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(dragon);
         CompoundTag data = new CompoundTag();
+        DragonSpirit.mark(dragon, false);
         DragonFrenzy.mark(dragon, false);
         dragon.saveWithoutId(data);
         data.putString("id", bond.entry.getString("type"));
