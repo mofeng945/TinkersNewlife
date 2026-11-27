@@ -296,6 +296,9 @@ public class DragonStaffHandler {
                     spawnPos = player.blockPosition().above(2);
                 }
                 dragon.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
+                if (dragon instanceof LivingEntity livingDragon) {
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonKinshipModifier.applyOnRelease(tool, player, livingDragon);
+                }
                 if (!player.level().addFreshEntity(dragon)) {
                     player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.release_fail_spawn"), true);
                     return;

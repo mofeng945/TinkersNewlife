@@ -145,6 +145,9 @@ public class Modifiers {
     public static final StaticModifier<DragonBloodInfusionTrait> DRAGON_BLOOD_INFUSION =
             MODIFIERS.register("dragon_blood_infusion", DragonBloodInfusionTrait::new);
 
+    public static final StaticModifier<DragonKinshipModifier> DRAGON_KINSHIP =
+            MODIFIERS.register("dragon_kinship", DragonKinshipModifier::new);
+
     public static final StaticModifier<DragonStaffTrait> DRAGON_STAFF =
             MODIFIERS.register("dragon_staff", DragonStaffTrait::new);
 

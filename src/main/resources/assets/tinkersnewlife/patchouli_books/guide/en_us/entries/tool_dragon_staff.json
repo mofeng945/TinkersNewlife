@@ -12,7 +12,8 @@
                   {
                       "type":  "patchouli:text",
                       "text":  "Use an Ice and Fire dragon horn, paper, and its Dragon Command Staff to make an Ancient Dragon Taming Manual Fragment; only the paper is consumed. Read it first.$(li)Press the bound key to try taming a nearby wild dragon for 88 experience levels.$(li)Right-click your dragon to store it; sneak-right-click to release one.$(li)Left-click your dragon to cycle its orders. Left-click other creatures to attack normally.$(br2)Damage bonus: stored dragons × trait level × 10%."
-                  }
+                  },
+    { "type": "patchouli:text", "text": "Dragon Kinship costs one ability slot, 64 silver ingots, 20 diamonds, 20 gold ingots and two silky cloth. On release, divide your armor and toughness by your maximum health, cap the ratios at 50% and 30%, then multiply by dragon maximum health. Bonuses add to dragon armor and refresh on release." }
               ],
     "flag":  "mod:iceandfire"
 }
