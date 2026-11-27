@@ -1,0 +1,22 @@
+{
+  "name": "龙王蛊场",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:dragon_staff",
+  "flag": "mod:iceandfire",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "驯龙杖需要至少收纳两条龙。打开龙册，选择「开始厮杀」并再次确认，等待 60 秒。已放出的龙不参战；若最高分并列，入杖记录靠前的龙胜出。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "蛊王印记",
+      "text": "胜者获得永久蛊王印记，最大生命值、攻击伤害、护甲和护甲韧性各乘以 3（仍受属性上限限制）。加成不会叠加，也不会恢复当前生命值。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "强化配方",
+      "text": "仅适用于驯龙杖，占用 1 个能力槽。需要任意冰火传说龙首 1 个、哈斯塔恶念 1 桶，以及火龙肉、冰龙肉和雷龙肉各 1 份。"
+    }
+  ]
+}

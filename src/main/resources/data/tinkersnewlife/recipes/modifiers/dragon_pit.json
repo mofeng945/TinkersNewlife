@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:modifier",
+  "conditions": [{ "type": "forge:mod_loaded", "modid": "iceandfire" }],
+  "allow_crystal": false,
+  "inputs": [
+    { "tag": "iceandfire:dragon_skulls", "amount_needed": 1 },
+    { "item": "tinkersnewlife:hastur_malice_bucket", "amount_needed": 1 },
+    { "item": "iceandfire:fire_dragon_flesh", "amount_needed": 1 },
+    { "item": "iceandfire:ice_dragon_flesh", "amount_needed": 1 },
+    { "item": "iceandfire:lightning_dragon_flesh", "amount_needed": 1 }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:dragon_pit",
+  "slots": { "abilities": 1 },
+  "tools": { "item": "tinkersnewlife:dragon_staff" }
+}

@@ -3,6 +3,9 @@ package com.mofengbaizhi.tinkersnewlife.client.screen;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.nbt.CompoundTag;
@@ -22,6 +25,10 @@ public final class DragonCardsScreen extends Screen {
     private static final int TURN_TICKS = 8;
     private final List<CompoundTag> cards;
     private final UUID session;
+    private final boolean pitAvailable;
+    private final boolean pitRunning;
+    private int remainingTicks;
+    private boolean pitRequested;
     private final LivingEntity[] previews;
     private final boolean[] attempted;
     private int index;
@@ -33,21 +40,60 @@ public final class DragonCardsScreen extends Screen {
     private float yaw;
     private float pitch;
 
-    public DragonCardsScreen(List<CompoundTag> cards, UUID session) {
+    public DragonCardsScreen(List<CompoundTag> cards, UUID session, boolean pitAvailable, int remainingTicks) {
         super(text("title"));
         this.cards = cards.stream().map(CompoundTag::copy).toList();
         this.session = session;
+        this.pitAvailable = pitAvailable;
+        this.pitRunning = remainingTicks > 0;
+        this.remainingTicks = remainingTicks;
         previews = new LivingEntity[cards.size()];
         attempted = new boolean[cards.size()];
     }
 
     private static Component text(String key, Object... args) { return Component.translatable(PREFIX + key, args); }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void tick() { if (turnAge < TURN_TICKS) turnAge++; }
+    @Override public void tick() {
+        if (turnAge < TURN_TICKS) turnAge++;
+        if (remainingTicks > 0) remainingTicks--;
+    }
+
+    @Override protected void init() {
+        if (pitAvailable && !releaseLocked()) {
+            int buttonWidth = Math.max(120, font.width(text("pit.start")) + 16);
+            addRenderableWidget(Button.builder(text("pit.start"), button -> confirmPit())
+                    .bounds((width - buttonWidth) / 2, 21, buttonWidth, 20)
+                    .tooltip(Tooltip.create(text("pit.warning"))).build());
+        }
+    }
+
+    private void confirmPit() {
+        pressed = false;
+        minecraft.setScreen(new ConfirmScreen(confirmed -> {
+            if (confirmed) {
+                pitRequested = true;
+                TinkersNewlife.CHANNEL.sendToServer(new DragonCards.StartPit(session));
+            }
+            minecraft.setScreen(this);
+        }, text("pit.confirm_title"), text("pit.warning"), text("pit.start"), Component.translatable("gui.cancel")) {
+            @Override public boolean isPauseScreen() { return false; }
+            @Override public boolean keyPressed(int key, int scan, int modifiers) {
+                if (key == GLFW.GLFW_KEY_ESCAPE) {
+                    minecraft.setScreen(DragonCardsScreen.this);
+                    return true;
+                }
+                return super.keyPressed(key, scan, modifiers);
+            }
+        });
+    }
+
+    // Only the next server Open can unlock release, even when the local countdown reaches zero.
+    private boolean releaseLocked() { return pitRunning || pitRequested; }
+    private int headerExtra() { return pitAvailable || releaseLocked() ? 22 : 0; }
     private int cardWidth() { return Math.max(80, Math.min(218, width - 116)); }
-    private int cardHeight() { return Math.max(112, Math.min(222, height - 54)); }
+    private int cardHeight() { return Math.max(112, Math.min(222, height - 54 - headerExtra())); }
     private int cardLeft() { return (width - cardWidth()) / 2; }
-    private int top() { return Math.max(23, (height - cardHeight()) / 2); }
+    private int top() { return Math.max(23 + headerExtra(), (height - cardHeight() + headerExtra()) / 2); }
     private int spacing() { return cardWidth() / 2 + sideWidth() / 2 + 7; }
     private int sideWidth() { return Math.max(21, Math.min(84, (width - cardWidth()) / 2 - 13)); }
     private int neighbor(int direction) { return Math.floorMod(index + direction, cards.size()); }
@@ -63,8 +109,14 @@ public final class DragonCardsScreen extends Screen {
     @Override public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
         renderBackground(gui);
         gui.drawCenteredString(font, title, width / 2, 8, 0xF8E2B2);
+        if (releaseLocked()) {
+            Component pitStatus = remainingTicks > 0 ? text("pit.countdown", (remainingTicks + 19) / 20)
+                    : text(pitRequested ? "pit.starting" : "pit.waiting");
+            centeredFit(gui, pitStatus, width / 2, 27, width - 16, 0xF0CA8D);
+        }
         if (cards.isEmpty()) {
             gui.drawCenteredString(font, text("empty"), width / 2, height / 2 - 4, 0xDDCDB0);
+            super.render(gui, mouseX, mouseY, partialTick);
             return;
         }
         int mid = width / 2;
@@ -82,6 +134,7 @@ public final class DragonCardsScreen extends Screen {
         } finally { gui.pose().popPose(); }
         gui.drawCenteredString(font, text("page", index + 1, cards.size()), mid, top() + cardHeight() + 3, 0xF8E2B2);
         gui.drawCenteredString(font, text("navigate"), mid, height - 11, 0xC7B89C);
+        super.render(gui, mouseX, mouseY, partialTick);
     }
 
     private void drawSide(GuiGraphics gui, int direction) {
@@ -111,7 +164,9 @@ public final class DragonCardsScreen extends Screen {
         centeredFit(gui, text("health", stat(card, "hp"), stat(card, "maxHp")), mid, statsTop + 11, w - 12, 0xF4B1A6);
         centeredFit(gui, text("defense", stat(card, "armor"), stat(card, "toughness")), mid, statsTop + 22, w - 12, 0xB9D1ED);
         centeredFit(gui, text("attack", stat(card, "attack")), mid, statsTop + 33, w - 12, 0xF0CA8D);
-        centeredFit(gui, text(stored(card) ? "release" : "unavailable"), mid, statsTop + 46, w - 12, stored(card) ? 0xFFF2C7 : 0xB5A395);
+        boolean canRelease = stored(card) && !releaseLocked();
+        String releaseLabel = canRelease ? "release" : stored(card) ? "pit.browse_only" : "unavailable";
+        centeredFit(gui, text(releaseLabel), mid, statsTop + 46, w - 12, canRelease ? 0xFFF2C7 : 0xB5A395);
     }
 
     private void drawDragon(GuiGraphics gui, int mid, int y1, int y2, CompoundTag card) {
@@ -222,6 +277,7 @@ public final class DragonCardsScreen extends Screen {
         return super.mouseReleased(x, y, button);
     }
     private void release() {
+        if (releaseLocked()) return;
         var card = cards.get(index);
         if (!stored(card)) return;
         UUID dragon;

@@ -1,0 +1,22 @@
+{
+  "name": "Dragon King's Pit",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:dragon_staff",
+  "flag": "mod:iceandfire",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Store at least two dragons in your Dragon Staff. Open the Dragon Book, choose to start the fight, and confirm. The fight takes 60 seconds. Released dragons do not participate. If the top scores are tied, the dragon registered first wins."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Winner's Mark",
+      "text": "The winner earns a permanent mark that triples maximum health, attack damage, armor, and armor toughness, subject to attribute caps. The bonus cannot stack and does not restore current health."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Modifier Recipe",
+      "text": "Dragon Staff only; costs 1 ability slot. Requires any Ice and Fire dragon skull, one bucket of Hastur's Malice, and one piece each of fire, ice, and lightning dragon flesh."
+    }
+  ]
+}

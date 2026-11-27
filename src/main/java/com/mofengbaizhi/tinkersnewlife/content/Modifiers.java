@@ -151,6 +151,9 @@ public class Modifiers {
     public static final StaticModifier<DragonHusbandryModifier> DRAGON_HUSBANDRY =
             MODIFIERS.register("dragon_husbandry", DragonHusbandryModifier::new);
 
+    public static final StaticModifier<DragonPitModifier> DRAGON_PIT =
+            MODIFIERS.register("dragon_pit", DragonPitModifier::new);
+
     public static final StaticModifier<DragonStaffTrait> DRAGON_STAFF =
             MODIFIERS.register("dragon_staff", DragonStaffTrait::new);
 

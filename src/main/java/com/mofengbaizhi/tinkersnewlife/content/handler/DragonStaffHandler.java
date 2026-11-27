@@ -85,6 +85,102 @@ public class DragonStaffHandler {
         }
     }
 
+    private static final ResourceLocation PIT_END = TinkersNewlife.prefix("dragon_pit_end");
+    private static final String PIT_WINNER = "TnlDragonPitWinner";
+
+    public static boolean canStartPit(Player player) {
+        var tool = ToolHelper.getToolStack(player.getMainHandItem());
+        return tool != null && com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isActive(tool);
+    }
+
+    public static int pitRemaining(Player player) {
+        var tool = ToolHelper.getToolStack(player.getMainHandItem());
+        return tool == null ? 0 : (int)Math.max(0, Math.min(1200,
+                pitEnd(tool) - player.level().getGameTime()));
+    }
+
+    private static long pitEnd(ToolStack tool) {
+        return tool.getPersistentData().get(PIT_END) instanceof net.minecraft.nbt.LongTag end ? end.getAsLong() : 0;
+    }
+
+    private static boolean pitLocked(ToolStack tool) { return pitEnd(tool) > 0; }
+
+    public static void startPit(net.minecraft.server.level.ServerPlayer player) {
+        var tool = getTool(player);
+        if (tool == null || !isOwner(tool, player)) return;
+        var slots = getSlots(tool);
+        if (!pitLocked(tool) && canStartPit(player) && !TAMING_TASKS.containsKey(player.getUUID())
+                && eligibleWinner(slots) >= 0) {
+            tool.getPersistentData().put(PIT_END, net.minecraft.nbt.LongTag.valueOf(player.level().getGameTime() + 1200));
+            tool.updateStack(player.getMainHandItem());
+        } else {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.dragon_pit.unavailable"), true);
+        }
+        com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.open(player, slots, true);
+    }
+
+    private static int eligibleWinner(ListTag slots) {
+        int winner = -1, count = 0;
+        double best = -1;
+        for (int i = 0; i < slots.size(); i++) {
+            var entry = slots.getCompound(i);
+            if (entry.getInt("state") != 1) continue;
+            var data = entry.getCompound("data");
+            if (!data.contains("Attributes", Tag.TAG_LIST) || data.getFloat("Health") <= 0) return -1;
+            int stage = Math.min(5, Math.max(0, data.getInt("AgeTicks")) / 600000 + 1);
+            double score = DragonPitPower.score(stage, stat(data, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH),
+                    stat(data, net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE),
+                    stat(data, net.minecraft.world.entity.ai.attributes.Attributes.ARMOR));
+            if (score > best) { best = score; winner = i; }
+            count++;
+        }
+        return count >= 2 ? winner : -1;
+    }
+
+    private static double stat(CompoundTag data, net.minecraft.world.entity.ai.attributes.Attribute attr) {
+        return com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.attribute(data, attr);
+    }
+
+    @SubscribeEvent public static void settlePit(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof net.minecraft.server.level.ServerPlayer player)) return;
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.DragonStaffItem)) return;
+        var tool = ToolHelper.getToolStack(stack);
+        if (tool == null || !pitLocked(tool) || !isOwner(tool, player) || pitRemaining(player) > 0) return;
+        var roster = getSlots(tool);
+        int winner = canStartPit(player) ? eligibleWinner(roster) : -1;
+        tool.getPersistentData().remove(PIT_END);
+        if (winner >= 0) {
+            var survivor = roster.getCompound(winner);
+            var type = ResourceLocation.tryParse(survivor.getString("type"));
+            var entityType = type == null ? null : com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.entityType(type);
+            try {
+                if (entityType == null || !(entityType.create(player.level()) instanceof LivingEntity dragon)) {
+                    winner = -1;
+                } else {
+                    dragon.load(survivor.getCompound("data"));
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.applyOnRelease(dragon, true);
+                    CompoundTag updated = new CompoundTag();
+                    dragon.saveWithoutId(updated);
+                    updated.putString("id", type.toString());
+                    survivor.put("data", updated);
+                    survivor.putBoolean(PIT_WINNER, true);
+                }
+            } catch (RuntimeException failure) {
+                winner = -1;
+                TinkersNewlife.LOGGER.warn("Could not resolve dragon pit winner; roster preserved", failure);
+            }
+        }
+        if (winner >= 0) {
+            for (int i = roster.size() - 1; i >= 0; i--) {
+                if (i != winner && roster.getCompound(i).getInt("state") == 1) roster.remove(i);
+            }
+            setSlots(player, tool, roster);
+        }
+        tool.updateStack(stack);
+        com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.open(player, roster, true);
+    }
+
     // ---------- 基础 NBT 操作 ----------
     private static ListTag getSlots(IToolStackView tool) {
         Tag tag = tool.getPersistentData().get(KEY_SLOTS);
@@ -149,7 +245,7 @@ public class DragonStaffHandler {
             com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.open(sp, getSlots(tool));
             return;
         }
-        if (target != null && checkCooldown(player.getMainHandItem(), player)) {
+        if (!pitLocked(tool) && target != null && checkCooldown(player.getMainHandItem(), player)) {
             tryRecycle(player, tool, target);
             tool.updateStack(player.getMainHandItem());
         }
@@ -270,7 +366,7 @@ public class DragonStaffHandler {
     // ---------- 释放 ----------
     public static void releaseSelected(net.minecraft.server.level.ServerPlayer player, UUID selected) {
         ToolStack tool = getTool(player);
-        if (tool == null || !isOwner(tool, player) || TAMING_TASKS.containsKey(player.getUUID()) || !checkCooldown(player.getMainHandItem(),player)) return;
+        if (tool == null || pitLocked(tool) || !isOwner(tool, player) || TAMING_TASKS.containsKey(player.getUUID()) || !checkCooldown(player.getMainHandItem(),player)) return;
         ListTag slots = getSlots(tool);
         for (int i = slots.size() - 1; i >= 0; i--) {
             CompoundTag entry = slots.getCompound(i);
@@ -303,8 +399,11 @@ public class DragonStaffHandler {
                 }
                 dragon.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
                 if (dragon instanceof LivingEntity livingDragon) {
-                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonHusbandryModifier.applyOnRelease(tool, livingDragon, slots.size());
-                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonKinshipModifier.applyOnRelease(tool, player, livingDragon);
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.applyBaseReleaseBonuses(livingDragon, () -> {
+                        com.mofengbaizhi.tinkersnewlife.content.modifier.DragonHusbandryModifier.applyOnRelease(tool, livingDragon, slots.size());
+                        com.mofengbaizhi.tinkersnewlife.content.modifier.DragonKinshipModifier.applyOnRelease(tool, player, livingDragon);
+                    });
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.applyOnRelease(livingDragon, entry.getBoolean(PIT_WINNER));
                 }
                 if (!player.level().addFreshEntity(dragon)) {
                     player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.release_fail_spawn"), true);
@@ -338,7 +437,7 @@ public class DragonStaffHandler {
             player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.not_owner"), true);
             return;
         }
-        if (TAMING_TASKS.containsKey(player.getUUID())) {
+        if (pitLocked(tool) || TAMING_TASKS.containsKey(player.getUUID())) {
             player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.taming_in_progress"), true);
             return;
         }
