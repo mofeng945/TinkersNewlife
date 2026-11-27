@@ -1,0 +1,12 @@
+{
+    "flag":  "mod:iceandfire",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "category":  "tinkersnewlife:traits",
+    "name":  "Battle Frenzy",
+    "pages":  [
+                  {
+                      "text":  "Each damaging hit adds a stack of rage: +5% attack damage and melee attack speed, capped at +50%. After five seconds without damage, lose a stack per second. Recalling clears rage. Costs one ability slot, a Strength potion, five blaze rods, and one bottle each of fire, ice, and lightning dragon blood.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

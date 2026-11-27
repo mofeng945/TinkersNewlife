@@ -12,6 +12,7 @@
     "PixieStealGoalMixin",
     "MyrmexHiveReputationMixin",
     "DragonSlayerShieldMixin",
+    "DragonFrenzyMeleeMixin",
     "DragonMealGrowthMixin",
     "CommunityDragonMealGrowthMixin",
     "RaptorPounceSweepMixin",

@@ -323,6 +323,7 @@ public class DragonStaffHandler {
             if (entry.getString("uuid").equals(uuid.toString())) {
                 CompoundTag data = new CompoundTag();
                 com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(tamable);
+                DragonFrenzy.mark(tamable, false);
                 target.save(data);
                 if (com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isWinner(tamable)) entry.putBoolean(PIT_WINNER, true);
                 entry.put("data", data);
@@ -349,6 +350,7 @@ public class DragonStaffHandler {
             CompoundTag entry = new CompoundTag();
             CompoundTag data = new CompoundTag();
             com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(tamable);
+            DragonFrenzy.mark(tamable, false);
             target.save(data);
             if (com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isWinner(tamable)) entry.putBoolean(PIT_WINNER, true);
             entry.putString("uuid", uuid.toString());
@@ -419,6 +421,7 @@ public class DragonStaffHandler {
                 }
                 if (dragon instanceof LivingEntity livingDragon) {
                     DragonGrowthNest.markReleased(livingDragon, ToolHelper.getActiveModifierLevel(tool, GROWTH));
+                    DragonFrenzy.mark(livingDragon, ToolHelper.getActiveModifierLevel(tool, FRENZY) > 0);
                     if (ToolHelper.getActiveModifierLevel(tool, NEST) > 0) DragonGrowthNest.applyNestRelease(livingDragon, wasFull);
                 }
                 entry.putInt("state", 0);
@@ -591,6 +594,7 @@ public class DragonStaffHandler {
 
     private static final ModifierId BROTHERHOOD = new ModifierId(TinkersNewlife.prefix("dragon_brotherhood"));
     private static final ModifierId NEST = new ModifierId(TinkersNewlife.prefix("dragon_nest"));
+    private static final ModifierId FRENZY = new ModifierId(TinkersNewlife.prefix("dragon_frenzy"));
     private static final ModifierId GROWTH = new ModifierId(TinkersNewlife.prefix("dragon_growth"));
     private static final String REVIVE_AT = "TnlDragonReviveAt";
     private record Brotherhood(Player owner, ItemStack stack, ToolStack tool, ListTag roster, CompoundTag entry) {}
@@ -698,6 +702,7 @@ public class DragonStaffHandler {
         if (bond == null) return false;
         com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(dragon);
         CompoundTag data = new CompoundTag();
+        DragonFrenzy.mark(dragon, false);
         dragon.saveWithoutId(data);
         data.putString("id", bond.entry.getString("type"));
         data.putShort("DeathTime", (short)0);

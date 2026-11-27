@@ -1,0 +1,12 @@
+{
+    "flag":  "mod:iceandfire",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "category":  "tinkersnewlife:traits",
+    "name":  "战狂",
+    "pages":  [
+                  {
+                      "text":  "每次被攻击且实际受伤，龙获得一层怒气：攻击力和近战攻击速度各提高5%，最高50%。连续5秒未受伤后，每秒消退一层；收回清空。占1个能力槽，消耗任意力量药水、5根烈焰棒及火、冰、雷龙血瓶各一。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}
