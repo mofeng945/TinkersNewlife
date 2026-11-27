@@ -324,6 +324,7 @@ public class DragonStaffHandler {
                 CompoundTag data = new CompoundTag();
                 com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(tamable);
                 DragonSpirit.mark(tamable, false);
+                DragonViltrum.mark(tamable, false);
                 DragonFrenzy.mark(tamable, false);
                 target.save(data);
                 if (com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isWinner(tamable)) entry.putBoolean(PIT_WINNER, true);
@@ -352,6 +353,7 @@ public class DragonStaffHandler {
             CompoundTag data = new CompoundTag();
             com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(tamable);
             DragonSpirit.mark(tamable, false);
+            DragonViltrum.mark(tamable, false);
             DragonFrenzy.mark(tamable, false);
             target.save(data);
             if (com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.isWinner(tamable)) entry.putBoolean(PIT_WINNER, true);
@@ -424,6 +426,7 @@ public class DragonStaffHandler {
                 if (dragon instanceof LivingEntity livingDragon) {
                     DragonGrowthNest.markReleased(livingDragon, ToolHelper.getActiveModifierLevel(tool, GROWTH));
                     DragonFrenzy.mark(livingDragon, ToolHelper.getActiveModifierLevel(tool, FRENZY) > 0);
+                    DragonViltrum.mark(livingDragon, ToolHelper.getActiveModifierLevel(tool, DragonViltrum.ID) > 0);
                     DragonSpirit.mark(livingDragon, ToolHelper.getActiveModifierLevel(tool, new ModifierId(TinkersNewlife.prefix("dragon_spirit"))) > 0);
                     if (ToolHelper.getActiveModifierLevel(tool, NEST) > 0) DragonGrowthNest.applyNestRelease(livingDragon, wasFull);
                 }
@@ -627,7 +630,8 @@ public class DragonStaffHandler {
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void shareDragonDamage(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
         if (!(event.getAmount() > 0) || !Float.isFinite(event.getAmount()) || event.getEntity().level().isClientSide) return;
-        if (event.getSource().getEntity() instanceof LivingEntity attacker && attacker != event.getEntity()) {
+        if (!DragonViltrum.isDragDamage(event.getSource())
+                && event.getSource().getEntity() instanceof LivingEntity attacker && attacker != event.getEntity()) {
             var bond = brotherhood(attacker);
             if (bond != null) {
                 double attack = 0;
@@ -706,6 +710,7 @@ public class DragonStaffHandler {
         com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(dragon);
         CompoundTag data = new CompoundTag();
         DragonSpirit.mark(dragon, false);
+        DragonViltrum.mark(dragon, false);
         DragonFrenzy.mark(dragon, false);
         dragon.saveWithoutId(data);
         data.putString("id", bond.entry.getString("type"));

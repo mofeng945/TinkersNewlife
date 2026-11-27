@@ -1,0 +1,16 @@
+{
+  "flag": "mod:iceandfire",
+  "icon": "tinkersnewlife:dragon_staff",
+  "category": "tinkersnewlife:traits",
+  "name": "Viltrum Crossing",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A single-rank ability for the Dragon Staff only. Costs one ability slot, one Nether Star, one Phantom Membrane, one Piercing enchanted book of any level, and 10 Redstone Blocks."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "When a deployed stage-three or older dragon lands a melee hit on an enemy smaller than an Iron Golem, it has a 5% chance to grab the enemy, climb, dive, and drag it across the ground. After touching down, the dragon drags the enemy for up to 20 ticks. Each tick of the drag deals physical damage equal to 5% of the dragon's attack damage, without breaking blocks. Each dragon has its own 20-second cooldown."
+    }
+  ]
+}
