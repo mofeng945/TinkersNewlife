@@ -407,9 +407,11 @@ public class DragonStaffHandler {
                 dragon.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
                 if (dragon instanceof LivingEntity livingDragon) {
                     com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(livingDragon);
+                     float healthRatio = livingDragon.getHealth() / Math.max(1f, livingDragon.getMaxHealth());
                         com.mofengbaizhi.tinkersnewlife.content.modifier.DragonHusbandryModifier.applyOnRelease(tool, livingDragon, slots.size());
                         com.mofengbaizhi.tinkersnewlife.content.modifier.DragonKinshipModifier.applyOnRelease(tool, player, livingDragon);
                     com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.applyOnRelease(livingDragon, entry.getBoolean(PIT_WINNER));
+                     livingDragon.setHealth(Math.min(1f, healthRatio) * livingDragon.getMaxHealth());
                 }
                 if (!player.level().addFreshEntity(dragon)) {
                     player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.release_fail_spawn"), true);
@@ -682,6 +684,7 @@ public class DragonStaffHandler {
             if (changed) {
                 tool.getPersistentData().put(KEY_SLOTS, roster);
                 tool.updateStack(stack);
+                com.mofengbaizhi.tinkersnewlife.network.dragon.DragonCards.syncStoredHealth(player, stack, roster);
             }
         }
     }

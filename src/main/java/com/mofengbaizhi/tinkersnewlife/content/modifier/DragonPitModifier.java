@@ -59,11 +59,12 @@ public final class DragonPitModifier extends Modifier {
     }
 
     public static void stripReleaseBonus(LivingEntity dragon) {
+        float ratio = dragon.getHealth() / Math.max(1f, dragon.getMaxHealth());
         MULTIPLIERS.forEach((attribute, id) -> {
             var instance = dragon.getAttribute(attribute);
             if (instance != null) instance.removeModifier(id);
         });
-        if (dragon.getHealth() > dragon.getMaxHealth()) dragon.setHealth(dragon.getMaxHealth());
+        dragon.setHealth(Math.min(1f, ratio) * dragon.getMaxHealth());
     }
 
     public static void awardWin(LivingEntity dragon, int participants) {

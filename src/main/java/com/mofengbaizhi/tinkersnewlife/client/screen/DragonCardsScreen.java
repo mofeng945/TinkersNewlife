@@ -51,6 +51,16 @@ public final class DragonCardsScreen extends Screen {
         attempted = new boolean[cards.size()];
     }
 
+    public boolean updateStoredHealth(List<CompoundTag> updated, UUID token) {
+        if (!session.equals(token)) return false;
+        for (var card : cards) for (var next : updated) {
+            if (!card.getString("uuid").equals(next.getString("uuid"))) continue;
+            for (String key : List.of("hp", "maxHp", "state")) card.put(key, next.get(key).copy());
+            break;
+        }
+        return true;
+    }
+
     private static Component text(String key, Object... args) { return Component.translatable(PREFIX + key, args); }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void tick() {

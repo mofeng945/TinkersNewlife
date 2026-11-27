@@ -31,7 +31,20 @@ public final class DragonCards {
 
     public static void open(ServerPlayer player, ListTag slots) { open(player, slots, false); }
 
+    public static void syncStoredHealth(ServerPlayer player, ItemStack staff, ListTag slots) {
+        var session = OPEN.get(player);
+        if (session != null && session.staff == staff && valid(player, session.token)) {
+            sendView(player, slots, session.token, true);
+        }
+    }
+
     public static void open(ServerPlayer player, ListTag slots, boolean refresh) {
+        UUID token = UUID.randomUUID();
+        OPEN.put(player, new Session(token, player.getMainHandItem(), player.level().getGameTime() + 2400, player.level().dimension().location()));
+        sendView(player, slots, token, refresh);
+    }
+
+    private static void sendView(ServerPlayer player, ListTag slots, UUID token, boolean refresh) {
         List<CompoundTag> cards = new ArrayList<>();
         for (int i=0; i<slots.size() && cards.size()<LIMIT; i++) {
             CompoundTag entry = slots.getCompound(i);
@@ -67,7 +80,6 @@ public final class DragonCards {
                 if(slot<=4){CompoundTag gear=new CompoundTag();gear.putByte("Slot",(byte)slot);gear.putString("id",it.getString("id"));gear.putByte("Count",(byte)1);armor.add(gear);}}
             model.put("Items",armor);card.put("data",model);cards.add(card);
         }
-        UUID token=UUID.randomUUID();OPEN.put(player,new Session(token,player.getMainHandItem(),player.level().getGameTime()+2400,player.level().dimension().location()));
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(()->player),new PitView(new Open(cards,token), DragonStaffHandler.canStartPit(player), DragonStaffHandler.pitRemaining(player), refresh));
     }
     public static double attribute(CompoundTag data,Attribute stat) {
@@ -90,6 +102,8 @@ public final class DragonCards {
         static void open(PitView packet){
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (packet.refresh && !(mc.screen instanceof com.mofengbaizhi.tinkersnewlife.client.screen.DragonCardsScreen)) return;
+            if (packet.refresh && mc.screen instanceof com.mofengbaizhi.tinkersnewlife.client.screen.DragonCardsScreen screen
+                    && screen.updateStoredHealth(packet.roster.cards, packet.roster.token)) return;
             mc.setScreen(new com.mofengbaizhi.tinkersnewlife.client.screen.DragonCardsScreen(packet.roster.cards,packet.roster.token,packet.pitAvailable,packet.remainingTicks));
         }
     }
