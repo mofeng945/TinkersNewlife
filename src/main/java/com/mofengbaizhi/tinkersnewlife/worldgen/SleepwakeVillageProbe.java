@@ -14,6 +14,7 @@ final class SleepwakeVillageProbe {
         var sets = c.registryAccess().registryOrThrow(Registries.STRUCTURE_SET);
         var placementState = net.minecraft.world.level.chunk.ChunkGeneratorStructureState.createForNormal(
                 c.randomState(), c.seed(), c.biomeSource(), sets.asLookup());
+        boolean nearby = false;
         for (var set : sets) {
             if (!(set.placement() instanceof RandomSpreadStructurePlacement placement)) continue;
             if (set.structures().stream().noneMatch(e -> e.structure().is(villages))) continue;
@@ -43,12 +44,13 @@ final class SleepwakeVillageProbe {
                     var box=start.getBoundingBox();
                     int dx=Math.max(Math.max(box.minX()- (x+50), x-box.maxX()),0);
                     int dz=Math.max(Math.max(box.minZ()- (z+72), z-box.maxZ()),0);
-                    if(dx*dx+dz*dz<=2500 && (dx>0 || dz>0)) return true;
+                    if (dx == 0 && dz == 0) return false;
+                    if (dx*dx+dz*dz<=2500) nearby = true;
                     break; // Vanilla stops at the first valid structure in this set.
                 }
             }
         }
-        return false;
+        return nearby;
     }
     private SleepwakeVillageProbe() {}
 }

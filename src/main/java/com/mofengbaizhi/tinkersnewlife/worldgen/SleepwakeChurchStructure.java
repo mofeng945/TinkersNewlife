@@ -27,8 +27,7 @@ public final class SleepwakeChurchStructure extends Structure {
         if (!allowed) return Optional.empty();
         int x = context.chunkPos().getMinBlockX();
         int z = context.chunkPos().getMinBlockZ();
-        if (!whiteSpace && !SleepwakeVillageProbe.nearVillage(context, x, z)) return Optional.empty();
-        return SleepwakeChurchTerrain.highestOrigin(context, x, z).map(origin ->
+        return SleepwakeChurchTerrain.selectOrigin(context, x, z, whiteSpace).map(origin ->
                 new GenerationStub(origin, builder -> builder.addPiece(new SleepwakeChurchPiece(
                         SleepwakeChurchRegistry.PIECE.get(), context.structureTemplateManager(), origin))));
     }

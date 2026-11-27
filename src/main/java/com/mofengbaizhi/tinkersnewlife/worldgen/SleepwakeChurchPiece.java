@@ -23,15 +23,23 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 public final class SleepwakeChurchPiece extends TemplateStructurePiece {
     public static final ResourceLocation TEMPLATE = new ResourceLocation("tinkersnewlife", "sleepwake_church");
     public static final int WIDTH = 51, HEIGHT = 82, DEPTH = 73;
+    private final boolean lowFoundation;
     private static StructurePlaceSettings settings() {
         return new StructurePlaceSettings().setIgnoreEntities(true).setKnownShape(false)
                 .addProcessor(BlockIgnoreProcessor.STRUCTURE_BLOCK);
     }
     public SleepwakeChurchPiece(StructurePieceType type, StructureTemplateManager manager, BlockPos origin) {
         super(type, 0, manager, TEMPLATE, TEMPLATE.toString(), settings(), origin);
+        lowFoundation = true;
     }
     public SleepwakeChurchPiece(StructurePieceType type, StructurePieceSerializationContext context, CompoundTag tag) {
         super(type, tag, context.structureTemplateManager(), id -> settings());
+        lowFoundation = tag.getBoolean("LowFoundation");
+    }
+
+    @Override protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
+        super.addAdditionalSaveData(context, tag);
+        tag.putBoolean("LowFoundation", lowFoundation);
     }
     @Override protected void handleDataMarker(String marker, BlockPos pos, ServerLevelAccessor level,
                                                RandomSource random, BoundingBox bounds) { }
@@ -45,9 +53,13 @@ public final class SleepwakeChurchPiece extends TemplateStructurePiece {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int x = minX; x <= maxX; x++) for (int z = minZ; z <= maxZ; z++) {
             int ground = level.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
+            if (lowFoundation) ground = Math.max(ground, templatePosition.getY() - SleepwakeChurchTerrain.MAX_FILL);
             for (int y = ground; y < templatePosition.getY(); y++) {
                 pos.set(x, y, z);
-                level.setBlock(pos, Blocks.STONE_BRICKS.defaultBlockState(), 2);
+                var block = !lowFoundation || templatePosition.getY() - y <= SleepwakeChurchTerrain.STONE_COURSES
+                        ? Blocks.STONE_BRICKS : level.getBlockState(new BlockPos(x, ground - 1, z)).is(Blocks.GRASS_BLOCK)
+                        ? Blocks.DIRT : Blocks.STONE;
+                level.setBlock(pos, block.defaultBlockState(), 2);
             }
         }
         super.postProcess(level, structures, generator, random, chunkBounds, chunk, pivot);
