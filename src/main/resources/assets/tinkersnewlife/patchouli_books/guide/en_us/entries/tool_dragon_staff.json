@@ -11,9 +11,24 @@
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "Use an Ice and Fire dragon horn, paper, and its Dragon Command Staff to make an Ancient Dragon Taming Manual Fragment; only the paper is consumed. Read it first.$(li)Press the bound key to try taming a nearby wild dragon for 88 experience levels.$(li)Right-click your dragon to store it; sneak-right-click to open the dragon cards. Scroll or click a side card to browse; drag to rotate, or click the main card to release that dragon.$(li)Left-click your dragon to cycle its orders. Left-click other creatures to attack normally.$(br2)Damage bonus: stored dragons × trait level × 10%."
+                      "text":  "Use an Ice and Fire Dragon Horn, Manuscript, and Dragon Command Staff at a smithing table to make an Ancient Dragon Taming Manual Fragment. Only the Manuscript is consumed. Read the fragment first.$(li)Press the bound key to try taming a nearby wild dragon for 88 experience levels. Full-health dragons have a 20% success chance; at 20% health or less, taming always succeeds.$(li)Right-click your dragon to store it; sneak-right-click to open the dragon cards. Scroll or click a side card to browse; drag to rotate, or click the main card to release that dragon.$(li)Left-click your dragon to cycle its orders. Left-click other creatures to attack normally.$(br2)Damage bonus: stored dragons × trait level × 10%."
                   },
-    { "type": "patchouli:text", "text": "Dragon Kinship costs one ability slot, 64 silver ingots, 20 diamonds, 20 gold ingots and two silky cloth. On release, divide your armor and toughness by your maximum health, cap the ratios at 50% and 30%, then multiply by dragon maximum health. Bonuses add to dragon armor and refresh on release." }
+    { "type": "patchouli:text", "text": "Dragon Kinship costs one ability slot, 64 silver ingots, 20 diamonds, 20 gold ingots and two silky cloth. On release, divide your armor and toughness by your maximum health, cap the ratios at 50% and 30%, then multiply by dragon maximum health. Bonuses add to dragon armor and refresh on release." },
+                  {
+                      "type": "patchouli:text",
+                      "title": "Dragon Brotherhood",
+                      "text": "Dragon Staff only, no levels. Costs one ability slot; cannot be made into a modifier crystal.$(br2)Recipe: a Fire, Ice, and Lightning Dragon Skull, 20 Fire Lilies, and one $(l:relic_nicholas_blessing)Nicholas's Blessing$().$(br2)Living stored dragons split 60% of incoming damage to the deployed dragon, which gains damage equal to 50% of their average attack damage. Fallen dragons revive after three in-game days."
+                  },
+                  {
+                      "type": "patchouli:text",
+                      "title": "Rapid Growth",
+                      "text": "Dragon Staff only, no levels. Costs one ability slot; cannot be made into a modifier crystal.$(br2)Recipe: 20 Dragon Meals and one each of a Fire Lily, Frost Lily, and Lightning Lily.$(br2)Feeding Dragon Meal to a registered dragon grants twice the normal growth. Other foods are unaffected."
+                  },
+                  {
+                      "type": "patchouli:text",
+                      "title": "Cozy Nest",
+                      "text": "Dragon Staff only, no levels. Costs one ability slot; cannot be made into a modifier crystal.$(br2)Recipe: any Ice and Fire dragon egg, one End Crystal, and a Fire, Ice, and Lightning Dragon Heart.$(br2)Stored dragons regain 2% of maximum health per second. Releasing a dragon at full health grants Regeneration I and Resistance I for 20 seconds."
+                  }
               ],
     "flag":  "mod:iceandfire"
 }

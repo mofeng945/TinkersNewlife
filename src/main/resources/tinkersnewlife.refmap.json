@@ -1,5 +1,11 @@
 {
   "mappings": {
+    "com/mofengbaizhi/tinkersnewlife/mixin/DragonMealGrowthMixin": {
+      "mobInteract(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;": "m_6071_(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/CommunityDragonMealGrowthMixin": {
+      "mobInteract(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;": "m_6071_(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"
+    },
     "com/mofengbaizhi/tinkersnewlife/mixin/MomoBossMusicMixin": {
       "getSituationalMusic": "Lnet/minecraft/client/Minecraft;m_91107_()Lnet/minecraft/sounds/Music;"
     },
@@ -82,6 +88,12 @@
   },
   "data": {
     "searge": {
+      "com/mofengbaizhi/tinkersnewlife/mixin/DragonMealGrowthMixin": {
+        "mobInteract(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;": "m_6071_(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/CommunityDragonMealGrowthMixin": {
+        "mobInteract(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;": "m_6071_(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"
+      },
       "com/mofengbaizhi/tinkersnewlife/mixin/MomoBossMusicMixin": {
         "getSituationalMusic": "Lnet/minecraft/client/Minecraft;m_91107_()Lnet/minecraft/sounds/Music;"
       },

@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:modifier",
+  "conditions": [{ "type": "forge:mod_loaded", "modid": "iceandfire" }],
+  "allow_crystal": false,
+  "inputs": [
+    { "tag": "tinkersnewlife:iceandfire_dragon_eggs" },
+    { "item": "minecraft:end_crystal" },
+    { "item": "iceandfire:fire_dragon_heart" },
+    { "item": "iceandfire:ice_dragon_heart" },
+    { "item": "iceandfire:lightning_dragon_heart" }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:dragon_nest",
+  "slots": { "abilities": 1 },
+  "tools": { "item": "tinkersnewlife:dragon_staff" }
+}

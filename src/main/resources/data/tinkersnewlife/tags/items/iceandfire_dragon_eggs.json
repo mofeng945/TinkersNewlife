@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "iceandfire:dragonegg_red", "required": false },
+    { "id": "iceandfire:dragonegg_green", "required": false },
+    { "id": "iceandfire:dragonegg_bronze", "required": false },
+    { "id": "iceandfire:dragonegg_gray", "required": false },
+    { "id": "iceandfire:dragonegg_blue", "required": false },
+    { "id": "iceandfire:dragonegg_white", "required": false },
+    { "id": "iceandfire:dragonegg_sapphire", "required": false },
+    { "id": "iceandfire:dragonegg_silver", "required": false },
+    { "id": "iceandfire:dragonegg_electric", "required": false },
+    { "id": "iceandfire:dragonegg_amythest", "required": false },
+    { "id": "iceandfire:dragonegg_copper", "required": false },
+    { "id": "iceandfire:dragonegg_black", "required": false }
+  ]
+}

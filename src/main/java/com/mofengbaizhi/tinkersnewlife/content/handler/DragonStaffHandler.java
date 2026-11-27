@@ -53,7 +53,7 @@ public class DragonStaffHandler {
     private static final int SEARCH_RADIUS = 16;
     private static double tamingChance(LivingEntity dragon) {
         double healthFraction = (double) dragon.getHealth() / dragon.getMaxHealth();
-        return 0.20 + 0.75 * (1.0 - Math.max(0.20, healthFraction));
+        return Math.min(1.0, 0.20 + (1.0 - Math.max(0.20, healthFraction)));
     }
     private static final int TAMING_DURATION_TICKS = 60;
     private static final int INTERACT_COOLDOWN_TICKS = 20;
@@ -124,7 +124,7 @@ public class DragonStaffHandler {
         double best = -1;
         for (int i = 0; i < slots.size(); i++) {
             var entry = slots.getCompound(i);
-            if (entry.getInt("state") != 1) continue;
+            if (entry.getInt("state") != 1 || entry.contains(REVIVE_AT)) continue;
             var data = entry.getCompound("data");
             if (!data.contains("Attributes", Tag.TAG_LIST) || data.getFloat("Health") <= 0) return -1;
             int stage = Math.min(5, Math.max(0, data.getInt("AgeTicks")) / 600000 + 1);
@@ -160,7 +160,7 @@ public class DragonStaffHandler {
                 } else {
                     dragon.load(survivor.getCompound("data"));
                     int participants = 0;
-                    for (int i = 0; i < roster.size(); i++) if (roster.getCompound(i).getInt("state") == 1) participants++;
+                    for (int i = 0; i < roster.size(); i++) if (canSupport(roster.getCompound(i))) participants++;
                     com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.awardWin(dragon, participants);
                     CompoundTag updated = new CompoundTag();
                     dragon.saveWithoutId(updated);
@@ -175,7 +175,7 @@ public class DragonStaffHandler {
         }
         if (winner >= 0) {
             for (int i = roster.size() - 1; i >= 0; i--) {
-                if (i != winner && roster.getCompound(i).getInt("state") == 1) roster.remove(i);
+                if (i != winner && canSupport(roster.getCompound(i))) roster.remove(i);
             }
             setSlots(player, tool, roster);
         }
@@ -376,7 +376,7 @@ public class DragonStaffHandler {
         ListTag slots = getSlots(tool);
         for (int i = slots.size() - 1; i >= 0; i--) {
             CompoundTag entry = slots.getCompound(i);
-            if (entry.getInt("state") == 1 && selected.toString().equals(entry.getString("uuid"))) {
+            if (canSupport(entry) && selected.toString().equals(entry.getString("uuid"))) {
                 CompoundTag data = entry.getCompound("data");
                 ResourceLocation typeId = new ResourceLocation(entry.getString("type"));
                 EntityType<?> type = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.entityType(typeId);
@@ -395,6 +395,7 @@ public class DragonStaffHandler {
                     player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.release_fail_data"), true);
                     return;
                 }
+                boolean wasFull = dragon instanceof LivingEntity living && living.getHealth() >= living.getMaxHealth() - .001f;
                 String slotName = entry.getString("name");
                 if (!slotName.isEmpty() && !dragon.hasCustomName()) {
                     dragon.setCustomName(Component.literal(slotName));
@@ -413,6 +414,10 @@ public class DragonStaffHandler {
                 if (!player.level().addFreshEntity(dragon)) {
                     player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.release_fail_spawn"), true);
                     return;
+                }
+                if (dragon instanceof LivingEntity livingDragon) {
+                    DragonGrowthNest.markReleased(livingDragon, ToolHelper.getActiveModifierLevel(tool, GROWTH));
+                    if (ToolHelper.getActiveModifierLevel(tool, NEST) > 0) DragonGrowthNest.applyNestRelease(livingDragon, wasFull);
                 }
                 entry.putInt("state", 0);
                 entry.putString("dimension", player.level().dimension().location().toString());
@@ -546,6 +551,7 @@ public class DragonStaffHandler {
         entry.putInt("posZ", target.getBlockZ());
         slots.add(entry);
         setSlots(player, tool, slots);
+        if (target instanceof LivingEntity dragon) DragonGrowthNest.markReleased(dragon, ToolHelper.getActiveModifierLevel(tool, GROWTH));
         tool.updateStack(player.getMainHandItem());
         if (!target.hasCustomName()) target.setCustomName(Component.literal(dragonName));
         player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.success"), true);
@@ -581,6 +587,131 @@ public class DragonStaffHandler {
         }
     }
 
+    private static final ModifierId BROTHERHOOD = new ModifierId(TinkersNewlife.prefix("dragon_brotherhood"));
+    private static final ModifierId NEST = new ModifierId(TinkersNewlife.prefix("dragon_nest"));
+    private static final ModifierId GROWTH = new ModifierId(TinkersNewlife.prefix("dragon_growth"));
+    private static final String REVIVE_AT = "TnlDragonReviveAt";
+    private record Brotherhood(Player owner, ItemStack stack, ToolStack tool, ListTag roster, CompoundTag entry) {}
+
+    private static Brotherhood brotherhood(Entity entity) {
+        if (!(entity instanceof TamableAnimal dragon) || !isDragon(dragon) || dragon.getOwnerUUID() == null
+                || !(entity.level() instanceof ServerLevel level)) return null;
+        var owner = level.getServer().getPlayerList().getPlayer(dragon.getOwnerUUID());
+        if (owner == null) return null;
+        var inventory = new java.util.ArrayList<>(owner.getInventory().items);
+        inventory.add(owner.getOffhandItem());
+        for (var stack : inventory) {
+            if (!(stack.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.DragonStaffItem)) continue;
+            var tool = ToolHelper.getToolStack(stack);
+            if (tool == null || !isOwner(tool, owner) || ToolHelper.getActiveModifierLevel(tool, BROTHERHOOD) <= 0) continue;
+            var roster = getSlots(tool);
+            for (int i = 0; i < roster.size(); i++) {
+                var entry = roster.getCompound(i);
+                if (entry.getInt("state") == 0 && entry.getString("uuid").equals(entity.getStringUUID())) {
+                    return new Brotherhood(owner, stack, tool, roster, entry);
+                }
+            }
+        }
+        return null;
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void shareDragonDamage(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
+        if (!(event.getAmount() > 0) || !Float.isFinite(event.getAmount()) || event.getEntity().level().isClientSide) return;
+        if (event.getSource().getEntity() instanceof LivingEntity attacker && attacker != event.getEntity()) {
+            var bond = brotherhood(attacker);
+            if (bond != null) {
+                double attack = 0;
+                int count = 0;
+                for (int i = 0; i < bond.roster.size(); i++) {
+                    var entry = bond.roster.getCompound(i);
+                    if (!canSupport(entry)) continue;
+                    attack += stat(entry.getCompound("data"), net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+                    count++;
+                }
+                if (count > 0) event.setAmount(event.getAmount() + (float)(attack / count * .5));
+            }
+        }
+        if (event.getSource().getEntity() == null || event.getSource().getEntity() == event.getEntity()) return;
+        var bond = brotherhood(event.getEntity());
+        if (bond == null || pitLocked(bond.tool)) return;
+        java.util.List<CompoundTag> supporters = new java.util.ArrayList<>();
+        for (int i = 0; i < bond.roster.size(); i++) if (canSupport(bond.roster.getCompound(i))) supporters.add(bond.roster.getCompound(i));
+        if (supporters.isEmpty()) return;
+        float share = event.getAmount() * .60f / supporters.size();
+        float absorbed = 0;
+        long time = bond.owner.level().getGameTime();
+        for (var entry : supporters) {
+            var data = entry.getCompound("data");
+            float hp = data.getFloat("Health");
+            absorbed += Math.min(hp, share);
+            data.putFloat("Health", Math.max(0, hp - share));
+            if (hp <= share) entry.putLong(REVIVE_AT, time + 72000);
+        }
+        event.setAmount(Math.max(0, event.getAmount() - absorbed));
+        bond.tool.getPersistentData().put(KEY_SLOTS, bond.roster);
+        bond.tool.updateStack(bond.stack);
+    }
+
+    @SubscribeEvent public static void tickStoredDragons(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof net.minecraft.server.level.ServerPlayer player)
+                || player.tickCount % 20 != 0) return;
+        long now = player.level().getGameTime();
+        var inventory = new java.util.ArrayList<>(player.getInventory().items);
+        inventory.add(player.getOffhandItem());
+        for (var stack : inventory) {
+            if (!(stack.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.DragonStaffItem)) continue;
+            var tool = ToolHelper.getToolStack(stack);
+            if (tool == null || !isOwner(tool, player) || pitLocked(tool)) continue;
+            var roster = getSlots(tool);
+            boolean changed = false;
+            for (int i = 0; i < roster.size(); i++) {
+                var entry = roster.getCompound(i);
+                if (entry.getInt("state") != 1) continue;
+                var data = entry.getCompound("data");
+                float max = (float)stat(data, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+                if (entry.contains(REVIVE_AT)) {
+                    if (now < entry.getLong(REVIVE_AT)) continue;
+                    entry.remove(REVIVE_AT);
+                    data.putFloat("Health", max);
+                    changed = true;
+                } else if (ToolHelper.getActiveModifierLevel(tool, NEST) > 0 && canSupport(entry) && data.getFloat("Health") < max) {
+                    changed |= DragonGrowthNest.healStored(data, max, 20);
+                }
+            }
+            if (changed) {
+                tool.getPersistentData().put(KEY_SLOTS, roster);
+                tool.updateStack(stack);
+            }
+        }
+    }
+
+    private static boolean canSupport(CompoundTag entry) {
+        return entry.getInt("state") == 1 && !entry.contains(REVIVE_AT) && entry.getCompound("data").getFloat("Health") > 0;
+    }
+
+    private static boolean recallFallen(TamableAnimal dragon) {
+        var bond = brotherhood(dragon);
+        if (bond == null) return false;
+        com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.stripReleaseBonus(dragon);
+        CompoundTag data = new CompoundTag();
+        dragon.saveWithoutId(data);
+        data.putString("id", bond.entry.getString("type"));
+        data.putShort("DeathTime", (short)0);
+        data.putBoolean("ModelDead", false);
+        data.putInt("DeathStage", 0);
+        data.putFloat("Health", 0);
+        bond.entry.put("data", data);
+        bond.entry.putInt("state", 1);
+        bond.entry.putLong(REVIVE_AT, dragon.level().getGameTime() + 72000);
+        // Roster changed during combat; abort a pending pit rather than admit an unconfirmed entrant.
+        bond.tool.getPersistentData().remove(PIT_END);
+        setSlots(bond.owner, bond.tool, bond.roster);
+        bond.tool.updateStack(bond.stack);
+        dragon.discard();
+        return true;
+    }
+
     // ---------- 死亡清理 ----------
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
@@ -588,6 +719,7 @@ public class DragonStaffHandler {
         if (!isDragon(entity)) return;
         if (!(entity instanceof TamableAnimal tamable)) return;
         if (!tamable.isTame()) return;
+        if (recallFallen(tamable)) { event.setCanceled(true); return; }
         UUID ownerId = tamable.getOwnerUUID();
         if (ownerId == null) return;
         Player player = entity.level().getPlayerByUUID(ownerId);

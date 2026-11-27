@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.*;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import slimeknights.tconstruct.library.modifiers.util.ModifierDeferredRegister;
+import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.util.StaticModifier;
 
 public class Modifiers {
@@ -153,6 +154,17 @@ public class Modifiers {
 
     public static final StaticModifier<DragonPitModifier> DRAGON_PIT =
             MODIFIERS.register("dragon_pit", DragonPitModifier::new);
+
+    private static Modifier dragonAbility() {
+        return new Modifier() {
+            @Override public net.minecraft.network.chat.Component getDisplayName(int level) {
+                return slimeknights.tconstruct.library.modifiers.util.ModifierLevelDisplay.NO_LEVELS.nameForLevel(this, level);
+            }
+        };
+    }
+    public static final StaticModifier<Modifier> DRAGON_BROTHERHOOD = MODIFIERS.register("dragon_brotherhood", Modifiers::dragonAbility);
+    public static final StaticModifier<Modifier> DRAGON_GROWTH = MODIFIERS.register("dragon_growth", Modifiers::dragonAbility);
+    public static final StaticModifier<Modifier> DRAGON_NEST = MODIFIERS.register("dragon_nest", Modifiers::dragonAbility);
 
     public static final StaticModifier<DragonStaffTrait> DRAGON_STAFF =
             MODIFIERS.register("dragon_staff", DragonStaffTrait::new);

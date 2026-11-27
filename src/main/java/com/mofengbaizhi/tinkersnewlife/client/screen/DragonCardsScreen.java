@@ -210,7 +210,7 @@ public final class DragonCardsScreen extends Screen {
     }
 
     private static boolean stored(CompoundTag card) { return card.getInt("state") == 1; }
-    private static Component status(CompoundTag card) { return text(stored(card) ? "stored" : card.getBoolean("live") ? "released" : "snapshot"); }
+    private static Component status(CompoundTag card) { return text(card.getInt("state") == 2 ? "recovering" : stored(card) ? "stored" : card.getBoolean("live") ? "released" : "snapshot"); }
     private static Component name(CompoundTag card) {
         String name = card.getString("name");
         Component label = name.isBlank() ? text("unnamed") : Component.literal(name);

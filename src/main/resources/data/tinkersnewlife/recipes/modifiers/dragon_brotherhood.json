@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:modifier",
+  "conditions": [{ "type": "forge:mod_loaded", "modid": "iceandfire" }],
+  "allow_crystal": false,
+  "inputs": [
+    { "item": "iceandfire:dragon_skull_fire" },
+    { "item": "iceandfire:dragon_skull_ice" },
+    { "item": "iceandfire:dragon_skull_lightning" },
+    { "item": "iceandfire:fire_lily", "amount_needed": 20 },
+    { "item": "tinkersnewlife:nicholas_blessing" }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:dragon_brotherhood",
+  "slots": { "abilities": 1 },
+  "tools": { "item": "tinkersnewlife:dragon_staff" }
+}

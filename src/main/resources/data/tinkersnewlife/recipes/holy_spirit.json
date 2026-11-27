@@ -5,5 +5,8 @@
   },
   "value": 1,
   "needed": 1,
-  "material": "tinkersnewlife:holy_spirit"
+  "material": "tinkersnewlife:holy_spirit",
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "irons_spellbooks" }
+  ]
 }

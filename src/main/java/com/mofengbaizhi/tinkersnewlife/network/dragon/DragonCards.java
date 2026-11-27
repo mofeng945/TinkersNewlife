@@ -48,7 +48,7 @@ public final class DragonCards {
             if (live != null) { data = new CompoundTag(); live.saveWithoutId(data); }
             CompoundTag card = new CompoundTag();
             card.putString("uuid",id.toString()); card.putString("name",live != null ? live.getName().getString() : entry.getString("name"));
-            card.putString("type",entry.getString("type")); card.putInt("state",entry.getInt("state")); card.putBoolean("live",live!=null);
+            card.putString("type",entry.getString("type")); card.putInt("state",entry.contains("TnlDragonReviveAt") ? 2 : entry.getInt("state")); card.putBoolean("live",live!=null);
             card.putBoolean("pitWinner",entry.getBoolean("TnlDragonPitWinner"));
             card.putBoolean("male",data.getBoolean("Gender"));
             int days=Math.max(0,data.getInt("AgeTicks"))/24000;
