@@ -1143,7 +1143,7 @@
   "modifier.tinkersnewlife.dragon_brotherhood.description": "Deployed dragons share incoming damage with the dragons still in the staff and gain bonus damage. Fallen dragons have a chance to return.",
   "modifier.tinkersnewlife.dragon_spirit": "Spirit Form",
   "modifier.tinkersnewlife.dragon_spirit.flavor": "Better behaved, stronger, smarter!",
-  "modifier.tinkersnewlife.dragon_spirit.description": "Released dragons resist in-wall suffocation and cramming and cannot damage terrain.",
+  "modifier.tinkersnewlife.dragon_spirit.description": "Released dragons can briefly phase past obstacles when stuck following or pursuing a target. They are immune to in-wall suffocation and cramming and cannot damage terrain.",
   "modifier.tinkersnewlife.dragon_frenzy": "Battle Frenzy",
   "modifier.tinkersnewlife.dragon_frenzy.flavor": "Combat feels great!",
   "modifier.tinkersnewlife.dragon_frenzy.description": "Released dragons build rage when hurt, increasing attack damage and melee attack speed by up to 50%.",
