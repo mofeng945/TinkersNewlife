@@ -222,14 +222,22 @@ public final class DragonWarScreen extends Screen {
         List<Marker> result = new ArrayList<>();
         if (frame == null || minecraft.level == null) return result;
         for (Entity entity : minecraft.level.entitiesForRendering()) {
-            if (entity instanceof net.minecraft.world.entity.item.ItemEntity
-                    || entity instanceof net.minecraftforge.entity.PartEntity<?>
-                    || !entity.isAlive() || entity.isSpectator() || !inArea(entity.blockPosition())) continue;
+            if (hideMarker(entity) || !entity.isAlive() || entity.isSpectator() || !inArea(entity.blockPosition())) continue;
             Vec3 label = entity.getPosition(partialTick).add(0, entity.getBbHeight() + .12, 0);
             Vec3 projected = frame.project(label);
             if (projected != null && inView(projected.x, projected.y)) result.add(new Marker(entity, projected));
         }
         return result;
+    }
+
+    private static boolean hideMarker(Entity entity) {
+        if (entity instanceof net.minecraft.world.entity.item.ItemEntity
+                || entity instanceof net.minecraft.world.entity.ExperienceOrb
+                || entity instanceof net.minecraftforge.entity.PartEntity<?>) return true;
+        // Ice and Fire registers its multipart children as ordinary Entity instances.
+        var id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        return id != null && id.getNamespace().equals("iceandfire")
+                && (id.getPath().equals("multipart") || id.getPath().endsWith("_multipart"));
     }
 
     private boolean isOrderTarget(Entity entity) {
