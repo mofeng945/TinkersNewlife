@@ -214,7 +214,9 @@ public final class DragonWarScreen extends Screen {
         List<Marker> result = new ArrayList<>();
         if (frame == null || minecraft.level == null) return result;
         for (Entity entity : minecraft.level.entitiesForRendering()) {
-            if (!entity.isAlive() || entity.isSpectator() || !inArea(entity.blockPosition())) continue;
+            if (entity instanceof net.minecraft.world.entity.item.ItemEntity
+                    || entity instanceof net.minecraftforge.entity.PartEntity<?>
+                    || !entity.isAlive() || entity.isSpectator() || !inArea(entity.blockPosition())) continue;
             Vec3 label = entity.getPosition(partialTick).add(0, entity.getBbHeight() + .12, 0);
             Vec3 projected = frame.project(label);
             if (projected != null && inView(projected.x, projected.y)) result.add(new Marker(entity, projected));
@@ -279,6 +281,11 @@ public final class DragonWarScreen extends Screen {
             int radius = id.equals(selected) ? 4 : 3;
             gui.fill(x - radius - 1, y - radius - 1, x + radius + 2, y + radius + 2, 0xCD11151C);
             gui.renderOutline(x - radius, y - radius, 2 * radius + 1, 2 * radius + 1, color);
+            var name = marker.entity.getDisplayName();
+            int labelWidth = font.width(name);
+            int labelX = x - labelWidth / 2, labelY = y - radius - font.lineHeight - 3;
+            gui.fill(labelX - 2, labelY - 1, labelX + labelWidth + 2, labelY + font.lineHeight, 0xCD11151C);
+            gui.drawString(font, name, labelX, labelY, color, false);
         }
         gui.disableScissor();
         gui.drawCenteredString(font, title, width / 2, 7, PICKED);
