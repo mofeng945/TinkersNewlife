@@ -293,6 +293,15 @@ public class DragonStaffHandler {
     }
 
     // ---------- 回收（增强版：只能回收活龙） ----------
+    public static void recallWarDragon(net.minecraft.server.level.ServerPlayer player, TamableAnimal dragon) {
+        if (warRoster(player) == null || dragon.isVehicle() || dragon.isPassenger()) return;
+        var tool = getTool(player);
+        if (tool != null && checkCooldown(player.getMainHandItem(), player)) {
+            tryRecycle(player, tool, dragon);
+            tool.updateStack(player.getMainHandItem());
+        }
+    }
+
     private static void tryRecycle(Player player, ToolStack tool, Entity target) {
         if (!isDragon(target)) {
             return;

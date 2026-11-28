@@ -26,8 +26,8 @@ import java.util.UUID;
 /** Tactical controls over the real client level; all accepted orders remain server-authoritative. */
 public final class DragonWarScreen extends Screen {
     private static final String PREFIX = "screen.tinkersnewlife.dragon_war.";
-    private static final double SIZE = 65, MIN_SPAN = 10;
-    private static final int DEPLOY = 0, MOVE = 1, ATTACK = 2, BREATH = 3, FOLLOW = 4, CANCEL = 5;
+    private static final double SIZE = 128, INITIAL_SPAN = 65, MIN_SPAN = 10;
+    private static final int DEPLOY = 0, MOVE = 1, ATTACK = 2, BREATH = 3, FOLLOW = 4, CANCEL = 5, RECALL = 6;
     private static final int FRIEND = 0xFF69E8C3, OTHER = 0xFFFF826E, PICKED = 0xFFFFDE91;
     private final DragonCardsScreen parent;
     private final UUID token;
@@ -37,7 +37,7 @@ public final class DragonWarScreen extends Screen {
     private UUID selected;
     private boolean aimBreath;
     private boolean pressed, dragged;
-    private double pressX, pressY, panX, panZ, span = SIZE;
+    private double pressX, pressY, panX, panZ, span = INITIAL_SPAN;
     private DragonWarCamera.Frame frame;
     private Button breath, follow, cancel;
 
@@ -66,9 +66,12 @@ public final class DragonWarScreen extends Screen {
         }
     }
 
-    private static Component text(String key) { return Component.translatable(PREFIX + key); }
+    private static Component text(String key, Object... args) { return Component.translatable(PREFIX + key, args); }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void onClose() { minecraft.setScreen(parent); }
+    @Override public void onClose() {
+        minecraft.setScreen(parent);
+        send(7, new UUID(0, 0), center, -1);
+    }
 
     @Override protected void init() {
         frame = null;
@@ -105,7 +108,7 @@ public final class DragonWarScreen extends Screen {
     void setFrame(DragonWarCamera.Frame frame) { this.frame = frame; }
 
     private boolean inArea(BlockPos p) {
-        return Math.abs((long) p.getX() - center.getX()) <= 32 && Math.abs((long) p.getZ() - center.getZ()) <= 32;
+        return DragonWar.inHorizontalArea(center, p);
     }
 
     private void clampPan() {
@@ -125,6 +128,11 @@ public final class DragonWarScreen extends Screen {
             return true;
         }
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            Entity entity = entityAt(x, y);
+            if (entity != null && allies.contains(entity.getUUID())) {
+                send(RECALL, entity.getUUID(), entity.blockPosition(), entity.getId());
+                return true;
+            }
             BlockPos point = ground(x, y);
             if (point != null && deployment != null && !allies.contains(deployment)) {
                 send(DEPLOY, deployment, point, -1);
@@ -288,6 +296,15 @@ public final class DragonWarScreen extends Screen {
             gui.drawString(font, name, labelX, labelY, color, false);
         }
         gui.disableScissor();
+        int blocks = span >= 96 ? 32 : span >= 48 ? 16 : span >= 24 ? 8 : 4;
+        int pixels = Math.max(1, (int)Math.round(side() * blocks / span));
+        int scaleX = r - pixels - 8, scaleY = b - 9;
+        var scale = text("scale", blocks);
+        gui.fill(scaleX - 4, scaleY - font.lineHeight - 5, r - 4, scaleY + 5, 0xDD11151C);
+        gui.drawCenteredString(font, scale, scaleX + pixels / 2, scaleY - font.lineHeight - 3, 0xFFE3E7EE);
+        gui.fill(scaleX, scaleY, scaleX + pixels + 1, scaleY + 1, 0xFFE3E7EE);
+        gui.fill(scaleX, scaleY - 2, scaleX + 1, scaleY + 3, 0xFFE3E7EE);
+        gui.fill(scaleX + pixels, scaleY - 2, scaleX + pixels + 1, scaleY + 3, 0xFFE3E7EE);
         gui.drawCenteredString(font, title, width / 2, 7, PICKED);
         gui.drawCenteredString(font, text(aimBreath ? "aim_breath" : "controls"), width / 2, 21, 0xFFE3E7EE);
         refreshButtons();
@@ -296,7 +313,7 @@ public final class DragonWarScreen extends Screen {
 
     private void drawBoundary(GuiGraphics gui) {
         if (frame == null) return;
-        double x = center.getX() - 32, y = center.getY(), z = center.getZ() - 32;
+        double x = center.getX() - SIZE / 2, y = center.getY(), z = center.getZ() - SIZE / 2;
         Vec3 nw = frame.project(new Vec3(x, y, z));
         Vec3 ne = frame.project(new Vec3(x + SIZE, y, z));
         Vec3 se = frame.project(new Vec3(x + SIZE, y, z + SIZE));

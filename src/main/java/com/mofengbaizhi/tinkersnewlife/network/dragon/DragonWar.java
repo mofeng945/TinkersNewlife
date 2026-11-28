@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 
 public final class DragonWar {
     private DragonWar() {}
-    private static final int HALF_WIDTH = 32;
+    private static final int HALF_WIDTH = 64;
     private static final long SESSION_TICKS = 6000;
     private static final UUID NONE = new UUID(0, 0);
     private static final WeakHashMap<ServerPlayer, Session> SESSIONS = new WeakHashMap<>();
@@ -70,10 +70,15 @@ public final class DragonWar {
         if (session == null || !session.token.equals(cmd.token) || !player.isAlive() || player.isSpectator()
                 || player.isPassenger() || player.level() != session.level || player.getMainHandItem() != session.staff
                 || player.level().getGameTime() > session.expires || !inside(session, player.blockPosition())) return;
-        if (cmd.action < 0 || cmd.action > 5) return;
+        if (cmd.action < 0 || cmd.action > 7) return;
         ListTag roster = DragonStaffHandler.warRoster(player);
         if (roster == null) return;
         var level = player.serverLevel();
+        if (cmd.action == 7) {
+            SESSIONS.remove(player);
+            DragonCards.open(player, roster, true);
+            return;
+        }
         if (cmd.action == 0) {
             if (!session.deployment.equals(cmd.dragon) || !slot(roster, cmd.dragon, 1)
                     || !inside(session, cmd.position) || !level.isLoaded(cmd.position)) return;
@@ -85,6 +90,12 @@ public final class DragonWar {
         Entity entity = level.getEntity(cmd.dragon);
         if (!slot(roster, cmd.dragon, 0) || !(entity instanceof TamableAnimal dragon) || !dragon.isAlive()
                 || !dragon.isOwnedBy(player) || !inside(session, dragon.blockPosition())) return;
+        if (cmd.action == 6) {
+            DragonStaffHandler.recallWarDragon(player, dragon);
+            var latest = DragonStaffHandler.warRoster(player);
+            if (latest != null) send(player, new View(session.token, session.center, session.deployment, allies(player, session, latest), false));
+            return;
+        }
         LivingEntity target = null;
         if (cmd.action == 2 || cmd.action == 3 && cmd.targetEntity >= 0) {
             if (!(level.getEntity(cmd.targetEntity) instanceof LivingEntity living) || living == dragon || living == player
@@ -99,9 +110,12 @@ public final class DragonWar {
     }
 
     private static boolean inside(Session session, BlockPos pos) {
-        return Math.abs((long)pos.getX() - session.center.getX()) <= HALF_WIDTH
-                && Math.abs((long)pos.getZ() - session.center.getZ()) <= HALF_WIDTH
+        return inHorizontalArea(session.center, pos)
                 && pos.getY() >= session.level.getMinBuildHeight() && pos.getY() < session.level.getMaxBuildHeight();
+    }
+    public static boolean inHorizontalArea(BlockPos center, BlockPos pos) {
+        long x = (long)pos.getX() - center.getX(), z = (long)pos.getZ() - center.getZ();
+        return x >= -HALF_WIDTH && x < HALF_WIDTH && z >= -HALF_WIDTH && z < HALF_WIDTH;
     }
     private static boolean slot(ListTag roster, UUID id, int state) {
         for (int i = 0; i < roster.size(); i++) {
