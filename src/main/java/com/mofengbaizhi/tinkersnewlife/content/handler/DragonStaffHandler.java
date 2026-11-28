@@ -376,7 +376,31 @@ public class DragonStaffHandler {
     }
 
     // ---------- 释放 ----------
+    private static boolean safeWarDeployment(ServerLevel level, Entity dragon) {
+        var box = dragon.getBoundingBox();
+        return box.minY >= level.getMinBuildHeight() && box.maxY <= level.getMaxBuildHeight()
+                && level.getWorldBorder().isWithinBounds(box)
+                && level.hasChunksAt(BlockPos.containing(box.minX, box.minY, box.minZ),
+                        BlockPos.containing(box.maxX, box.maxY, box.maxZ))
+                && level.noCollision(dragon, box) && !level.containsAnyLiquid(box)
+                && level.getBlockCollisions(dragon, box.move(0, -.1, 0)).iterator().hasNext();
+    }
+
+    private static final ModifierId WAR = new ModifierId(TinkersNewlife.prefix("dragon_war"));
+
+    public static ListTag warRoster(net.minecraft.server.level.ServerPlayer player) {
+        var tool = getTool(player);
+        return tool != null && isOwner(tool, player) && !pitLocked(tool)
+                && !TAMING_TASKS.containsKey(player.getUUID()) && ToolHelper.getActiveModifierLevel(tool, WAR) > 0
+                ? getSlots(tool) : null;
+    }
+
     public static void releaseSelected(net.minecraft.server.level.ServerPlayer player, UUID selected) {
+        releaseSelected(player, selected, null);
+    }
+
+    public static void releaseSelected(net.minecraft.server.level.ServerPlayer player, UUID selected, BlockPos destination) {
+        if (destination != null && warRoster(player) == null) return;
         ToolStack tool = getTool(player);
         if (tool == null || pitLocked(tool) || !isOwner(tool, player) || TAMING_TASKS.containsKey(player.getUUID()) || !checkCooldown(player.getMainHandItem(),player)) return;
         ListTag slots = getSlots(tool);
@@ -406,8 +430,8 @@ public class DragonStaffHandler {
                 if (!slotName.isEmpty() && !dragon.hasCustomName()) {
                     dragon.setCustomName(Component.literal(slotName));
                 }
-                BlockPos spawnPos = player.blockPosition().relative(player.getDirection(), 3);
-                if (!player.level().getBlockState(spawnPos).isAir() && !player.level().getBlockState(spawnPos).canBeReplaced()) {
+                BlockPos spawnPos = destination != null ? destination : player.blockPosition().relative(player.getDirection(), 3);
+                if (destination == null && !player.level().getBlockState(spawnPos).isAir() && !player.level().getBlockState(spawnPos).canBeReplaced()) {
                     spawnPos = player.blockPosition().above(2);
                 }
                 dragon.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
@@ -419,6 +443,7 @@ public class DragonStaffHandler {
                     com.mofengbaizhi.tinkersnewlife.content.modifier.DragonPitModifier.applyOnRelease(livingDragon, entry.getBoolean(PIT_WINNER));
                      livingDragon.setHealth(Math.min(1f, healthRatio) * livingDragon.getMaxHealth());
                 }
+                if (destination != null && !safeWarDeployment(player.serverLevel(), dragon)) return;
                 if (!player.level().addFreshEntity(dragon)) {
                     player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.release_fail_spawn"), true);
                     return;

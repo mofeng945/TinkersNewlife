@@ -48,6 +48,7 @@ public final class DragonCards {
 
     private static void sendView(ServerPlayer player, ListTag slots, UUID token, boolean refresh) {
         List<CompoundTag> cards = new ArrayList<>();
+        boolean warAvailable = DragonStaffHandler.warRoster(player) != null;
         for (int i=0; i<slots.size() && cards.size()<LIMIT; i++) {
             CompoundTag entry = slots.getCompound(i);
             UUID id;
@@ -65,6 +66,7 @@ public final class DragonCards {
             card.putString("uuid",id.toString()); card.putString("name",live != null ? live.getName().getString() : entry.getString("name"));
             card.putString("type",entry.getString("type")); card.putInt("state",entry.contains("TnlDragonReviveAt") ? 2 : entry.getInt("state")); card.putBoolean("live",live!=null);
             card.putLong("reviveAt", entry.getLong("TnlDragonReviveAt"));
+            card.putBoolean("warAvailable", warAvailable);
             card.putBoolean("pitWinner",entry.getBoolean("TnlDragonPitWinner"));
             card.putBoolean("male",data.getBoolean("Gender"));
             int days=Math.max(0,data.getInt("AgeTicks"))/24000;
@@ -110,7 +112,7 @@ public final class DragonCards {
             mc.setScreen(new com.mofengbaizhi.tinkersnewlife.client.screen.DragonCardsScreen(packet.roster.cards,packet.roster.token,packet.pitAvailable,packet.remainingTicks));
         }
     }
-    private static boolean valid(ServerPlayer player, UUID token) {
+    static boolean valid(ServerPlayer player, UUID token) {
         var session = OPEN.get(player);
         return session != null && session.token.equals(token) && player.isAlive() && !player.isSpectator()
                 && player.getMainHandItem() == session.staff && player.level().getGameTime() <= session.expires

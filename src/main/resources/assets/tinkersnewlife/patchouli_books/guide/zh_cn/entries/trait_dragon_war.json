@@ -1,0 +1,12 @@
+{
+    "flag":  "mod:iceandfire",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "category":  "tinkersnewlife:traits",
+    "name":  "此谓战争",
+    "pages":  [
+                  {
+                      "text":  "占 1 个能力槽。消耗龙吟号角、下界之星、指南针和三种龙心各一个。打开龙册并选择「指令部署」以浏览 65×65 格战场。右键地面部署当前收纳龙；左键选中己方龙，再点击地面或敌人发送命令。按 Esc 返回龙册。",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

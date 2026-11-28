@@ -517,6 +517,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.content.handler.DragonViltrum.Use::new,
                 com.mofengbaizhi.tinkersnewlife.content.handler.DragonViltrum.Use::handle);
 
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Begin.class, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Begin::encode, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Begin::new, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Begin::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Command.class, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Command::encode, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Command::new, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Command::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.View.class, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.View::encode, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.View::new, com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.View::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 

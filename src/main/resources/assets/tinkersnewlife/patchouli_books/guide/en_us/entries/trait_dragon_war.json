@@ -1,0 +1,12 @@
+{
+    "flag":  "mod:iceandfire",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "category":  "tinkersnewlife:traits",
+    "name":  "This Is War",
+    "pages":  [
+                  {
+                      "text":  "Costs one ability slot, a dragon horn, a nether star, a compass and one heart from each dragon species. Open Tactical Deployment from the dragon roster to view a 65×65 area. Right-click terrain to deploy the selected stored dragon; left-click your dragon, then pick a destination or target. Esc returns to the roster.",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}

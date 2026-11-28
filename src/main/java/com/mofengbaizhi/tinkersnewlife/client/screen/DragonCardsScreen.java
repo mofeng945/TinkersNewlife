@@ -68,7 +68,15 @@ public final class DragonCardsScreen extends Screen {
         if (remainingTicks > 0) remainingTicks--;
     }
 
+    private boolean warAvailable() { return !cards.isEmpty() && cards.get(0).getBoolean("warAvailable"); }
+
     @Override protected void init() {
+        if (warAvailable() && !releaseLocked()) {
+            addRenderableWidget(Button.builder(Component.translatable("screen.tinkersnewlife.dragon_war.open"), button -> {
+                UUID selected = UUID.fromString(cards.get(index).getString("uuid"));
+                TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.dragon.DragonWar.Begin(session, selected));
+            }).bounds(width / 2 - 55, pitAvailable ? 43 : 21, 110, 20).build());
+        }
         if (pitAvailable && !releaseLocked()) {
             int buttonWidth = Math.max(120, font.width(text("pit.start")) + 16);
             addRenderableWidget(Button.builder(text("pit.start"), button -> confirmPit())
@@ -99,7 +107,7 @@ public final class DragonCardsScreen extends Screen {
 
     // Only the next server Open can unlock release, even when the local countdown reaches zero.
     private boolean releaseLocked() { return pitRunning || pitRequested; }
-    private int headerExtra() { return pitAvailable || releaseLocked() ? 22 : 0; }
+    private int headerExtra() { return (pitAvailable || releaseLocked() ? 22 : 0) + (warAvailable() && !releaseLocked() ? 22 : 0); }
     private int cardWidth() { return Math.max(80, Math.min(218, width - 116)); }
     private int cardHeight() { return Math.max(112, Math.min(222, height - 54 - headerExtra())); }
     private int cardLeft() { return (width - cardWidth()) / 2; }
