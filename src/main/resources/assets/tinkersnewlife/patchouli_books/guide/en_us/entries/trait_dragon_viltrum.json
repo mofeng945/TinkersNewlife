@@ -2,7 +2,7 @@
   "flag": "mod:iceandfire",
   "icon": "tinkersnewlife:dragon_staff",
   "category": "tinkersnewlife:traits",
-  "name": "Viltrum Crossing",
+  "name": "Tail Whip",
   "pages": [
     {
       "type": "patchouli:text",
@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Right-click while riding a deployed stage-three or older dragon to make it grab an enemy ahead that is smaller than an Iron Golem, climb, dive, and drag it across the ground. After touching down, the dragon drags the enemy for up to 20 ticks. Each tick of the drag deals physical damage equal to 5% of the dragon's attack damage, without breaking blocks. Each dragon has its own 20-second cooldown."
+      "text": "Right-click while riding a deployed stage-three or older dragon to toss a small enemy into the air, then spin and swat it with the tail. Hitting the ground deals additional blunt damage. The target must be smaller than an Iron Golem. The tail strike deals 50% of dragon attack damage once and launches the target. Ground impact within 3 seconds deals an additional 25% as blunt damage. Does not break blocks; each dragon has a 20-second cooldown."
     }
   ]
 }

@@ -36,6 +36,8 @@ public final class DragonViltrum {
     private static final int COOLDOWN = 400;
     private static final Map<UUID, Throw> THROWS = new HashMap<>();
     private static final Map<UUID, Throw> VICTIMS = new HashMap<>();
+    private record Impact(ServerLevel level, LivingEntity dragon, LivingEntity victim, float damage, long expires) {}
+    private static final Map<UUID, Impact> IMPACTS = new HashMap<>();
     private DragonViltrum() {}
 
     private static final class Throw {
@@ -105,7 +107,8 @@ public final class DragonViltrum {
 
     @SubscribeEvent
     public static void tick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || THROWS.isEmpty()) return;
+        if (event.phase != TickEvent.Phase.END) return;
+        tickImpacts();
         for (var active : java.util.List.copyOf(THROWS.values())) {
             var dragon = active.dragon;
             var victim = active.victim;
@@ -119,31 +122,45 @@ public final class DragonViltrum {
             if (dragon instanceof net.minecraft.world.entity.Mob mob) mob.getNavigation().stop();
             if (victim instanceof net.minecraft.world.entity.Mob mob) mob.getNavigation().stop();
             if (!active.plan.step(active.tick)) {
-                TinkersNewlife.LOGGER.debug("Viltrum Crossing aborted at tick {}/{} (drag phase: {})",
-                        active.tick, active.plan.duration(), active.plan.isDragging(active.tick));
                 end(active);
                 continue;
             }
-            if (active.plan.isDragging(active.tick)) {
-                if (active.tick == 0 || !active.plan.isDragging(active.tick - 1)) {
-                    active.level.playSound(null, victim.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, .65f, 1.25f);
-                }
-                var ground = active.level.getBlockState(net.minecraft.core.BlockPos.containing(victim.getX(), victim.getY() - .15, victim.getZ()));
-                if (!ground.isAir()) active.level.sendParticles(
-                        new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, ground),
-                        victim.getX(), victim.getY() + .06, victim.getZ(), 12, .35, .04, .35, .16);
-                active.level.sendParticles(ParticleTypes.POOF, victim.getX(), victim.getY() + .12, victim.getZ(), 5, .28, .08, .28, .04);
-                if (active.tick % 4 == 0) active.level.playSound(null, victim.blockPosition(),
-                        ground.getSoundType().getBreakSound(), SoundSource.HOSTILE, .48f, .72f);
-                victim.hurt(new DragDamage(dragon), (float)(dragon.getAttributeValue(Attributes.ATTACK_DAMAGE) * .05));
-                // Vanilla hit recoil must not kick the held target away from the next drag sample.
+            if (active.plan.isTailStrike(active.tick)) {
+                end(active);
+                float attack = (float) dragon.getAttributeValue(Attributes.ATTACK_DAMAGE);
+                active.level.playSound(null, victim.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1f, .8f);
+                active.level.sendParticles(ParticleTypes.SWEEP_ATTACK, victim.getX(), victim.getY() + .6, victim.getZ(), 1, 0, 0, 0, 0);
+                victim.hurt(new DragDamage(dragon), attack * .50f);
                 if (victim.isAlive()) {
-                    victim.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                    victim.setDeltaMovement(active.plan.push());
                     victim.hurtMarked = true;
+                    victim.setOnGround(false);
+                    IMPACTS.put(victim.getUUID(), new Impact(active.level, dragon, victim, attack * .25f, active.level.getGameTime() + 60));
                 }
+                continue;
             }
             if (++active.tick >= active.plan.duration() || !victim.isAlive()) end(active);
         }
+    }
+
+    private static void tickImpacts() {
+        for (var impact : java.util.List.copyOf(IMPACTS.values())) {
+            var victim = impact.victim;
+            if (!victim.isAlive() || victim.isRemoved() || victim.level() != impact.level
+                    || victim.isInFluidType() || impact.level.getGameTime() > impact.expires) {
+                IMPACTS.remove(victim.getUUID(), impact);
+            } else if (victim.onGround()) {
+                groundImpact(impact);
+            }
+        }
+    }
+
+    private static void groundImpact(Impact impact) {
+        var victim = impact.victim;
+        if (!IMPACTS.remove(victim.getUUID(), impact)) return;
+        victim.hurt(new DragDamage(impact.dragon), impact.damage);
+        impact.level.playSound(null, victim.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, .55f, .8f);
+        impact.level.sendParticles(ParticleTypes.POOF, victim.getX(), victim.getY() + .1, victim.getZ(), 10, .25, .08, .25, .06);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -173,7 +190,7 @@ public final class DragonViltrum {
         if (THROWS.containsKey(event.getEntity().getUUID())) event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
     }
 
-    @SubscribeEvent public static void shutdown(ServerStoppedEvent event) { THROWS.clear(); VICTIMS.clear(); }
+    @SubscribeEvent public static void shutdown(ServerStoppedEvent event) { THROWS.clear(); VICTIMS.clear(); IMPACTS.clear(); }
 
     public record Use() {
         public Use(net.minecraft.network.FriendlyByteBuf ignored) { this(); }

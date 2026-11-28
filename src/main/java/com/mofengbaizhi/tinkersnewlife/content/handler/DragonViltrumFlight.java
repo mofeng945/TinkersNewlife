@@ -18,12 +18,8 @@ import java.util.List;
 /** Server-only geometry and movement for a single Viltrum flight. */
 public final class DragonViltrumFlight {
     private static final int CLIMB_TICKS = 14;
-    private static final int DIVE_TICKS = 12;
-    private static final int DRAG_START = CLIMB_TICKS + DIVE_TICKS;
-    private static final int DURATION = DRAG_START + 20;
-    private static final double CLIMB_HEIGHT = 6.5;
-    private static final double DIVE_REACH = 7.0;
-    private static final double DRAG_REACH = 8.0;
+    private static final int SPIN_TICKS = 16;
+    private static final int DURATION = CLIMB_TICKS + SPIN_TICKS;
     private static final double MAX_STEP = 2.25;
     private static final double EPSILON = 1.0e-6;
     private static final int[] LANE_ANGLES = {0, -35, 35, -70, 70};
@@ -47,85 +43,40 @@ public final class DragonViltrumFlight {
         List<Entity> ownParts = parts(dragon, victim);
         for (int angle : LANE_ANGLES) {
             Vec3 forward = heading.yRot((float) Math.toRadians(angle));
-            Vec3 apex = victimStart.add(forward.scale(.75)).add(0, CLIMB_HEIGHT, 0);
-            Vec3 landing = findLanding(level, victim, victimHull, apex.add(forward.scale(DIVE_REACH)), victimStart.y, 32);
-            if (landing == null) continue;
-            Vec3 grip = heading.scale(-forwardGrip).add(0, gap, 0);
-            Pose[] poses = path(dragonStart, victimStart, apex, landing, forward, grip);
-            double groundY = landing.y;
-            int count = DRAG_START;
-            // Follow small changes in ground height rather than requiring a level runway.
-            for (; count < DURATION; count++) {
-                Vec3 feet = poses[count].victim;
-                Vec3 ground = findLanding(level, victim, victimHull, feet, groundY + .25, 6);
-                if (ground == null) break;
-                groundY = ground.y;
-                poses[count] = new Pose(ground.add(grip), ground);
-            }
-            if (count < DRAG_START + 8) continue;
-            poses = java.util.Arrays.copyOf(poses, count);
+            Vec3 apex = victimStart.add(forward.scale(.75)).add(0, 4, 0);
+            Vec3 grip = forward.scale(-forwardGrip).add(0, gap, 0);
+            Pose[] poses = path(dragonStart, victimStart, apex, forward, grip);
             Pose prev = new Pose(dragonStart, victimStart);
             boolean clear = true;
             for (int tick = 0; tick < poses.length && clear; tick++) {
                 Pose next = poses[tick];
                 clear = clearStep(level, dragon, victim, ownParts, dragonHull, victimHull,
                         dragonStart, victimStart, prev, next, tick);
-                if (!clear && tick >= DRAG_START + 8) {
-                    return new Plan(level, dragon, victim, java.util.Arrays.copyOf(poses, tick));
-                }
                 prev = next;
             }
-            if (clear) return new Plan(level, dragon, victim, poses);
+            if (clear) return new Plan(level, dragon, victim, poses, forward);
         }
         return null;
     }
 
-    private static Pose[] path(Vec3 dragonStart, Vec3 victimStart, Vec3 apex, Vec3 landing,
-                               Vec3 forward, Vec3 grip) {
+    private static Pose[] path(Vec3 dragonStart, Vec3 victimStart, Vec3 apex, Vec3 forward, Vec3 grip) {
         Pose[] poses = new Pose[DURATION];
         for (int i = 0; i < CLIMB_TICKS; i++) {
             double t = smooth((i + 1.0) / CLIMB_TICKS);
-            // Bring the two hulls into the carry position gradually rather than snapping the victim.
             poses[i] = new Pose(dragonStart.lerp(apex.add(grip), t), victimStart.lerp(apex, t));
         }
-        for (int i = CLIMB_TICKS; i < DRAG_START; i++) {
-            double t = (i - CLIMB_TICKS + 1.0) / DIVE_TICKS;
-            double u = smooth(t);
-            Vec3 dive = new Vec3(Mth.lerp(u, apex.x, landing.x),
-                    Mth.lerp(u * u, apex.y, landing.y), Mth.lerp(u, apex.z, landing.z));
-            poses[i] = new Pose(dive.add(grip), dive);
-        }
-        for (int i = DRAG_START; i < DURATION; i++) {
-            double t = (i - DRAG_START + 1.0) / (DURATION - DRAG_START);
-            Vec3 drag = landing.add(forward.scale(DRAG_REACH * t * (2 - t)));
-            poses[i] = new Pose(drag.add(grip), drag);
+        for (int i = CLIMB_TICKS; i < DURATION; i++) {
+            double t = (i - CLIMB_TICKS + 1.0) / SPIN_TICKS;
+            Vec3 tossed = apex.add(forward.scale(2.5 * t)).add(0, 12 * t * (1 - t) - 1.5 * t, 0);
+            Vec3 spinning = apex.add(grip).add(forward.scale(2.5 * t)).add(0, 3 * Math.sin(Math.PI * t) - 1.5 * t, 0);
+            // Keep the carrying clearance throughout the toss; swing on the descent.
+            poses[i] = new Pose(spinning.add(0, 1.25 * Math.sin(Math.PI * t), 0), tossed);
         }
         return poses;
     }
 
     private static double smooth(double t) {
         return t * t * (3 - 2 * t);
-    }
-
-    @Nullable
-    private static Vec3 findLanding(ServerLevel level, LivingEntity victim, List<AABB> hull, Vec3 at, double startY, int steps) {
-        // A short downward search permits a lower landing, but never dives into an unknown drop.
-        for (int i = 0; i <= steps; i++) {
-            Vec3 feet = new Vec3(at.x, startY - i * .125, at.z);
-            AABB box = hull.get(0).move(feet.subtract(victim.position()));
-            if (safeArea(level, box) && !level.getBlockCollisions(victim, box).iterator().hasNext()
-                    && supported(level, victim, box)) return feet;
-        }
-        return null;
-    }
-
-    private static boolean supported(ServerLevel level, LivingEntity victim, AABB body) {
-        // Use a narrow probe beneath the stance; floor collisions are intentional only here.
-        double inset = Math.min(.18, (body.maxX - body.minX) * .2);
-        double insetZ = Math.min(.18, (body.maxZ - body.minZ) * .2);
-        AABB foot = new AABB(body.minX + inset, body.minY - .13, body.minZ + insetZ,
-                body.maxX - inset, body.minY, body.maxZ - insetZ);
-        return safeArea(level, foot) && level.getBlockCollisions(victim, foot).iterator().hasNext();
     }
 
     private static boolean eligible(ServerLevel level, LivingEntity dragon, LivingEntity victim) {
@@ -194,8 +145,6 @@ public final class DragonViltrumFlight {
             }
             // The live entity may start this tick slightly above the floor (gravity, step-up,
             // or a position correction). Only the planned endpoint must be grounded.
-            boolean checkSupport = tick >= DRAG_START - 1 && j == slices - 1;
-            if (checkSupport && !supported(level, victim, victimHull.get(0).move(vb))) return false;
         }
         return true;
     }
@@ -261,29 +210,37 @@ public final class DragonViltrumFlight {
         private final LivingEntity victim;
         private final Pose[] poses;
         private int nextTick;
+        private final Vec3 forward;
+        private final float initialYaw;
 
-        private Plan(ServerLevel level, LivingEntity dragon, LivingEntity victim, Pose[] poses) {
+        private Plan(ServerLevel level, LivingEntity dragon, LivingEntity victim, Pose[] poses, Vec3 forward) {
             this.level = level;
             this.dragon = dragon;
             this.victim = victim;
             this.poses = poses;
+            this.forward = forward;
+            this.initialYaw = dragon.getYRot();
         }
 
         public int duration() { return poses.length; }
 
-        public boolean isDragging(int tick) { return tick >= DRAG_START && tick < duration(); }
+        public boolean isTailStrike(int tick) { return tick == duration() - 1; }
+        public Vec3 push() { return forward.scale(1.6).add(0, -.65, 0); }
 
         /** Apply exactly one zero-based tick. False is terminal; the caller releases both entities. */
         public boolean step(int tick) {
             if (tick != nextTick || tick >= duration() || !eligible(level, dragon, victim)) return false;
             Pose from = new Pose(dragon.position(), victim.position());
             Pose to = poses[tick];
-            boolean ground = tick >= DRAG_START - 1;
             // Recheck current dimensions, parts, chunks and obstacles before moving either entity.
             if (!clearStep(level, dragon, victim, parts(dragon, victim), hull(dragon), hull(victim),
                     from.dragon, from.victim, from, to, tick)) return false;
             move(dragon, to.dragon, false, tick == 0);
-            move(victim, to.victim, ground, tick == 0);
+            move(victim, to.victim, false, tick == 0);
+            if (tick >= CLIMB_TICKS) {
+                float yaw = initialYaw + 360f * (tick - CLIMB_TICKS + 1) / SPIN_TICKS;
+                dragon.setYRot(yaw); dragon.setYBodyRot(yaw); dragon.setYHeadRot(yaw);
+            }
             nextTick++;
             return true;
         }
