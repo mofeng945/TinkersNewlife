@@ -630,8 +630,7 @@ public class DragonStaffHandler {
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void shareDragonDamage(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
         if (!(event.getAmount() > 0) || !Float.isFinite(event.getAmount()) || event.getEntity().level().isClientSide) return;
-        if (!DragonViltrum.isDragDamage(event.getSource())
-                && event.getSource().getEntity() instanceof LivingEntity attacker && attacker != event.getEntity()) {
+        if (event.getSource().getEntity() instanceof LivingEntity attacker && attacker != event.getEntity()) {
             var bond = brotherhood(attacker);
             if (bond != null) {
                 double attack = 0;

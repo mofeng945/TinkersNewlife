@@ -2,7 +2,7 @@
   "flag": "mod:iceandfire",
   "icon": "tinkersnewlife:dragon_staff",
   "category": "tinkersnewlife:traits",
-  "name": "Tail Whip",
+  "name": "Shake Prey",
   "pages": [
     {
       "type": "patchouli:text",
@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Right-click while riding a deployed stage-three or older dragon to toss a small enemy into the air, then spin and swat it with the tail. Hitting the ground deals additional blunt damage. The target must be smaller than an Iron Golem. The tail strike deals 50% of dragon attack damage once and launches the target. Ground impact within 3 seconds deals an additional 25% as blunt damage. Does not break blocks; each dragon has a 20-second cooldown."
+      "text": "Right-click while riding a deployed stage-three or older dragon to grab a small enemy ahead, shake and bite it, then let go. The target must be smaller than an Iron Golem. Ice and Fire handles bite damage. Each dragon has a 20-second cooldown."
     }
   ]
 }

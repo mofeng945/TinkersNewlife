@@ -13,10 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class AstralEntityMovementMixin {
     @Inject(method="collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;",at=@At("HEAD"),cancellable=true,require=1)
     private void tnl$astralMove(Vec3 wanted, CallbackInfoReturnable<Vec3> cir) {
-        if (com.mofengbaizhi.tinkersnewlife.content.handler.DragonViltrum.controlsMovement((Entity)(Object)this)) {
-            cir.setReturnValue(Vec3.ZERO);
-            return;
-        }
         if((Object)this instanceof Player p && AstralMovement.active(p))
             cir.setReturnValue(AstralMovement.collide(p,p.getBoundingBox(),wanted));
     }

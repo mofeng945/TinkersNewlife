@@ -1,68 +1,26 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.DamageTypeTags;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-@Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
 public final class DragonViltrum {
     public static final ModifierId ID = new ModifierId(TinkersNewlife.prefix("dragon_viltrum"));
     private static final String ENABLED = "tnlDragonViltrum";
     private static final String READY_AT = "tnlViltrumReadyAt";
     private static final int COOLDOWN = 400;
-    private static final Map<UUID, Throw> THROWS = new HashMap<>();
-    private static final Map<UUID, Throw> VICTIMS = new HashMap<>();
-    private record Impact(ServerLevel level, LivingEntity dragon, LivingEntity victim, float damage, long expires) {}
-    private static final Map<UUID, Impact> IMPACTS = new HashMap<>();
     private DragonViltrum() {}
-
-    private static final class Throw {
-        final ServerLevel level;
-        final LivingEntity dragon, victim;
-        final DragonViltrumFlight.Plan plan;
-        final LivingEntity rider;
-        int tick;
-        Throw(ServerLevel level, LivingEntity dragon, LivingEntity victim, DragonViltrumFlight.Plan plan) {
-            this.level = level; this.dragon = dragon; this.victim = victim; this.plan = plan; this.rider = dragon.getControllingPassenger();
-        }
-    }
 
     public static void mark(Entity dragon, boolean enabled) {
         if (enabled) dragon.getPersistentData().putBoolean(ENABLED, true);
-        else {
-            dragon.getPersistentData().remove(ENABLED);
-            var active = THROWS.get(dragon.getUUID());
-            if (active != null) end(active);
-        }
-    }
-
-    private static void end(Throw active) {
-        THROWS.remove(active.dragon.getUUID(), active);
-        VICTIMS.remove(active.victim.getUUID(), active);
+        else dragon.getPersistentData().remove(ENABLED);
     }
 
     public static void activate(net.minecraft.server.level.ServerPlayer rider) {
@@ -81,13 +39,8 @@ public final class DragonViltrum {
                     && forward.dot(flat.normalize()) >= .707 && dragon.hasLineOfSight(target);
         }).stream().min(java.util.Comparator.comparingDouble(dragon::distanceToSqr)).orElse(null);
         if (victim == null) return;
-        var plan = DragonViltrumFlight.create(level, dragon, victim);
-        if (plan == null) return;
+        if (dragon.getPassengers().size() != 1 || !victim.startRiding(dragon, true)) return;
         dragon.getPersistentData().putLong(READY_AT, level.getGameTime() + COOLDOWN);
-        var active = new Throw(level, dragon, victim, plan);
-        THROWS.put(dragon.getUUID(), active);
-        VICTIMS.put(victim.getUUID(), active);
-        level.playSound(null, dragon.blockPosition(), SoundEvents.PHANTOM_FLAP, SoundSource.HOSTILE, 1f, .8f);
     }
 
     private static boolean eligible(TamableAnimal dragon, LivingEntity victim) {
@@ -95,102 +48,13 @@ public final class DragonViltrum {
                 && !dragon.isAlliedTo(victim) && !victim.isAlliedTo(dragon) && !dragon.isOwnedBy(victim)
                 && !dragon.isPassenger() && !dragon.isOrderedToSit()
                 && !victim.isVehicle() && !victim.isPassenger()
-                && victim.getBbWidth() < EntityType.IRON_GOLEM.getWidth() && victim.getBbHeight() < EntityType.IRON_GOLEM.getHeight()
-                && !THROWS.containsKey(dragon.getUUID()) && !VICTIMS.containsKey(dragon.getUUID())
-                && !THROWS.containsKey(victim.getUUID()) && !VICTIMS.containsKey(victim.getUUID());
+                && victim.getBbWidth() < EntityType.IRON_GOLEM.getWidth() && victim.getBbHeight() < EntityType.IRON_GOLEM.getHeight();
     }
 
     private static boolean stageThree(LivingEntity dragon) {
         try { return ((Number)dragon.getClass().getMethod("getDragonStage").invoke(dragon)).intValue() >= 3; }
         catch (ReflectiveOperationException ignored) { return false; }
     }
-
-    @SubscribeEvent
-    public static void tick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        tickImpacts();
-        for (var active : java.util.List.copyOf(THROWS.values())) {
-            var dragon = active.dragon;
-            var victim = active.victim;
-            if (!dragon.isAlive() || !victim.isAlive() || dragon.isRemoved() || victim.isRemoved()
-                    || dragon.level() != active.level || victim.level() != active.level
-                    || !dragon.getPersistentData().getBoolean(ENABLED) || victim.isSpectator()
-                    || dragon.getControllingPassenger() != active.rider || active.rider == null || !active.rider.isAlive() || dragon.isPassenger() || victim.isVehicle() || victim.isPassenger()) {
-                end(active);
-                continue;
-            }
-            if (dragon instanceof net.minecraft.world.entity.Mob mob) mob.getNavigation().stop();
-            if (victim instanceof net.minecraft.world.entity.Mob mob) mob.getNavigation().stop();
-            if (!active.plan.step(active.tick)) {
-                end(active);
-                continue;
-            }
-            if (active.plan.isTailStrike(active.tick)) {
-                end(active);
-                float attack = (float) dragon.getAttributeValue(Attributes.ATTACK_DAMAGE);
-                active.level.playSound(null, victim.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1f, .8f);
-                active.level.sendParticles(ParticleTypes.SWEEP_ATTACK, victim.getX(), victim.getY() + .6, victim.getZ(), 1, 0, 0, 0, 0);
-                victim.hurt(new DragDamage(dragon), attack * .50f);
-                if (victim.isAlive()) {
-                    victim.setDeltaMovement(active.plan.push());
-                    victim.hurtMarked = true;
-                    victim.setOnGround(false);
-                    IMPACTS.put(victim.getUUID(), new Impact(active.level, dragon, victim, attack * .25f, active.level.getGameTime() + 60));
-                }
-                continue;
-            }
-            if (++active.tick >= active.plan.duration() || !victim.isAlive()) end(active);
-        }
-    }
-
-    private static void tickImpacts() {
-        for (var impact : java.util.List.copyOf(IMPACTS.values())) {
-            var victim = impact.victim;
-            if (!victim.isAlive() || victim.isRemoved() || victim.level() != impact.level
-                    || victim.isInFluidType() || impact.level.getGameTime() > impact.expires) {
-                IMPACTS.remove(victim.getUUID(), impact);
-            } else if (victim.onGround()) {
-                groundImpact(impact);
-            }
-        }
-    }
-
-    private static void groundImpact(Impact impact) {
-        var victim = impact.victim;
-        if (!IMPACTS.remove(victim.getUUID(), impact)) return;
-        victim.hurt(new DragDamage(impact.dragon), impact.damage);
-        impact.level.playSound(null, victim.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, .55f, .8f);
-        impact.level.sendParticles(ParticleTypes.POOF, victim.getX(), victim.getY() + .1, victim.getZ(), 10, .25, .08, .25, .06);
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void suppressConcurrentAttacks(LivingAttackEvent event) {
-        if (event.getSource() instanceof DragDamage || event.getEntity().level().isClientSide) return;
-        var attacker = event.getSource().getEntity();
-        if (attacker != null && (THROWS.containsKey(attacker.getUUID()) || VICTIMS.containsKey(attacker.getUUID()))) event.setCanceled(true);
-    }
-
-    public static boolean controlsMovement(Entity entity) {
-        if (entity.level().isClientSide) return false;
-        var attack = THROWS.get(entity.getUUID());
-        if (attack != null && attack.dragon == entity) return true;
-        var grab = VICTIMS.get(entity.getUUID());
-        return grab != null && grab.victim == entity;
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void suppressFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {
-        if (controlsMovement(event.getEntity())) event.setCanceled(true);
-    }
-
-    public static boolean isDragDamage(DamageSource source) { return source instanceof DragDamage; }
-
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void protectTerrain(net.minecraftforge.event.entity.EntityMobGriefingEvent event) {
-        if (THROWS.containsKey(event.getEntity().getUUID())) event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
-    }
-
-    @SubscribeEvent public static void shutdown(ServerStoppedEvent event) { THROWS.clear(); VICTIMS.clear(); IMPACTS.clear(); }
 
     public record Use() {
         public Use(net.minecraft.network.FriendlyByteBuf ignored) { this(); }
@@ -216,9 +80,4 @@ public final class DragonViltrum {
         }
     }
 
-    private static final class DragDamage extends DamageSource {
-        DragDamage(LivingEntity dragon) { super(dragon.damageSources().mobAttack(dragon).typeHolder(), dragon); }
-        // Only this damage sequence bypasses repeated-hit cooldown; normal physical defenses still apply.
-        @Override public boolean is(TagKey<DamageType> tag) { return tag.equals(DamageTypeTags.BYPASSES_COOLDOWN) || super.is(tag); }
-    }
 }

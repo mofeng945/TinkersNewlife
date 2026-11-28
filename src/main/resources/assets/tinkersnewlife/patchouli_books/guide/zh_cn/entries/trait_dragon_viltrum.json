@@ -2,7 +2,7 @@
   "flag": "mod:iceandfire",
   "icon": "tinkersnewlife:dragon_staff",
   "category": "tinkersnewlife:traits",
-  "name": "甩尾",
+  "name": "撕咬",
   "pages": [
     {
       "type": "patchouli:text",
@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "骑乘三阶及以上的出战龙时，右键可指挥它叼起前方的小型敌人并抛向空中，再旋身甩尾将下落的敌人抽飞，撞地时追加钝伤。目标须比铁傀儡小；尾击造成一次攻击力 50% 的物理伤害并施加推力，被抽飞后 3 秒内撞地额外受到攻击力 25% 的钝伤。不会破坏地形，每条龙冷却 20 秒。"
+      "text": "骑乘三阶及以上的出战龙时，右键指挥它叼起前方的小型敌人，摇头撕咬后松口。目标须比铁傀儡小，伤害由冰火传说原生撕咬结算。每条龙冷却 20 秒。"
     }
   ]
 }
