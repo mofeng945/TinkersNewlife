@@ -23,7 +23,7 @@ public final class DragonViltrumFlight {
     private static final int DURATION = DRAG_START + 20;
     private static final double CLIMB_HEIGHT = 6.5;
     private static final double DIVE_REACH = 7.0;
-    private static final double DRAG_REACH = 3.4;
+    private static final double DRAG_REACH = 8.0;
     private static final double MAX_STEP = 2.25;
     private static final double EPSILON = 1.0e-6;
     private static final int[] LANE_ANGLES = {0, -35, 35, -70, 70};
@@ -48,16 +48,31 @@ public final class DragonViltrumFlight {
         for (int angle : LANE_ANGLES) {
             Vec3 forward = heading.yRot((float) Math.toRadians(angle));
             Vec3 apex = victimStart.add(forward.scale(.75)).add(0, CLIMB_HEIGHT, 0);
-            Vec3 landing = findLanding(level, victim, victimHull, apex.add(forward.scale(DIVE_REACH)), victimStart.y);
+            Vec3 landing = findLanding(level, victim, victimHull, apex.add(forward.scale(DIVE_REACH)), victimStart.y, 32);
             if (landing == null) continue;
             Vec3 grip = heading.scale(-forwardGrip).add(0, gap, 0);
             Pose[] poses = path(dragonStart, victimStart, apex, landing, forward, grip);
+            double groundY = landing.y;
+            int count = DRAG_START;
+            // Follow small changes in ground height rather than requiring a level runway.
+            for (; count < DURATION; count++) {
+                Vec3 feet = poses[count].victim;
+                Vec3 ground = findLanding(level, victim, victimHull, feet, groundY + .25, 6);
+                if (ground == null) break;
+                groundY = ground.y;
+                poses[count] = new Pose(ground.add(grip), ground);
+            }
+            if (count < DRAG_START + 8) continue;
+            poses = java.util.Arrays.copyOf(poses, count);
             Pose prev = new Pose(dragonStart, victimStart);
             boolean clear = true;
-            for (int tick = 0; tick < DURATION && clear; tick++) {
+            for (int tick = 0; tick < poses.length && clear; tick++) {
                 Pose next = poses[tick];
                 clear = clearStep(level, dragon, victim, ownParts, dragonHull, victimHull,
                         dragonStart, victimStart, prev, next, tick);
+                if (!clear && tick >= DRAG_START + 8) {
+                    return new Plan(level, dragon, victim, java.util.Arrays.copyOf(poses, tick));
+                }
                 prev = next;
             }
             if (clear) return new Plan(level, dragon, victim, poses);
@@ -93,9 +108,9 @@ public final class DragonViltrumFlight {
     }
 
     @Nullable
-    private static Vec3 findLanding(ServerLevel level, LivingEntity victim, List<AABB> hull, Vec3 at, double startY) {
+    private static Vec3 findLanding(ServerLevel level, LivingEntity victim, List<AABB> hull, Vec3 at, double startY, int steps) {
         // A short downward search permits a lower landing, but never dives into an unknown drop.
-        for (int i = 0; i <= 32; i++) {
+        for (int i = 0; i <= steps; i++) {
             Vec3 feet = new Vec3(at.x, startY - i * .125, at.z);
             AABB box = hull.get(0).move(feet.subtract(victim.position()));
             if (safeArea(level, box) && !level.getBlockCollisions(victim, box).iterator().hasNext()

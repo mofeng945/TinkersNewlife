@@ -123,7 +123,13 @@ public final class DragonViltrum {
                 if (active.tick == 0 || !active.plan.isDragging(active.tick - 1)) {
                     active.level.playSound(null, victim.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, .65f, 1.25f);
                 }
-                active.level.sendParticles(ParticleTypes.POOF, victim.getX(), victim.getY() + .12, victim.getZ(), 4, .25, .08, .25, .03);
+                var ground = active.level.getBlockState(net.minecraft.core.BlockPos.containing(victim.getX(), victim.getY() - .15, victim.getZ()));
+                if (!ground.isAir()) active.level.sendParticles(
+                        new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, ground),
+                        victim.getX(), victim.getY() + .06, victim.getZ(), 12, .35, .04, .35, .16);
+                active.level.sendParticles(ParticleTypes.POOF, victim.getX(), victim.getY() + .12, victim.getZ(), 5, .28, .08, .28, .04);
+                if (active.tick % 4 == 0) active.level.playSound(null, victim.blockPosition(),
+                        ground.getSoundType().getBreakSound(), SoundSource.HOSTILE, .48f, .72f);
                 victim.hurt(new DragDamage(dragon), (float)(dragon.getAttributeValue(Attributes.ATTACK_DAMAGE) * .05));
             }
             if (++active.tick >= active.plan.duration() || !victim.isAlive()) end(active);
