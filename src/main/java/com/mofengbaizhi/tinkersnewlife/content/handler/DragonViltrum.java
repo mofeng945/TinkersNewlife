@@ -118,7 +118,12 @@ public final class DragonViltrum {
             }
             if (dragon instanceof net.minecraft.world.entity.Mob mob) mob.getNavigation().stop();
             if (victim instanceof net.minecraft.world.entity.Mob mob) mob.getNavigation().stop();
-            if (!active.plan.step(active.tick)) { end(active); continue; }
+            if (!active.plan.step(active.tick)) {
+                TinkersNewlife.LOGGER.debug("Viltrum Crossing aborted at tick {}/{} (drag phase: {})",
+                        active.tick, active.plan.duration(), active.plan.isDragging(active.tick));
+                end(active);
+                continue;
+            }
             if (active.plan.isDragging(active.tick)) {
                 if (active.tick == 0 || !active.plan.isDragging(active.tick - 1)) {
                     active.level.playSound(null, victim.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, .65f, 1.25f);
@@ -146,6 +151,19 @@ public final class DragonViltrum {
         if (event.getSource() instanceof DragDamage || event.getEntity().level().isClientSide) return;
         var attacker = event.getSource().getEntity();
         if (attacker != null && (THROWS.containsKey(attacker.getUUID()) || VICTIMS.containsKey(attacker.getUUID()))) event.setCanceled(true);
+    }
+
+    public static boolean controlsMovement(Entity entity) {
+        if (entity.level().isClientSide) return false;
+        var attack = THROWS.get(entity.getUUID());
+        if (attack != null && attack.dragon == entity) return true;
+        var grab = VICTIMS.get(entity.getUUID());
+        return grab != null && grab.victim == entity;
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void suppressFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {
+        if (controlsMovement(event.getEntity())) event.setCanceled(true);
     }
 
     public static boolean isDragDamage(DamageSource source) { return source instanceof DragDamage; }

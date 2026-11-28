@@ -249,6 +249,7 @@ public final class DragonViltrumFlight {
                 part.setPos(pos.x, pos.y, pos.z);
             }
         }
+        for (var passenger : entity.getPassengers()) entity.positionRider(passenger);
         entity.setOnGround(ground);
     }
 
