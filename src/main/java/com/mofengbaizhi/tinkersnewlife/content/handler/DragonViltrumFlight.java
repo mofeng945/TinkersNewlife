@@ -192,7 +192,9 @@ public final class DragonViltrumFlight {
                 AABB relativeSweep = victimBox.move(relativeA).minmax(victimBox.move(relativeB));
                 for (AABB dragonBox : dragonHull) if (relativeSweep.intersects(dragonBox)) return false;
             }
-            boolean checkSupport = tick >= DRAG_START || tick == DRAG_START - 1 && j == slices - 1;
+            // The live entity may start this tick slightly above the floor (gravity, step-up,
+            // or a position correction). Only the planned endpoint must be grounded.
+            boolean checkSupport = tick >= DRAG_START - 1 && j == slices - 1;
             if (checkSupport && !supported(level, victim, victimHull.get(0).move(vb))) return false;
         }
         return true;

@@ -131,6 +131,11 @@ public final class DragonViltrum {
                 if (active.tick % 4 == 0) active.level.playSound(null, victim.blockPosition(),
                         ground.getSoundType().getBreakSound(), SoundSource.HOSTILE, .48f, .72f);
                 victim.hurt(new DragDamage(dragon), (float)(dragon.getAttributeValue(Attributes.ATTACK_DAMAGE) * .05));
+                // Vanilla hit recoil must not kick the held target away from the next drag sample.
+                if (victim.isAlive()) {
+                    victim.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                    victim.hurtMarked = true;
+                }
             }
             if (++active.tick >= active.plan.duration() || !victim.isAlive()) end(active);
         }
